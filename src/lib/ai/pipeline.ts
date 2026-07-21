@@ -1,17 +1,39 @@
+/**
+ * Конвейер v3: extract (evidence map) → score → persona → grounding.
+ *
+ * Эвристики больше не источник истины — только сигналы и fallback.
+ * Каждый этап шлёт события наружу (onEvent) — из них строится живой
+ * Analysis Theatre без фальшивых сообщений.
+ */
+
 import type { PersonaId } from "@/lib/personas";
 import { PERSONAS } from "@/lib/personas";
 import {
   AnalysisReportSchema,
   type AnalysisReport,
   type Problem,
+  type TheatreFinding,
 } from "@/lib/ai/schemas";
 import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
 import { AiConfigError, runAi } from "@/lib/ai/gateway";
 import { groundReport, quoteInResume } from "@/lib/ai/grounding";
+import {
+  runExtractStage,
+  runScoreStage,
+  type EvidenceMap,
+  type ScoreResult,
+} from "@/lib/ai/evidence";
+
+export type PipelineStage = "extract" | "score" | "persona";
+
+export type PipelineEvent =
+  | { type: "stage"; stage: PipelineStage; status: "start" | "done" }
+  | { type: "finding"; stage: PipelineStage; message: string };
 
 export type PipelineInput = {
   resumeText: string;
   personaId: PersonaId;
+  onEvent?: (event: PipelineEvent) => void;
 };
 
 export type PipelineResult = {
@@ -53,11 +75,7 @@ type GptReportPayload = {
     recommendation?: string;
     suggestedRewrite?: string;
   }>;
-  strengths?: Array<{
-    title?: string;
-    quote?: string;
-    comment?: string;
-  }>;
+  strengths?: Array<{ title?: string; quote?: string; comment?: string }>;
   shareQuotes?: Array<{ kind?: "precise" | "funny" | "safe"; text?: string }>;
   improvementPlan?: Array<{
     horizon?: "10m" | "30m" | "recall";
@@ -88,28 +106,154 @@ function fallbackHrReview(base: AnalysisReport): AnalysisReport["hrReview"] {
   };
 }
 
+/** Реальные находки театра из evidence map — не из регэкспов. */
+function theatreFromEvidence(map: EvidenceMap): TheatreFinding[] {
+  const findings: TheatreFinding[] = [];
+  const achievements = map.claims.filter(
+    (c) => c.type === "achievement" && (c.hasMetric || c.hasOutcome),
+  ).length;
+  const duties = map.claims.filter((c) => c.type === "duty").length;
+  const generic = map.claims.filter((c) => c.isGeneric).length;
+
+  findings.push({
+    id: "ev-counts",
+    stage: "classify",
+    message: `Найдено ${duties} обязанностей и ${achievements} доказанных результатов. ${
+      achievements < duties ? "Обязанности ведут всухую." : "Неожиданно достойно."
+    }`,
+  });
+
+  if (generic > 0) {
+    findings.push({
+      id: "ev-generic",
+      stage: "water",
+      message: `${generic} формулировок можно вставить в любое резюме без изменений. Уникальность отказалась давать показания.`,
+    });
+  }
+
+  const worst = map.claims.find(
+    (c) => c.isGeneric && !c.hasMetric && !c.hasPersonalAction,
+  );
+  if (worst) {
+    findings.push({
+      id: "ev-worst",
+      stage: "evidence",
+      message: `«${worst.quote.slice(0, 90)}» — ${worst.note ?? "ни личной роли, ни цифр, ни результата"}.`,
+    });
+  }
+
+  if (map.contradictions[0]) {
+    findings.push({
+      id: "ev-contra",
+      stage: "evidence",
+      message: `Противоречие: ${map.contradictions[0].why}`,
+    });
+  }
+
+  if (map.missing[0]) {
+    findings.push({
+      id: "ev-missing",
+      stage: "seniority",
+      message: `В деле не хватает: ${map.missing.slice(0, 3).join(", ")}.`,
+    });
+  }
+
+  if (map.profile.claimedLevel !== map.profile.inferredLevel) {
+    findings.push({
+      id: "ev-level",
+      stage: "seniority",
+      message: `Заявлен уровень «${map.profile.claimedLevel}», доказан — «${map.profile.inferredLevel}». Разрыв зафиксирован.`,
+    });
+  }
+
+  return findings;
+}
+
 export async function runAnalysisPipeline(
   input: PipelineInput,
 ): Promise<PipelineResult> {
-  // Баллы и сырые сигналы — локально (чтобы не выдумывать метрики).
+  const emit = input.onEvent ?? (() => {});
+  let totalCost = 0;
+
+  // Сигналы и полный fallback — локально, мгновенно.
   const heuristic = runHeuristicAnalysis(input.resumeText, input.personaId);
-  const groundedBase = groundReport(heuristic, input.resumeText);
+  const heuristicBase = groundReport(heuristic, input.resumeText);
   const persona = PERSONAS.find((p) => p.id === input.personaId);
 
-  const signalPack = {
-    role: groundedBase.candidateProfile.primaryRole,
-    claimedLevel: groundedBase.candidateProfile.claimedLevel,
-    inferredLevel: groundedBase.candidateProfile.inferredLevel,
-    score: groundedBase.score,
-    viralMetrics: groundedBase.viralMetrics,
-    detectedSignals: {
-      sampleWeakQuotes: groundedBase.topProblems.map((p) => p.quote).slice(0, 6),
-      responsibilitiesCount: groundedBase.viralMetrics.responsibilitiesCount,
-      achievementsCount: groundedBase.viralMetrics.achievementsCount,
-    },
-  };
+  /* ---------- Этап 1: Evidence Map ---------- */
+  emit({ type: "stage", stage: "extract", status: "start" });
+  let evidenceMap: EvidenceMap | null = null;
+  try {
+    const extract = await runExtractStage(input.resumeText);
+    evidenceMap = extract.map;
+    totalCost += extract.costUsd;
+  } catch (error) {
+    if (error instanceof AiConfigError) throw error;
+    console.error("[pipeline] extract stage failed, using heuristics", error);
+  }
+  emit({ type: "stage", stage: "extract", status: "done" });
 
-  // Don't send pre-written roasts — GPT must write fresh for THIS resume.
+  const theatreFindings = evidenceMap
+    ? theatreFromEvidence(evidenceMap)
+    : heuristicBase.theatreFindings;
+  for (const f of theatreFindings) {
+    emit({ type: "finding", stage: "extract", message: f.message });
+  }
+
+  /* ---------- Этап 2: Скоринг ---------- */
+  emit({ type: "stage", stage: "score", status: "start" });
+  let scored: ScoreResult | null = null;
+  if (evidenceMap) {
+    try {
+      const scoring = await runScoreStage(evidenceMap, heuristicBase.score, {
+        corporateWater: heuristicBase.viralMetrics.corporateWater,
+        aiLanguageProbability:
+          heuristicBase.viralMetrics.aiLanguageProbability,
+        participialCoefficient:
+          heuristicBase.viralMetrics.participialCoefficient,
+        clicheExamples: heuristicBase.topProblems
+          .map((p) => p.quote)
+          .slice(0, 4),
+      });
+      scored = scoring.result;
+      totalCost += scoring.costUsd;
+    } catch (error) {
+      if (error instanceof AiConfigError) throw error;
+      console.error("[pipeline] score stage failed, using heuristics", error);
+    }
+  }
+  emit({ type: "stage", stage: "score", status: "done" });
+
+  const finalScore = scored?.score ?? heuristicBase.score;
+  const finalProfile = evidenceMap?.profile ?? heuristicBase.candidateProfile;
+  emit({
+    type: "finding",
+    stage: "score",
+    message: `Убедительность текста: ${finalScore.total}/100. Дело передаётся: ${persona?.name ?? "HR"}.`,
+  });
+
+  // Метрики: счётчики из evidence map (факты), остальное — эвристики.
+  const viralMetrics = evidenceMap
+    ? {
+        ...heuristicBase.viralMetrics,
+        responsibilitiesCount: evidenceMap.claims.filter(
+          (c) => c.type === "duty",
+        ).length,
+        achievementsCount: evidenceMap.claims.filter(
+          (c) => c.type === "achievement" && (c.hasMetric || c.hasOutcome),
+        ).length,
+        unprovenClaimsCount: evidenceMap.claims.filter(
+          (c) =>
+            (c.type === "selfpraise" || c.isGeneric) &&
+            !c.hasMetric &&
+            !c.hasOutcome,
+        ).length,
+      }
+    : heuristicBase.viralMetrics;
+
+  /* ---------- Этап 3: Персона ---------- */
+  emit({ type: "stage", stage: "persona", status: "start" });
+
   let ai;
   try {
     ai = await runAi({
@@ -118,6 +262,8 @@ export async function runAnalysisPipeline(
 
 Задача: сделать РАЗВЁРНУТЫЙ разбор резюме как живой HR, а не набор коротких карточек.
 Пиши по-русски. Бей по ТЕКСТУ резюме, не по личности (не возраст, пол, внешность, здоровье).
+
+Тебе передана карта доказательств (evidenceMap): заявления резюме с признаками доказанности, противоречия и пробелы. Это результат аналитического этапа — строй разбор НА НЕЙ, а не на общих впечатлениях. Самые слабые места = claims с isGeneric/без метрик; самые важные пробелы = missing.
 
 СТРУКТУРА JSON (строго):
 {
@@ -145,11 +291,11 @@ export async function runAnalysisPipeline(
 }
 
 Правила:
-- topProblems: 4–7 штук. Каждая quote ОБЯЗАНА быть дословным фрагментом из резюме.
-- Не копируй шаблонные фразы вроде «Мало конкретики» / «Руководил всем» — пиши уникально под этот текст.
+- topProblems: 4–7 штук. Каждая quote ОБЯЗАНА быть дословным фрагментом из резюме — бери из evidenceMap.claims.
+- Не копируй шаблонные фразы — пиши уникально под этот текст.
 - Не выдумывай цифры, компании, должности, даты, метрики.
 - Не используй слова: улики, суд, досье, приговор, следователь, выживаемость.
-- Баллы score уже посчитаны системой — не спорь с ними в цифрах, но можешь интерпретировать смысл.
+- Баллы score уже посчитаны с обоснованиями (scoreReasons) — не спорь с цифрами, но используй обоснования в тексте.
 - hrReview.deepDive — главная ценность. Пиши плотно, конкретно, с отсылками к тексту.`,
       user: JSON.stringify({
         persona: {
@@ -160,33 +306,37 @@ export async function runAnalysisPipeline(
           lenses: persona?.lenses,
           question: persona?.question,
         },
-        lockedScores: signalPack.score,
-        lockedMetrics: signalPack.viralMetrics,
-        profileHint: {
-          role: signalPack.role,
-          claimedLevel: signalPack.claimedLevel,
-          inferredLevel: signalPack.inferredLevel,
-        },
-        weakQuoteHints: signalPack.detectedSignals.sampleWeakQuotes,
+        lockedScores: finalScore,
+        scoreReasons: scored?.reasons ?? {},
+        lockedMetrics: viralMetrics,
+        profile: finalProfile,
+        evidenceMap: evidenceMap
+          ? {
+              claims: evidenceMap.claims,
+              contradictions: evidenceMap.contradictions,
+              missing: evidenceMap.missing,
+            }
+          : { note: "evidence map недоступна — работай по тексту" },
         resumeText: clipResume(input.resumeText),
       }),
-      jsonSchemaName: "hr_full_review_v2",
+      jsonSchemaName: "hr_full_review_v3",
+      temperature: 0.9,
     });
+    totalCost += ai.costUsd;
   } catch (error) {
     if (error instanceof AiConfigError) throw error;
-    console.error("[pipeline] ChatGPT failed", error);
+    console.error("[pipeline] persona stage failed", error);
     throw new Error(
-      error instanceof Error
-        ? error.message
-        : "ChatGPT не ответил. Попробуй ещё раз.",
+      error instanceof Error ? error.message : "AI не ответил. Попробуй ещё раз.",
     );
   }
+  emit({ type: "stage", stage: "persona", status: "done" });
 
   let parsed: GptReportPayload;
   try {
     parsed = JSON.parse(ai.content) as GptReportPayload;
   } catch {
-    throw new Error("ChatGPT вернул нечитаемый ответ. Попробуй ещё раз.");
+    throw new Error("AI вернул нечитаемый ответ. Попробуй ещё раз.");
   }
 
   const resume = input.resumeText;
@@ -197,7 +347,7 @@ export async function runAnalysisPipeline(
       const quote = String(p.quote).trim();
       const groundedQuote = quoteInResume(quote, resume)
         ? quote
-        : groundedBase.topProblems[i]?.quote || quote.slice(0, 180);
+        : heuristicBase.topProblems[i]?.quote || quote.slice(0, 180);
       return {
         id: `p-${i}`,
         severity: (["critical", "high", "medium", "low"] as const).includes(
@@ -219,7 +369,7 @@ export async function runAnalysisPipeline(
     });
 
   const topProblems =
-    rawProblems.length > 0 ? rawProblems : groundedBase.topProblems;
+    rawProblems.length > 0 ? rawProblems : heuristicBase.topProblems;
 
   const strengths = (parsed.strengths ?? [])
     .filter((s) => s?.title && s?.comment)
@@ -246,8 +396,7 @@ export async function runAnalysisPipeline(
     .slice(0, 6)
     .map((s, i) => ({
       id: `plan-${i}`,
-      horizon: (s.horizon ??
-        (i === 0 ? "10m" : i === 1 ? "30m" : "recall")) as
+      horizon: (s.horizon ?? (i === 0 ? "10m" : i === 1 ? "30m" : "recall")) as
         | "10m"
         | "30m"
         | "recall",
@@ -266,60 +415,42 @@ export async function runAnalysisPipeline(
           hiringTake: hrReviewRaw.hiringTake.trim(),
           fixPriority: hrReviewRaw.fixPriority.trim(),
         }
-      : fallbackHrReview({
-          ...groundedBase,
-          topProblems,
-          improvementPlan:
-            improvementPlan.length > 0
-              ? improvementPlan
-              : groundedBase.improvementPlan,
-        });
+      : null;
 
   const merged: AnalysisReport = {
-    ...groundedBase,
+    ...heuristicBase,
+    candidateProfile: finalProfile,
+    score: finalScore,
+    viralMetrics,
+    theatreFindings,
     verdict: {
-      title:
-        parsed.verdict?.title?.trim() ||
-        groundedBase.verdict.title,
+      title: parsed.verdict?.title?.trim() || heuristicBase.verdict.title,
       comment:
-        parsed.verdict?.comment?.trim() ||
-        groundedBase.verdict.comment,
+        parsed.verdict?.comment?.trim() || heuristicBase.verdict.comment,
     },
-    hrReview,
+    hrReview: hrReview ?? fallbackHrReview(heuristicBase),
     topProblems,
-    strengths: strengths.length > 0 ? strengths : groundedBase.strengths,
+    strengths: strengths.length > 0 ? strengths : heuristicBase.strengths,
     shareQuotes:
-      shareQuotes.length > 0 ? shareQuotes : groundedBase.shareQuotes,
+      shareQuotes.length > 0 ? shareQuotes : heuristicBase.shareQuotes,
     improvementPlan:
       improvementPlan.length > 0
         ? improvementPlan
-        : groundedBase.improvementPlan,
-    // locked
-    score: groundedBase.score,
-    candidateProfile: groundedBase.candidateProfile,
-    viralMetrics: groundedBase.viralMetrics,
-    theatreFindings: groundedBase.theatreFindings,
-    recommendedPersonaId: groundedBase.recommendedPersonaId,
-    recommendationReason: groundedBase.recommendationReason,
+        : heuristicBase.improvementPlan,
+    recommendedPersonaId: heuristicBase.recommendedPersonaId,
+    recommendationReason: heuristicBase.recommendationReason,
   };
 
-  // Ensure hrReview always present for zod
-  const withReview: AnalysisReport = {
-    ...merged,
-    hrReview: merged.hrReview ?? fallbackHrReview(merged),
-  };
-
-  const grounded = groundReport(withReview, input.resumeText);
-  // preserve hrReview through grounding
+  const grounded = groundReport(merged, input.resumeText);
   const finalReport = AnalysisReportSchema.parse({
     ...grounded,
-    hrReview: withReview.hrReview,
+    hrReview: merged.hrReview,
   });
 
   return {
     report: finalReport,
     provider: ai.provider,
     model: ai.model,
-    costUsd: ai.costUsd,
+    costUsd: totalCost,
   };
 }

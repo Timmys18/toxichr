@@ -19,6 +19,9 @@ export type AiRequest = {
   system: string;
   user: string;
   jsonSchemaName?: string;
+  /** 0–1: аналитические этапы низкая, персона — высокая */
+  temperature?: number;
+  maxTokens?: number;
 };
 
 export type AiResponse = {
@@ -76,6 +79,7 @@ export function assertAiReady(): void {
 async function callOpenAi(
   system: string,
   user: string,
+  options?: { temperature?: number; maxTokens?: number },
 ): Promise<AiResponse> {
   const model = process.env.OPENAI_MODEL ?? "gpt-4o";
   // Можно указать обходной адрес, если прямой доступ к OpenAI закрыт в стране.
@@ -89,8 +93,8 @@ async function callOpenAi(
     },
     body: JSON.stringify({
       model,
-      temperature: 0.95,
-      max_tokens: 4500,
+      temperature: options?.temperature ?? 0.9,
+      max_tokens: options?.maxTokens ?? 4500,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: system },
@@ -143,6 +147,7 @@ async function callOpenAi(
 async function callAnthropic(
   system: string,
   user: string,
+  options?: { temperature?: number; maxTokens?: number },
 ): Promise<AiResponse> {
   const model = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514";
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -154,8 +159,8 @@ async function callAnthropic(
     },
     body: JSON.stringify({
       model,
-      max_tokens: 4096,
-      temperature: 0.7,
+      max_tokens: options?.maxTokens ?? 4096,
+      temperature: options?.temperature ?? 0.7,
       system,
       messages: [
         {
@@ -202,9 +207,14 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
   assertAiReady();
   const provider = resolveProvider();
 
+  const options = {
+    temperature: request.temperature,
+    maxTokens: request.maxTokens,
+  };
+
   if (provider === "openai") {
-    return callOpenAi(request.system, request.user);
+    return callOpenAi(request.system, request.user, options);
   }
 
-  return callAnthropic(request.system, request.user);
+  return callAnthropic(request.system, request.user, options);
 }
