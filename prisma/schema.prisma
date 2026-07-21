@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum ResumeStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                  String         @id @default(cuid())
+  email               String?        @unique
+  passwordHash        String?
+  displayName         String?
+  locale              String         @default("ru")
+  consentVersion      String?
+  marketingConsent    Boolean        @default(false)
+  deletionRequestedAt DateTime?
+  createdAt           DateTime       @default(now())
+  lastLoginAt         DateTime?
+  resumes             Resume[]
+  analyses            Analysis[]
+  shares              PublicShare[]
+  payments            Payment[]
+  grants              AccessGrant[]
+}
+
+model Resume {
+  id                     String          @id @default(cuid())
+  userId                 String?
+  user                   User?           @relation(fields: [userId], references: [id])
+  originalFilename       String?
+  mimeType               String?
+  size                   Int?
+  privateStorageKey      String?
+  extractedTextEncrypted String?
+  sanitizedText          String?
+  language               String          @default("ru")
+  status                 ResumeStatus    @default(UPLOADED)
+  pageCount              Int?
+  createdAt              DateTime        @default(now())
+  deletedAt              DateTime?
+  versions               ResumeVersion[]
+}
+
+model ResumeVersion {
+  id                String            @id @default(cuid())
+  resumeId          String
+  resume            Resume            @relation(fields: [resumeId], references: [id])
+  parentVersionId   String?
+  versionNumber     Int               @default(1)
+  structuredContent Json?
+  source            String            @default("upload")
+  createdAt         DateTime          @default(now())
+  candidateProfile  CandidateProfile?
+  analyses          Analysis[]
+}
+
+model CandidateProfile {
+  id                       String        @id @default(cuid())
+  resumeVersionId          String        @unique
+  resumeVersion            ResumeVersion @relation(fields: [resumeVersionId], references: [id])
+  primaryRole              String?
+  professionalFamily       String?
+  claimedLevel             String?
+  inferredLevel            String?
+  industry                 String?
+  experienceYears          Float?
+  managementExperience     Boolean       @default(false)
+  classificationConfidence Float?
+}
+
+model Persona {
+  id                  String     @id @default(cuid())
+  code                String     @unique
+  name                String
+  title               String
+  description         String?
+  visualAsset         String?
+  systemPromptVersion String     @default("v1")
+  active              Boolean    @default(true)
+  analyses            Analysis[]
+}
+
+model Analysis {
+  id              String             @id @default(cuid())
+  resumeVersionId String
+  resumeVersion   ResumeVersion      @relation(fields: [resumeVersionId], references: [id])
+  personaId       String?
+  persona         Persona?           @relation(fields: [personaId], references: [id])
+  userId          String?
+  user            User?              @relation(fields: [userId], references: [id])
+  analysisType    String             @default("roast")
+  modelProvider   String?
+  modelName       String?
+  schemaVersion   String             @default("v1")
+  status          AnalysisStatus     @default(QUEUED)
+  scorePayload    Json?
+  reportPayload   Json?
+  cost            Float?
+  tokensIn        Int?
+  tokensOut       Int?
+  createdAt       DateTime           @default(now())
+  shares          PublicShare[]
+  feedback        AnalysisFeedback[]
+  payments        Payment[]
+  grants          AccessGrant[]
+}
+
+model AnalysisFeedback {
+  id           String   @id @default(cuid())
+  analysisId   String
+  analysis     Analysis @relation(fields: [analysisId], references: [id])
+  annotationId String?
+  verdict      String
+  note         String?
+  createdAt    DateTime @default(now())
+}
+
+model PublicShare {
+  id            String            @id @default(cuid())
+  analysisId    String?
+  analysis      Analysis?         @relation(fields: [analysisId], references: [id])
+  userId        String?
+  user          User?             @relation(fields: [userId], references: [id])
+  slug          String            @unique
+  publicPayload Json
+  title         String?
+  description   String?
+  imageKey      String?
+  active        Boolean           @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime          @default(now())
+  revokedAt     DateTime?
+  events        ShareEvent[]
+  referrals     ReferralSession[]
+}
+
+model ShareEvent {
+  id            String      @id @default(cuid())
+  publicShareId String
+  publicShare   PublicShare @relation(fields: [publicShareId], references: [id])
+  sessionId     String?
+  eventType     String
+  platform      String?
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+}
+
+model ReferralSession {
+  id                  String      @id @default(cuid())
+  publicShareId       String
+  publicShare         PublicShare @relation(fields: [publicShareId], references: [id])
+  visitorId           String
+  platform            String?
+  campaign            String?
+  startedResumeId     String?
+  completedAnalysisId String?
+  createdAt           DateTime    @default(now())
+  completedAt         DateTime?
+
+  @@index([visitorId])
+  @@index([publicShareId])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id])
+  analysisId  String?
+  analysis    Analysis?     @relation(fields: [analysisId], references: [id])
+  provider    String        @default("stripe")
+  externalId  String?       @unique
+  productCode String
+  amount      Int
+  currency    String        @default("usd")
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  paidAt      DateTime?
+  grants      AccessGrant[]
+}
+
+model AccessGrant {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  analysisId  String
+  analysis    Analysis @relation(fields: [analysisId], references: [id])
+  productCode String
+  paymentId   String?
+  payment     Payment? @relation(fields: [paymentId], references: [id])
+  source      String   @default("payment")
+  createdAt   DateTime @default(now())
+
+  @@unique([analysisId, productCode])
+  @@index([userId])
+}
