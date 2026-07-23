@@ -1,17 +1,13 @@
-import { SiteHeader } from "@/components/landing/site-header";
-import { LandingHero } from "@/components/landing/landing-hero";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { SiteFooter } from "@/components/landing/site-footer";
+import { TopNav } from "@/components/shared/top-nav";
+import { HomeClient } from "@/components/home/home-client";
 
 export default function HomePage() {
   return (
     <>
-      <SiteHeader />
+      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
-        <LandingHero />
-        <HowItWorks />
+        <HomeClient />
       </main>
-      <SiteFooter />
     </>
   );
 }

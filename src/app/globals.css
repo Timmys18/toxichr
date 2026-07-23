@@ -1,27 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  /* Cool premium — not beige Word paper */
-  --paper: #f3f4ef;
-  --paper-deep: #e6e8e0;
-  --surface: #ffffff;
-  --ink: #0a0a0a;
-  --graphite: #1c1d1a;
-  --muted: #5a5d54;
-  --line: rgba(10, 10, 10, 0.1);
-  --toxic: #c8f135;
-  --toxic-hot: #b4de0a;
-  --roast: #e11d38;
-  --signal: #2563eb;
-  --ok: #15803d;
+  /* Dark premium — metal & glass */
+  --bg: #08090a;
+  --metal-0: #0e1012;
+  --metal-1: #151719;
+  --metal-2: #1c1f22;
+  --fg: #f2f4f5;
+  --dim: rgba(242, 244, 245, 0.56);
+  --faint: rgba(242, 244, 245, 0.32);
+  --hair: rgba(242, 244, 245, 0.08);
+  --hair2: rgba(242, 244, 245, 0.14);
+  --tox: #2ce08b;
+  --tox-dim: rgba(44, 224, 139, 0.12);
+  --crit: #ff5647;
+  --data: #6a9bff;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --background: var(--paper);
-  --foreground: var(--ink);
+  /* legacy token bridge — старые компоненты продолжают работать в тёмной теме */
+  --paper: var(--bg);
+  --paper-deep: var(--metal-0);
+  --surface: var(--metal-1);
+  --ink: var(--fg);
+  --graphite: var(--metal-2);
+  --muted: var(--dim);
+  --line: var(--hair);
+  --toxic: var(--tox);
+  --toxic-hot: #3bf58e;
+  --roast: var(--crit);
+  --signal: var(--data);
+  --ok: var(--tox);
+
+  --background: var(--bg);
+  --foreground: var(--fg);
   --radius-sm: 2px;
-  --shadow-lift: 0 24px 64px rgba(10, 10, 10, 0.08);
+  --shadow-lift: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
 @theme inline {
+  --color-bg: var(--bg);
+  --color-metal-0: var(--metal-0);
+  --color-metal-1: var(--metal-1);
+  --color-metal-2: var(--metal-2);
+  --color-fg: var(--fg);
+  --color-dim: var(--dim);
+  --color-faint: var(--faint);
+  --color-tox: var(--tox);
+  --color-crit: var(--crit);
+  --color-data: var(--data);
+
   --color-paper: var(--paper);
   --color-paper-deep: var(--paper-deep);
   --color-surface: var(--surface);
@@ -37,7 +64,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-unbounded), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
@@ -52,57 +79,88 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background:
-    radial-gradient(ellipse 80% 50% at 100% -5%, rgba(200, 241, 53, 0.16), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(37, 99, 235, 0.06), transparent 50%),
-    var(--paper);
-  color: var(--ink);
+    radial-gradient(70% 55% at 50% -8%, rgba(44, 224, 139, 0.05), transparent 60%),
+    radial-gradient(50% 45% at 88% 108%, rgba(106, 155, 255, 0.045), transparent 60%),
+    linear-gradient(180deg, #0a0c0d, var(--bg) 60%);
+  background-attachment: fixed;
+  color: var(--fg);
   font-family: var(--font-sans), system-ui, sans-serif;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--toxic) 72%, white);
-  color: var(--ink);
+  background: var(--tox);
+  color: #06130c;
 }
 
-.dossier-grid {
-  background-image:
-    linear-gradient(rgba(10, 10, 10, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(10, 10, 10, 0.03) 1px, transparent 1px);
-  background-size: 64px 64px;
+/* ============ design-system primitives ============ */
+.thr-mono {
+  font-family: var(--font-mono), monospace;
+}
+.thr-over {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.thr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.22s var(--ease);
+  border-radius: 999px;
+}
+.thr-btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.thr-btn-tox {
+  background: var(--tox);
+  color: #06130c;
+  font-weight: 700;
+}
+.thr-btn-tox:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 44px rgba(44, 224, 139, 0.28);
+}
+.thr-btn-white {
+  background: var(--fg);
+  color: #08090a;
+}
+.thr-btn-white:hover {
+  transform: translateY(-2px);
+}
+.thr-btn-line {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--hair2);
+}
+.thr-btn-line:hover {
+  border-color: var(--dim);
 }
 
-.dossier-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+.thr-card {
+  border: 1px solid var(--hair);
+  border-radius: 20px;
+  background: var(--metal-0);
 }
 
-.marker-underline {
-  background-image: linear-gradient(
-    transparent 64%,
-    color-mix(in srgb, var(--toxic) 58%, transparent) 64%
-  );
-}
-
-.stamp {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--toxic) 55%, transparent);
-}
-
-.surface-lift {
-  box-shadow: var(--shadow-lift);
-}
-
-.metric-bar {
-  height: 3px;
-  background: rgba(10, 10, 10, 0.08);
-  overflow: hidden;
-}
-
-.metric-bar > span {
-  display: block;
-  height: 100%;
-  background: var(--ink);
+/* photo grade toggle — оставляем ЧИСТЫЕ фото (обработку сняли по просьбе) */
+.thr-photo {
+  background-size: cover;
+  background-position: center 16%;
 }
 
 .sr-only {
@@ -116,7 +174,6 @@ body {
   white-space: nowrap;
   border-width: 0;
 }
-
 .sr-only:focus,
 .sr-only:focus-visible {
   position: fixed;
@@ -130,6 +187,26 @@ body {
   padding: 0.75rem 1rem;
   overflow: visible;
   white-space: normal;
-  background: var(--toxic);
-  color: var(--ink);
+  background: var(--tox);
+  color: #06130c;
+}
+
+/* keyframes */
+@keyframes thr-fade {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes thr-pulse {
+  50% { opacity: 0.25; }
+}
+@keyframes thr-breath {
+  50% { box-shadow: 0 0 0 1px rgba(44, 224, 139, 0.35), 0 0 90px rgba(44, 224, 139, 0.26); }
+}
+@keyframes thr-tblink {
+  40% { opacity: 0.15; }
+}
+@keyframes thr-beam {
+  0% { transform: translateY(-60px); }
+  60% { transform: translateY(264px); }
+  100% { transform: translateY(264px); }
 }

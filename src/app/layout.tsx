@@ -44,7 +44,7 @@ export default function RootLayout({
       lang="ru"
       className={`${onest.variable} ${unbounded.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">
+      <body className="flex min-h-full flex-col font-sans text-fg">
         <Providers>{children}</Providers>
       </body>
     </html>
