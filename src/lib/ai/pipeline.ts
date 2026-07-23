@@ -17,6 +17,8 @@ import {
 import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
 import { AiConfigError, runAi } from "@/lib/ai/gateway";
 import { groundReport, quoteInResume } from "@/lib/ai/grounding";
+import { voicePromptBlock } from "@/lib/ai/persona-voice";
+import { guessCandidateFirstName } from "@/lib/documents/candidate-name";
 import {
   runExtractStage,
   runScoreStage,
@@ -179,6 +181,7 @@ export async function runAnalysisPipeline(
   const heuristic = runHeuristicAnalysis(input.resumeText, input.personaId);
   const heuristicBase = groundReport(heuristic, input.resumeText);
   const persona = PERSONAS.find((p) => p.id === input.personaId);
+  const candidateFirstName = guessCandidateFirstName(input.resumeText);
 
   /* ---------- Этап 1: Evidence Map ---------- */
   emit({ type: "stage", stage: "extract", status: "start" });
@@ -259,6 +262,8 @@ export async function runAnalysisPipeline(
     ai = await runAi({
       stage: "persona",
       system: `${PERSONA_SYSTEM[input.personaId]}
+
+${voicePromptBlock(input.personaId, candidateFirstName)}
 
 Задача: сделать РАЗВЁРНУТЫЙ разбор резюме как живой HR, а не набор коротких карточек.
 Пиши по-русски. Бей по ТЕКСТУ резюме, не по личности (не возраст, пол, внешность, здоровье).
