@@ -1,26 +1,6 @@
-import { Onest, Unbounded, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/shared/providers";
 import type { Metadata } from "next";
 import "./globals.css";
-
-const onest = Onest({
-  variable: "--font-onest",
-  subsets: ["latin", "cyrillic"],
-  display: "swap",
-});
-
-const unbounded = Unbounded({
-  variable: "--font-unbounded",
-  subsets: ["latin", "cyrillic"],
-  display: "swap",
-});
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -28,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s · ToxicHR",
   },
   description:
-    "Самый токсичный HR тебя заждался. Прожарка резюме: жёстко, саркастично, за пару минут. Без лишней деликатности — и без оскорблений личности.",
+    "Самый честный и саркастично объективный комментарий вашего резюме. Каждое слово — на основании фактов.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),
@@ -40,10 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ru"
-      className={`${onest.variable} ${unbounded.variable} ${jetbrains.variable} h-full antialiased`}
-    >
+    <html lang="ru" className="h-full antialiased">
       <body className="flex min-h-full flex-col font-sans text-fg">
         <Providers>{children}</Providers>
       </body>
