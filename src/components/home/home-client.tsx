@@ -177,12 +177,12 @@ export function HomeClient() {
         .home {
           max-width: 1160px;
           margin: 0 auto;
-          padding: 40px 40px 90px;
+          padding: 24px 40px 64px;
           animation: thr-fade 0.6s var(--ease);
         }
         @media (max-width: 720px) {
           .home {
-            padding: 28px 18px 70px;
+            padding: 20px 18px 56px;
           }
         }
         .hh {
@@ -202,10 +202,10 @@ export function HomeClient() {
         }
         .hh h1 {
           font-weight: 800;
-          font-size: clamp(48px, 7vw, 96px);
-          line-height: 0.92;
-          letter-spacing: -0.05em;
-          margin-top: 22px;
+          font-size: clamp(40px, 4.6vw, 66px);
+          line-height: 0.94;
+          letter-spacing: -0.045em;
+          margin-top: 18px;
         }
         .hh h1 i {
           font-style: normal;
@@ -226,7 +226,7 @@ export function HomeClient() {
         }
         .pick {
           text-align: center;
-          margin: 48px 0 20px;
+          margin: 36px 0 18px;
           font-family: var(--font-mono), monospace;
           font-size: 11px;
           letter-spacing: 0.2em;
@@ -240,7 +240,7 @@ export function HomeClient() {
         .roster {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
+          gap: 18px;
         }
         @media (max-width: 900px) {
           .roster {
