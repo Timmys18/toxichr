@@ -65,20 +65,17 @@ export function HomeClient() {
   return (
     <section className="home">
       <div className="hh">
-        <div className="thr-over hh-over">
-          <span />Токсичный, но справедливый разбор резюме<span />
-        </div>
         <h1>
           Токсичный <i>HR</i>
         </h1>
         <p>
-          Самый честный и саркастично объективный комментарий вашего резюме.{" "}
-          <b>Каждое слово — на основании фактов.</b>
+          Точный диагноз вместо корпоративной{" "}
+          <b>политкорректности.</b>
         </p>
       </div>
 
       <div className="pick">
-        Шаг 1 — выберите, кто вас <b>примет</b>
+        Выбери своего <b>HR</b>
       </div>
 
       <div className="roster">
@@ -106,11 +103,13 @@ export function HomeClient() {
                   />
                 </svg>
               </span>
+              <span className="hr-qt-overlay">
+                <span className="hr-qt">«{p.quote}»</span>
+              </span>
             </span>
             <span className="hr-body">
               <span className="hr-nm">{p.name}</span>
               <span className="hr-rl">{p.role}</span>
-              <span className="hr-qt">«{p.quote}»</span>
             </span>
           </button>
         ))}
@@ -137,7 +136,7 @@ export function HomeClient() {
             </span>
             <span>
               <span className="drop-t1">
-                {busy ? "Читаем документ…" : "Перетащите резюме или нажмите"}
+                {busy ? "Читаем документ…" : "Кидай резюме"}
               </span>
               <span className="drop-t2 thr-mono">PDF / DOCX · ДО 8 МБ · ПРИВАТНО</span>
             </span>
@@ -278,7 +277,26 @@ export function HomeClient() {
           position: relative;
           aspect-ratio: 1 / 1;
           flex-shrink: 0;
-          background-position: center 12%;
+          background-position: center 28%;
+        }
+        .hr-qt-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: flex-end;
+          padding: 18px 16px;
+          background: linear-gradient(
+            180deg,
+            rgba(8, 9, 10, 0.35),
+            rgba(8, 9, 10, 0.92)
+          );
+          backdrop-filter: blur(1px);
+          opacity: 0;
+          transition: opacity 0.28s var(--ease);
+        }
+        .hr:hover .hr-qt-overlay,
+        .hr.sel .hr-qt-overlay {
+          opacity: 1;
         }
         .hr-tag {
           position: absolute;
@@ -328,10 +346,9 @@ export function HomeClient() {
           margin-top: 3px;
         }
         .hr-qt {
-          margin-top: 12px;
-          font-size: 12px;
+          font-size: 12.5px;
           line-height: 1.5;
-          color: rgba(242, 244, 245, 0.78);
+          color: var(--fg);
         }
         .dock {
           margin-top: 22px;
