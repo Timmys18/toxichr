@@ -93,21 +93,21 @@ export function HomeClient() {
             <span
               className="hr-photo thr-photo"
               style={{ backgroundImage: `url('${p.img}')` }}
-            />
-            <span className="hr-shade" />
-            <span className="hr-tag thr-mono">{p.tag}</span>
-            <span className="hr-check" aria-hidden>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M3 7.5l2.5 2.5L11 4"
-                  stroke="#06130c"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+            >
+              <span className="hr-tag thr-mono">{p.tag}</span>
+              <span className="hr-check" aria-hidden>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path
+                    d="M3 7.5l2.5 2.5L11 4"
+                    stroke="#06130c"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
             </span>
-            <span className="hr-info">
+            <span className="hr-body">
               <span className="hr-nm">{p.name}</span>
               <span className="hr-rl">{p.role}</span>
               <span className="hr-qt">«{p.quote}»</span>
@@ -253,11 +253,11 @@ export function HomeClient() {
           }
         }
         .hr {
-          position: relative;
+          display: flex;
+          flex-direction: column;
           border-radius: 20px;
           overflow: hidden;
           cursor: pointer;
-          aspect-ratio: 3 / 4.1;
           border: 1px solid var(--hair);
           transition: 0.4s var(--ease);
           background: var(--metal-1);
@@ -275,28 +275,20 @@ export function HomeClient() {
           box-shadow: 0 0 0 1px var(--tox), 0 30px 70px rgba(44, 224, 139, 0.14);
         }
         .hr-photo {
-          position: absolute;
-          inset: 0;
-        }
-        .hr-shade {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            180deg,
-            transparent 34%,
-            rgba(8, 9, 10, 0.55) 62%,
-            rgba(8, 9, 10, 0.95) 100%
-          );
+          position: relative;
+          aspect-ratio: 1 / 1;
+          flex-shrink: 0;
+          background-position: center 12%;
         }
         .hr-tag {
           position: absolute;
-          top: 14px;
-          left: 14px;
+          top: 12px;
+          left: 12px;
           font-size: 9px;
           letter-spacing: 0.14em;
           text-transform: uppercase;
           color: var(--fg);
-          background: rgba(0, 0, 0, 0.35);
+          background: rgba(0, 0, 0, 0.4);
           backdrop-filter: blur(6px);
           padding: 5px 9px;
           border-radius: 6px;
@@ -317,41 +309,29 @@ export function HomeClient() {
         .hr.sel .hr-check {
           display: flex;
         }
-        .hr-info {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          padding: 20px 18px;
-          display: block;
+        .hr-body {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          padding: 16px 16px 18px;
+          background: var(--metal-1);
         }
         .hr-nm {
-          display: block;
           font-weight: 700;
-          font-size: 19px;
+          font-size: 17px;
           letter-spacing: -0.02em;
+          line-height: 1.15;
         }
         .hr-rl {
-          display: block;
           font-size: 12px;
           color: var(--dim);
-          margin-top: 2px;
+          margin-top: 3px;
         }
         .hr-qt {
-          display: block;
-          font-size: 12.5px;
-          line-height: 1.45;
-          color: rgba(242, 244, 245, 0.82);
-          max-height: 0;
-          opacity: 0;
-          overflow: hidden;
-          transition: 0.45s var(--ease);
-        }
-        .hr:hover .hr-qt,
-        .hr.sel .hr-qt {
-          max-height: 90px;
-          opacity: 1;
           margin-top: 12px;
+          font-size: 12px;
+          line-height: 1.5;
+          color: rgba(242, 244, 245, 0.78);
         }
         .dock {
           margin-top: 22px;
@@ -440,6 +420,14 @@ export function HomeClient() {
           font-weight: 700;
           font-size: 18px;
           margin-top: 4px;
+        }
+        .who-q {
+          margin-top: 10px;
+          font-size: 13px;
+          line-height: 1.5;
+          color: var(--dim);
+          max-width: 30ch;
+          margin-left: auto;
         }
         .who-btn {
           height: 48px;
