@@ -1,117 +1,121 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SiteHeader } from "@/components/landing/site-header";
-import { SiteFooter } from "@/components/landing/site-footer";
-import { PricingClient } from "./pricing-client";
-import { fullReportPriceCents, paywallEnabled } from "@/lib/products";
+import { TopNav } from "@/components/shared/top-nav";
 
-export const metadata: Metadata = {
-  title: "Тарифы",
-};
+export const metadata: Metadata = { title: "Цены" };
 
-type Props = {
-  searchParams: Promise<{ analysisId?: string }>;
-};
+const FREE = [
+  "Полное заключение HR без урезаний",
+  "Разбор голосом персонажа под твой текст",
+  "Факты и цитаты из резюме",
+  "Все четыре HR-эксперта",
+  "Публичная карточка и шаринг",
+];
 
-export default async function PricingPage({ searchParams }: Props) {
-  const params = await searchParams;
-  const price = (fullReportPriceCents() / 100).toFixed(2);
-  const paywallOn = paywallEnabled();
+const PRO = [
+  "Переписывание слабых формулировок",
+  "Сравнение резюме с вакансией",
+  "Динамика до / после правок",
+  "История версий резюме",
+  "Подготовка к вопросам интервью",
+];
 
+export default function PricingPage() {
   return (
     <>
-      <SiteHeader />
-      <main id="main" className="relative flex flex-1 flex-col overflow-hidden">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 dossier-grid opacity-35"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute right-[-10%] top-0 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(200,241,53,0.2),transparent_68%)]"
-        />
-        <div className="relative z-10 mx-auto w-full max-w-5xl px-5 py-14 sm:px-8 lg:py-20">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted">
-            Money · без воды
-          </p>
-          <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] tracking-tight text-ink sm:text-5xl lg:text-[3.25rem]">
-            Сначала удар бесплатно.
-            <span className="mt-2 block text-muted">
-              Потом — полный разбор и план правок.
-            </span>
-          </h1>
-          <p className="mt-5 max-w-xl text-muted leading-relaxed">
-            Платишь не за сарказм. Платишь за полный разбор, разметку цитат, каркасы
-            формулировок без выдуманных фактов и план на 10 / 30 минут.
-          </p>
-
-          <div className="mt-14 grid gap-5 lg:grid-cols-2">
-            <article className="flex flex-col border border-ink/12 bg-surface p-7 sm:p-9">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
-                Free
-              </p>
-              <h2 className="mt-4 font-display text-3xl tracking-tight text-ink">
-                Прожарка
-              </h2>
-              <p className="mt-3 font-mono text-4xl tabular-nums text-ink">$0</p>
-              <ul className="mt-8 flex-1 space-y-3 text-sm leading-relaxed text-muted">
-                <li className="border-l-2 border-ink/15 pl-3">
-                  Вердикт и оценка убедительности
-                </li>
-                <li className="border-l-2 border-ink/15 pl-3">
-                  4 метрики и 3 ключевых удара
-                </li>
-                <li className="border-l-2 border-ink/15 pl-3">
-                  Share Studio, challenge, публичная карточка
-                </li>
-              </ul>
-              <Link
-                href="/start"
-                className="mt-8 inline-flex h-11 items-center justify-center border border-ink/20 bg-paper px-5 text-sm font-medium text-ink transition-colors hover:border-ink/40"
-              >
-                Бросить резюме
-              </Link>
-            </article>
-
-            <article className="relative flex flex-col border border-ink bg-ink p-7 text-paper surface-lift sm:p-9">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-toxic/20 blur-3xl"
-              />
-              <p className="relative font-mono text-[11px] uppercase tracking-[0.16em] text-toxic">
-                Full report
-              </p>
-              <h2 className="relative mt-4 font-display text-3xl tracking-tight">
-                Полный разбор
-              </h2>
-              <p className="relative mt-3 font-mono text-4xl tabular-nums text-toxic">
-                {paywallOn ? `$${price}` : "открыто"}
-              </p>
-              <ul className="relative mt-8 flex-1 space-y-3 text-sm leading-relaxed text-paper/75">
-                <li className="border-l-2 border-toxic/50 pl-3">
-                  Все проблемы по приоритету
-                </li>
-                <li className="border-l-2 border-toxic/50 pl-3">
-                  Разметка цитат из резюме
-                </li>
-                <li className="border-l-2 border-toxic/50 pl-3">
-                  Каркасы формулировок без выдуманных цифр
-                </li>
-                <li className="border-l-2 border-toxic/50 pl-3">
-                  Персональный план на 10 / 30 минут
-                </li>
-              </ul>
-              <div className="relative">
-                <PricingClient
-                  analysisId={params.analysisId ?? null}
-                  paywallOn={paywallOn}
-                />
-              </div>
-            </article>
+      <TopNav />
+      <main id="main" className="flex flex-1 flex-col">
+        <section className="pricing">
+          <div className="ph">
+            <div className="over thr-mono">Цены</div>
+            <h1>
+              Честный разбор — <span>бесплатно.</span>
+              <br />
+              Глубже — когда захочешь.
+            </h1>
+            <p>
+              Сейчас идёт закрытый тест: полный разбор открыт всем без оплаты.
+            </p>
           </div>
-        </div>
+
+          <div className="grid">
+            <div className="card">
+              <div className="c-top">
+                <div className="c-k thr-mono">Разбор</div>
+                <div className="price">
+                  0 ₽ <span>/ навсегда бесплатно в тесте</span>
+                </div>
+              </div>
+              <ul>
+                {FREE.map((f) => (
+                  <li key={f}>
+                    <i className="ok" aria-hidden>
+                      ✓
+                    </i>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/" className="thr-btn thr-btn-tox cta">
+                Кинуть резюме на разбор
+              </Link>
+            </div>
+
+            <div className="card pro">
+              <div className="c-top">
+                <div className="c-k thr-mono">
+                  Карьерный пакет <span className="soon">скоро</span>
+                </div>
+                <div className="price muted">
+                  по подписке <span>· цену настроишь сам</span>
+                </div>
+              </div>
+              <ul>
+                {PRO.map((f) => (
+                  <li key={f}>
+                    <i aria-hidden>+</i>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <span className="thr-btn thr-btn-line cta disabled">
+                Появится после запуска
+              </span>
+            </div>
+          </div>
+
+          <p className="note">
+            Оплата подключается через провайдера (Stripe / YooKassa) — включается
+            одним флагом, когда придёт время. Пока платить не нужно.
+          </p>
+        </section>
       </main>
-      <SiteFooter />
+
+      <style>{`
+        .pricing { max-width: 1000px; margin: 0 auto; padding: 48px 40px 90px; }
+        @media (max-width: 720px) { .pricing { padding: 32px 18px 70px; } }
+        .pricing .ph { text-align: center; max-width: 640px; margin: 0 auto; }
+        .pricing .over { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
+        .pricing h1 { font-weight: 800; font-size: clamp(32px,4.4vw,54px); line-height: 1.04; letter-spacing: -.04em; margin-top: 16px; }
+        .pricing h1 span { color: var(--tox); }
+        .pricing .ph p { margin-top: 18px; font-size: 16px; color: var(--dim); }
+        .pricing .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 44px; }
+        @media (max-width: 760px) { .pricing .grid { grid-template-columns: 1fr; } }
+        .pricing .card { border: 1px solid var(--hair); border-radius: 22px; background: var(--metal-0); padding: 30px; display: flex; flex-direction: column; }
+        .pricing .card.pro { background: linear-gradient(180deg,var(--metal-1),var(--metal-0)); }
+        .pricing .c-k { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+        .pricing .soon { font-size: 9px; letter-spacing: .12em; color: var(--faint); border: 1px solid var(--hair); padding: 3px 8px; border-radius: 999px; }
+        .pricing .price { font-weight: 800; font-size: 30px; letter-spacing: -.03em; margin-top: 12px; }
+        .pricing .price.muted { color: var(--dim); font-size: 22px; }
+        .pricing .price span { font-weight: 400; font-size: 13px; color: var(--faint); letter-spacing: 0; }
+        .pricing ul { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+        .pricing li { display: flex; gap: 12px; font-size: 14.5px; color: var(--fg); line-height: 1.4; }
+        .pricing li i { color: var(--tox); font-style: normal; font-weight: 700; flex-shrink: 0; }
+        .pricing .card.pro li i { color: var(--faint); }
+        .pricing .cta { margin-top: 28px; height: 52px; justify-content: center; text-decoration: none; }
+        .pricing .cta.disabled { opacity: .5; cursor: default; }
+        .pricing .note { margin-top: 34px; text-align: center; font-size: 13px; color: var(--faint); line-height: 1.6; max-width: 60ch; margin-left: auto; margin-right: auto; }
+      `}</style>
     </>
   );
 }

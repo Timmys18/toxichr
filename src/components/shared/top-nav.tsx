@@ -1,18 +1,20 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth";
 
-export function TopNav() {
+export async function TopNav() {
+  const session = await auth();
+  const authed = Boolean(session?.user?.id);
   return (
     <nav className="topnav">
       <Link href="/" className="brand">
         TOXIC<i>HR</i>
       </Link>
       <div className="links">
-        <a href="#how">Как это работает</a>
         <Link href="/hr">HR-состав</Link>
         <Link href="/pricing">Цены</Link>
       </div>
-      <Link href="/auth" className="login">
-        Войти
+      <Link href={authed ? "/me" : "/auth"} className="login">
+        {authed ? "Кабинет" : "Войти"}
       </Link>
       <style>{`
         .topnav{height:68px;display:flex;align-items:center;justify-content:space-between;

@@ -2,169 +2,253 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "motion/react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
-import { Button } from "@/components/ui/button";
 import { track } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
+
+type Mode = "login" | "register";
 
 export function AuthClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const analysisId = searchParams.get("analysisId");
-  const next = searchParams.get("next") ?? "/history";
+  const params = useSearchParams();
+  const nextUrl = params.get("next") || "/me";
+  const analysisId = params.get("analysisId") || undefined;
 
-  const [mode, setMode] = useState<"login" | "register">("register");
+  const [mode, setMode] = useState<Mode>(analysisId ? "register" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function claimIfNeeded() {
-    if (!analysisId) return;
-    await fetch(`/api/analyses/${analysisId}/claim`, { method: "POST" });
-  }
-
-  async function onSubmit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
+    setBusy(true);
     setError(null);
-
     try {
       if (mode === "register") {
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, analysisId }),
+          body: JSON.stringify({
+            email,
+            password,
+            displayName: name || undefined,
+            analysisId,
+          }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Регистрация не удалась");
+        if (!res.ok) throw new Error(data.error ?? "Не удалось создать аккаунт");
+        track("auth_registered", {});
       }
 
-      const result = await signIn("credentials", {
+      const signRes = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-
-      if (result?.error) {
+      if (signRes?.error) {
         throw new Error(
           mode === "login"
-            ? "Неверный email или пароль"
-            : "Войти после регистрации не удалось",
+            ? "Неверная почта или пароль."
+            : "Аккаунт создан, но войти не вышло. Попробуй войти вручную.",
         );
       }
 
-      if (mode === "login") {
-        await claimIfNeeded();
+      if (analysisId) {
+        await fetch(`/api/analyses/${analysisId}/claim`, {
+          method: "POST",
+        }).catch(() => null);
       }
 
-      track(mode === "register" ? "auth_registered" : "analysis_claimed", {
-        hasAnalysis: Boolean(analysisId),
-      });
-
-      router.push(
-        analysisId
-          ? `${next}${next.includes("?") ? "&" : "?"}analysisId=${analysisId}`
-          : next,
-      );
+      router.push(nextUrl);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка");
-    } finally {
-      setLoading(false);
+      setError(err instanceof Error ? err.message : "Что-то пошло не так");
+      setBusy(false);
     }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mx-auto w-full max-w-md"
-    >
-      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted">
-        После ценности
-      </p>
-      <h1 className="mt-4 font-display text-4xl tracking-tight text-ink sm:text-5xl">
-        {mode === "register" ? "Сохранить приговор" : "С возвращением"}
-      </h1>
-      <p className="mt-4 text-muted leading-relaxed">
-        Аккаунт — для истории, полного отчёта и новых загрузок. Результат ты
-        уже получил.
-      </p>
+    <div className="authwrap">
+      <div className="auth">
+        <div className="k thr-mono">
+          {analysisId ? "Сохраним разбор?" : "Вход в ToxicHR"}
+        </div>
+        <h2>{mode === "login" ? "С возвращением" : "Пара секунд — и готово"}</h2>
+        <p>
+          {analysisId
+            ? "Аккаунт привяжет разбор к тебе — появятся история и динамика правок."
+            : "Почта и пароль. Без анкет и лишних шагов."}
+        </p>
 
-      <div className="mt-8 flex border border-ink/10 bg-surface p-1">
-        {(
-          [
-            ["register", "Регистрация"],
-            ["login", "Вход"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setMode(id)}
-            className={cn(
-              "flex-1 px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors",
-              mode === id ? "bg-ink text-paper" : "text-muted hover:text-ink",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <label className="block space-y-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-            Email
-          </span>
+        <form onSubmit={submit}>
+          {mode === "register" ? (
+            <input
+              type="text"
+              placeholder="Имя (по желанию)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+            />
+          ) : null}
           <input
             type="email"
-            required
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-ink/15 bg-surface px-3.5 py-3 text-ink outline-none transition-colors focus:border-ink/45"
+            required
             autoComplete="email"
           />
-        </label>
-        <label className="block space-y-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-            Пароль · минимум 8
-          </span>
           <input
             type="password"
-            required
-            minLength={8}
+            placeholder={mode === "register" ? "Пароль (от 8 символов)" : "Пароль"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-ink/15 bg-surface px-3.5 py-3 text-ink outline-none transition-colors focus:border-ink/45"
+            required
+            minLength={mode === "register" ? 8 : undefined}
             autoComplete={
               mode === "register" ? "new-password" : "current-password"
             }
           />
-        </label>
+          {error ? (
+            <p className="err" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            className="thr-btn thr-btn-tox sub"
+            disabled={busy}
+          >
+            {busy ? "Секунду…" : mode === "login" ? "Войти" : "Создать аккаунт"}
+          </button>
+        </form>
 
-        {error ? (
-          <p className="text-sm text-roast" role="alert">
-            {error}
-          </p>
-        ) : null}
+        <div className="switch">
+          {mode === "login" ? (
+            <>
+              Нет аккаунта?{" "}
+              <button type="button" onClick={() => setMode("register")}>
+                Зарегистрироваться
+              </button>
+            </>
+          ) : (
+            <>
+              Уже есть аккаунт?{" "}
+              <button type="button" onClick={() => setMode("login")}>
+                Войти
+              </button>
+            </>
+          )}
+        </div>
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading
-            ? "Секунду…"
-            : mode === "register"
-              ? "Создать аккаунт"
-              : "Войти"}
-        </Button>
-      </form>
+        <div className="fine">
+          Резюме приватно. Публичной ссылки нет, пока сам не создашь.{" "}
+          <Link href="/">На главную</Link>
+        </div>
+      </div>
 
-      {analysisId ? (
-        <p className="mt-5 border border-toxic/30 bg-toxic/10 px-3 py-2 font-mono text-[11px] text-ink">
-          Приговор будет привязан к аккаунту после входа.
-        </p>
-      ) : null}
-    </motion.div>
+      <style jsx>{`
+        .authwrap {
+          min-height: calc(100vh - 68px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+        }
+        .auth {
+          width: 400px;
+          max-width: 100%;
+          border: 1px solid var(--hair2);
+          border-radius: 24px;
+          background: linear-gradient(180deg, var(--metal-1), var(--metal-0));
+          padding: 36px;
+          animation: thr-fade 0.6s var(--ease);
+        }
+        .k {
+          font-size: 10.5px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: var(--tox);
+        }
+        .auth h2 {
+          font-weight: 700;
+          font-size: 26px;
+          letter-spacing: -0.03em;
+          margin-top: 12px;
+        }
+        .auth p {
+          font-size: 14px;
+          color: var(--dim);
+          margin-top: 10px;
+          line-height: 1.55;
+        }
+        form {
+          margin-top: 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        input {
+          width: 100%;
+          background: var(--metal-2);
+          border: 1px solid var(--hair2);
+          border-radius: 14px;
+          height: 52px;
+          padding: 0 18px;
+          color: var(--fg);
+          font-family: inherit;
+          font-size: 15px;
+          outline: none;
+          transition: 0.2s;
+        }
+        input:focus {
+          border-color: var(--tox);
+        }
+        input::placeholder {
+          color: var(--faint);
+        }
+        .err {
+          color: var(--crit);
+          font-size: 13px;
+          margin: 2px 0 0;
+        }
+        .sub {
+          width: 100%;
+          height: 52px;
+          justify-content: center;
+          margin-top: 4px;
+          font-size: 15px;
+        }
+        .switch {
+          margin-top: 18px;
+          font-size: 13.5px;
+          color: var(--dim);
+          text-align: center;
+        }
+        .switch button {
+          background: none;
+          border: none;
+          color: var(--tox);
+          font-family: inherit;
+          font-size: 13.5px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .fine {
+          margin-top: 20px;
+          font-size: 11.5px;
+          color: var(--faint);
+          line-height: 1.5;
+          text-align: center;
+        }
+        .fine :global(a) {
+          color: var(--dim);
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+      `}</style>
+    </div>
   );
 }

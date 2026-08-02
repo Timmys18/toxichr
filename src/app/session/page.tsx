@@ -6,11 +6,27 @@ import type { PersonaId } from "@/lib/personas";
 const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
 type Props = {
-  searchParams: Promise<{ resumeId?: string; personaId?: string }>;
+  searchParams: Promise<{
+    resumeId?: string;
+    personaId?: string;
+    view?: string;
+  }>;
 };
 
 export default async function SessionPage({ searchParams }: Props) {
-  const { resumeId, personaId } = await searchParams;
+  const { resumeId, personaId, view } = await searchParams;
+
+  // Режим просмотра готового разбора
+  if (view) {
+    return (
+      <>
+        <TopNav />
+        <main id="main" className="flex flex-1 flex-col">
+          <SessionClient viewId={view} />
+        </main>
+      </>
+    );
+  }
 
   if (!resumeId || !personaId || !PERSONA_CODES.includes(personaId as PersonaId)) {
     redirect("/");
@@ -20,7 +36,10 @@ export default async function SessionPage({ searchParams }: Props) {
     <>
       <TopNav />
       <main id="main" className="flex flex-1 flex-col">
-        <SessionClient resumeId={resumeId!} personaId={personaId as PersonaId} />
+        <SessionClient
+          resumeId={resumeId!}
+          personaId={personaId as PersonaId}
+        />
       </main>
     </>
   );

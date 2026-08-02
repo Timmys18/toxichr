@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import type { PersonaId } from "@/lib/personas";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { track } from "@/lib/analytics";
@@ -15,7 +16,7 @@ type StreamEvent =
 
 type Phase = "analyzing" | "verdict" | "error";
 
-type Props = { resumeId: string; personaId: PersonaId };
+type Props = { resumeId?: string; personaId?: PersonaId; viewId?: string };
 
 const STAGE_STATUS: Record<string, string> = {
   extract: "читает документ",
@@ -27,12 +28,16 @@ function paras(text: string): string[] {
   return text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
 }
 
-export function SessionClient({ resumeId, personaId }: Props) {
-  const hr = ROSTER.find((r) => r.id === personaId) ?? ROSTER[0];
+export function SessionClient({ resumeId, personaId, viewId }: Props) {
+  const [personaCode, setPersonaCode] = useState<PersonaId | null>(
+    personaId ?? null,
+  );
+  const hr = ROSTER.find((r) => r.id === personaCode) ?? ROSTER[0];
   const [phase, setPhase] = useState<Phase>("analyzing");
   const [findings, setFindings] = useState<{ id: string; msg: string }[]>([]);
-  const [stage, setStage] = useState<string>("extract");
+  const [stage, setStage] = useState<string>(viewId ? "persona" : "extract");
   const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
   const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
 
@@ -42,17 +47,22 @@ export function SessionClient({ resumeId, personaId }: Props) {
     let cancelled = false;
     let n = 0;
 
-    async function loadReport(analysisId: string) {
+    async function loadReport(id: string) {
       for (let i = 0; i < 10; i++) {
-        const res = await fetch(`/api/analyses/${analysisId}`);
+        const res = await fetch(`/api/analyses/${id}`);
         const data = await res.json();
         if (data.report) {
           if (!cancelled) {
             setReport(data.report as AnalysisReport);
+            if (data.personaId) setPersonaCode(data.personaId as PersonaId);
+            setAnalysisId(id);
             setPhase("verdict");
-            track("verdict_viewed", { analysisId });
+            track("verdict_viewed", { analysisId: id });
           }
           return;
+        }
+        if (!res.ok && res.status !== 200) {
+          throw new Error(data.error ?? "Разбор не найден");
         }
         await new Promise((r) => setTimeout(r, 600));
       }
@@ -120,6 +130,10 @@ export function SessionClient({ resumeId, personaId }: Props) {
 
     (async () => {
       try {
+        if (viewId) {
+          await loadReport(viewId);
+          return;
+        }
         const ok = await runStream();
         if (!ok && !cancelled) await runFallback();
       } catch (e) {
@@ -133,7 +147,7 @@ export function SessionClient({ resumeId, personaId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [resumeId, personaId]);
+  }, [resumeId, personaId, viewId]);
 
   const speaking = phase === "analyzing";
 
@@ -207,7 +221,7 @@ export function SessionClient({ resumeId, personaId }: Props) {
         ) : null}
 
         {phase === "verdict" && report ? (
-          <Verdict report={report} hrName={hr.name} />
+          <Verdict report={report} hrName={hr.name} analysisId={analysisId} />
         ) : null}
       </div>
 
@@ -381,7 +395,70 @@ export function SessionClient({ resumeId, personaId }: Props) {
   );
 }
 
-function Verdict({ report, hrName }: { report: AnalysisReport; hrName: string }) {
+function Verdict({
+  report,
+  hrName,
+  analysisId,
+}: {
+  report: AnalysisReport;
+  hrName: string;
+  analysisId: string | null;
+}) {
+  const { status } = useSession();
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [shareErr, setShareErr] = useState<string | null>(null);
+
+  async function doShare() {
+    if (!analysisId || sharing) return;
+    setSharing(true);
+    setShareErr(null);
+    try {
+      const quoteId = report.shareQuotes[0]?.id ?? "q-0";
+      const res = await fetch("/api/public-shares", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisId,
+          mode: "loud",
+          format: "og",
+          quoteId,
+          metrics: ["total", "evidence", "corporateWater"],
+          anonymization: {
+            showName: false,
+            showPhoto: false,
+            showCompanies: false,
+            showRole: true,
+            showLevel: true,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Не удалось создать ссылку");
+      const url =
+        data.url ??
+        (data.slug ? `${window.location.origin}/toast/${data.slug}` : null);
+      setShareUrl(url);
+      track("share_created", { analysisId });
+    } catch (e) {
+      setShareErr(e instanceof Error ? e.message : "Ошибка шаринга");
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function copyLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* ignore */
+    }
+  }
+
   const r = report;
   const vm = r.viralMetrics;
   const facts = [
@@ -470,13 +547,51 @@ function Verdict({ report, hrName }: { report: AnalysisReport; hrName: string })
       ) : null}
 
       <div className="acts">
-        <button type="button" className="thr-btn thr-btn-tox">
+        <Link href="/" className="thr-btn thr-btn-tox">
           Исправить и переспросить
+        </Link>
+        <button
+          type="button"
+          className="thr-btn thr-btn-line"
+          onClick={doShare}
+          disabled={sharing || !analysisId}
+        >
+          {sharing
+            ? "Создаём ссылку…"
+            : shareUrl
+              ? "Ссылка ниже ↓"
+              : "Поделиться"}
         </button>
-        <button type="button" className="thr-btn thr-btn-line">
-          Поделиться
-        </button>
+        {status === "authenticated" ? (
+          <Link href="/me" className="thr-btn thr-btn-line">
+            В кабинет
+          </Link>
+        ) : (
+          <Link
+            href={`/auth?analysisId=${analysisId ?? ""}&next=/me`}
+            className="thr-btn thr-btn-line"
+          >
+            Сохранить разбор
+          </Link>
+        )}
       </div>
+
+      {shareErr ? (
+        <p className="shareerr" role="alert">
+          {shareErr}
+        </p>
+      ) : null}
+      {shareUrl ? (
+        <div className="sharelink">
+          <span className="su">{shareUrl}</span>
+          <button type="button" onClick={copyLink}>
+            {copied ? "Скопировано" : "Копировать"}
+          </button>
+          <a href={shareUrl} target="_blank" rel="noreferrer">
+            Открыть
+          </a>
+        </div>
+      ) : null}
 
       <style jsx>{`
         .verdict {
@@ -622,6 +737,45 @@ function Verdict({ report, hrName }: { report: AnalysisReport; hrName: string })
           height: 52px;
           padding: 0 28px;
           font-size: 14.5px;
+        }
+        .shareerr {
+          margin-top: 14px;
+          color: var(--crit);
+          font-size: 13.5px;
+        }
+        .sharelink {
+          margin-top: 16px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          border: 1px solid var(--hair2);
+          border-radius: 14px;
+          background: var(--metal-0);
+          padding: 12px 14px;
+          max-width: 64ch;
+        }
+        .sharelink .su {
+          font-family: var(--font-mono);
+          font-size: 12.5px;
+          color: var(--dim);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          flex: 1;
+          min-width: 140px;
+        }
+        .sharelink button,
+        .sharelink a {
+          font-size: 12.5px;
+          font-weight: 600;
+          color: var(--tox);
+          background: none;
+          border: none;
+          cursor: pointer;
+          text-decoration: none;
+          font-family: inherit;
+          flex-shrink: 0;
         }
       `}</style>
     </div>
