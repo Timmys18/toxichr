@@ -275,9 +275,9 @@ export function HomeClient() {
         }
         .hr-photo {
           position: relative;
-          aspect-ratio: 1 / 1;
+          aspect-ratio: 4 / 5;
           flex-shrink: 0;
-          background-position: center 28%;
+          background-position: center 22%;
         }
         .hr-qt-overlay {
           position: absolute;
