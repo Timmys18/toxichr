@@ -22,6 +22,8 @@ export type AiRequest = {
   /** 0–1: аналитические этапы низкая, персона — высокая */
   temperature?: number;
   maxTokens?: number;
+  /** Модель на этот вызов (аналитике — быстрая mini, персоне — сильная) */
+  model?: string;
 };
 
 export type AiResponse = {
@@ -105,9 +107,9 @@ async function fetchWithTimeout(
 async function callOpenAi(
   system: string,
   user: string,
-  options?: { temperature?: number; maxTokens?: number },
+  options?: { temperature?: number; maxTokens?: number; model?: string },
 ): Promise<AiResponse> {
-  const model = process.env.OPENAI_MODEL ?? "gpt-4o";
+  const model = options?.model ?? process.env.OPENAI_MODEL ?? "gpt-4o";
   // Можно указать обходной адрес, если прямой доступ к OpenAI закрыт в стране.
   const baseRaw = process.env.OPENAI_BASE_URL?.trim();
   const base = (baseRaw || "https://api.openai.com/v1").replace(/\/$/, "");
@@ -236,6 +238,7 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
   const options = {
     temperature: request.temperature,
     maxTokens: request.maxTokens,
+    model: request.model,
   };
 
   if (provider === "openai") {

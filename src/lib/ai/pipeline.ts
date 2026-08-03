@@ -21,9 +21,8 @@ import { voicePromptBlock } from "@/lib/ai/persona-voice";
 import { guessCandidateFirstName } from "@/lib/documents/candidate-name";
 import {
   runExtractStage,
-  runScoreStage,
+  scoreFromEvidence,
   type EvidenceMap,
-  type ScoreResult,
 } from "@/lib/ai/evidence";
 
 export type PipelineStage = "extract" | "score" | "persona";
@@ -210,31 +209,13 @@ export async function runAnalysisPipeline(
     emit({ type: "finding", stage: "extract", message: f.message });
   }
 
-  /* ---------- Этап 2: Скоринг ---------- */
+  /* ---------- Этап 2: Скоринг (локально, без вызова AI) ---------- */
   emit({ type: "stage", stage: "score", status: "start" });
-  let scored: ScoreResult | null = null;
-  if (evidenceMap) {
-    try {
-      const scoring = await runScoreStage(evidenceMap, heuristicBase.score, {
-        corporateWater: heuristicBase.viralMetrics.corporateWater,
-        aiLanguageProbability:
-          heuristicBase.viralMetrics.aiLanguageProbability,
-        participialCoefficient:
-          heuristicBase.viralMetrics.participialCoefficient,
-        clicheExamples: heuristicBase.topProblems
-          .map((p) => p.quote)
-          .slice(0, 4),
-      });
-      scored = scoring.result;
-      totalCost += scoring.costUsd;
-    } catch (error) {
-      if (error instanceof AiConfigError) throw error;
-      console.error("[pipeline] score stage failed, using heuristics", error);
-    }
-  }
+  const finalScore = evidenceMap
+    ? scoreFromEvidence(evidenceMap, heuristicBase.score)
+    : heuristicBase.score;
   emit({ type: "stage", stage: "score", status: "done" });
 
-  const finalScore = scored?.score ?? heuristicBase.score;
   const finalProfile = evidenceMap?.profile ?? heuristicBase.candidateProfile;
   emit({
     type: "finding",
@@ -319,7 +300,7 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
           question: persona?.question,
         },
         lockedScores: finalScore,
-        scoreReasons: scored?.reasons ?? {},
+        scoreReasons: {},
         lockedMetrics: viralMetrics,
         profile: finalProfile,
         evidenceMap: evidenceMap

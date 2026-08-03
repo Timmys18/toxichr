@@ -87,6 +87,8 @@ export async function runExtractStage(
     jsonSchemaName: "evidence_map_v1",
     temperature: 0.15,
     maxTokens: 4000,
+    // Извлечение — структурная задача: быстрая mini-модель вместо тяжёлой.
+    model: process.env.OPENAI_EXTRACT_MODEL ?? "gpt-4o-mini",
   });
 
   try {
@@ -165,6 +167,49 @@ const WEIGHTS: Record<
   structure: 10,
   language: 5,
 };
+
+/**
+ * Детерминированный скоринг из Evidence Map — без отдельного вызова AI.
+ * Баллы считаются по признакам claims + весам ТЗ §7.1. Быстрее и стабильнее
+ * LLM-калибровки. Измерения, не покрытые картой (карьерная логика, структура),
+ * берутся из эвристики.
+ */
+export function scoreFromEvidence(
+  map: EvidenceMap,
+  heuristicScore: AnalysisReport["score"],
+): AnalysisReport["score"] {
+  const claims = map.claims;
+  const n = Math.max(1, claims.length);
+  const pct = (x: number) => (x / n) * 100;
+  const clamp = (v: number) => Math.max(6, Math.min(96, Math.round(v)));
+
+  const ach = claims.filter(
+    (c) => c.type === "achievement" && (c.hasMetric || c.hasOutcome),
+  ).length;
+  const withProof = claims.filter((c) => c.hasMetric || c.hasOutcome).length;
+  const withScale = claims.filter((c) => c.hasScale).length;
+  const withAction = claims.filter((c) => c.hasPersonalAction).length;
+  const generic = claims.filter((c) => c.isGeneric).length;
+  const levelGap = map.profile.claimedLevel !== map.profile.inferredLevel;
+
+  const dims = {
+    positioning: clamp(100 - pct(generic) * 0.85),
+    evidence: clamp(pct(withProof) * 0.7 + pct(ach) * 0.3),
+    personalContribution: clamp(pct(withAction) * 0.9 + 8),
+    scale: clamp(pct(withScale) * 0.9 + 8),
+    seniorityConsistency: clamp(levelGap ? 44 : 78),
+    careerLogic: heuristicScore.careerLogic,
+    structure: heuristicScore.structure,
+    language: clamp(100 - pct(generic) * 0.6 - map.contradictions.length * 4),
+  };
+
+  let weighted = 0;
+  (Object.keys(WEIGHTS) as Array<keyof typeof WEIGHTS>).forEach((k) => {
+    weighted += (dims[k] * WEIGHTS[k]) / 100;
+  });
+
+  return { total: Math.max(0, Math.min(100, Math.round(weighted))), ...dims };
+}
 
 const SCORE_SYSTEM = `Ты калибровщик оценки резюме. Тебе дают Evidence Map (карту заявлений с признаками доказанности) и сигналы текстового анализа. Оцени КАЖДОЕ измерение 0–100 и обоснуй одним предложением.
 
