@@ -18,6 +18,10 @@ type Phase = "analyzing" | "verdict" | "error";
 
 type Props = { resumeId?: string; personaId?: PersonaId; viewId?: string };
 
+// Глобальный счётчик id находок — гарантирует уникальные React-ключи даже
+// при повторном монтировании эффекта (Strict Mode / ремоунт).
+let FINDING_SEQ = 0;
+
 const STAGE_STATUS: Record<string, string> = {
   extract: "читает документ",
   score: "сверяет факты",
@@ -45,7 +49,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
     if (started.current) return;
     started.current = true;
     let cancelled = false;
-    let n = 0;
 
     async function loadReport(id: string) {
       for (let i = 0; i < 10; i++) {
@@ -73,8 +76,8 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
       if (cancelled) return;
       if (e.type === "stage" && e.status === "start") setStage(e.stage);
       else if (e.type === "finding") {
-        n += 1;
-        setFindings((prev) => [...prev, { id: `f${n}`, msg: e.message }]);
+        const fid = `f${(FINDING_SEQ += 1)}`;
+        setFindings((prev) => [...prev, { id: fid, msg: e.message }]);
       } else if (e.type === "completed") void loadReport(e.analysisId);
       else if (e.type === "error") {
         setError(e.message);
@@ -180,7 +183,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           </div>
           <div className="row">
             <span>Формат</span>
-            <b>разбор без анестезии</b>
+            <b>жёстко и по делу</b>
           </div>
         </div>
         {phase === "verdict" ? (
@@ -193,7 +196,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
       <div className="feed">
         <div className="feed-head thr-mono">
           <span>Сеанс · живой разбор</span>
-          <span>{hr.name}</span>
         </div>
 
         {phase === "analyzing" ? (

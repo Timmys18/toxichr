@@ -78,9 +78,8 @@ export default function HrPage() {
         .cast .ph p { margin-top: 18px; font-size: 16px; color: var(--dim); line-height: 1.6; }
         .cast .list { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 44px; }
         @media (max-width: 820px){ .cast .list { grid-template-columns: 1fr; } }
-        .cast .hr { display: grid; grid-template-columns: 150px 1fr; border: 1px solid var(--hair); border-radius: 20px; overflow: hidden; background: var(--metal-0); }
-        @media (max-width: 480px){ .cast .hr { grid-template-columns: 1fr; } }
-        .cast .photo { position: relative; background-position: center 20%; min-height: 190px; }
+        .cast .hr { display: flex; flex-direction: column; border: 1px solid var(--hair); border-radius: 20px; overflow: hidden; background: var(--metal-0); }
+        .cast .photo { position: relative; aspect-ratio: 16 / 9; flex-shrink: 0; background-position: center 22%; }
         .cast .tag { position: absolute; top: 12px; left: 12px; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg); background: rgba(0,0,0,.4); backdrop-filter: blur(6px); padding: 5px 9px; border-radius: 6px; border: 1px solid var(--hair2); }
         .cast .body { padding: 22px 22px 24px; }
         .cast .nm { font-weight: 700; font-size: 20px; letter-spacing: -.02em; }

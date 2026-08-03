@@ -36,25 +36,27 @@ export function CabinetClient({
   const last = items[0];
   const status =
     !last
-      ? "пора на приём"
+      ? "ждёт разбора"
       : last.score >= 75
-        ? "почти в форме"
+        ? "почти готово"
         : last.score >= 55
-          ? "ещё хромает"
-          : "нуждается в реанимации";
+          ? "сыровато"
+          : "тонет в воде";
 
   return (
     <div className="cab">
       <div className="cab-head">
-        <div>
+        <div className="cab-head-l">
           <div className="hi thr-mono">Центр карьеры</div>
           <h1>
             {name}, резюме <span>{status}</span>
           </h1>
         </div>
-        <Link href="/" className="thr-btn thr-btn-tox newbtn">
-          Новый разбор
-        </Link>
+        {last ? (
+          <Link href="/" className="thr-btn thr-btn-tox newbtn">
+            Новый разбор
+          </Link>
+        ) : null}
       </div>
 
       {last ? (
@@ -166,7 +168,11 @@ export function CabinetClient({
           align-items: flex-end;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 18px;
+          gap: 16px 24px;
+        }
+        .cab-head-l {
+          flex: 1 1 auto;
+          min-width: 260px;
         }
         .hi {
           font-size: 11px;
@@ -176,9 +182,10 @@ export function CabinetClient({
         }
         .cab-head h1 {
           font-weight: 700;
-          font-size: clamp(28px, 3.6vw, 42px);
+          font-size: clamp(26px, 3.2vw, 38px);
           letter-spacing: -0.035em;
           margin-top: 10px;
+          max-width: 22ch;
         }
         .cab-head h1 span {
           color: var(--crit);
@@ -187,6 +194,8 @@ export function CabinetClient({
           height: 48px;
           padding: 0 24px;
           font-size: 14.5px;
+          flex-shrink: 0;
+          text-decoration: none;
         }
         .cab-grid {
           display: grid;

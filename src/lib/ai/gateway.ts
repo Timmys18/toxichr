@@ -76,6 +76,32 @@ export function assertAiReady(): void {
   }
 }
 
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? "45000");
+
+/** fetch с таймаутом: без него зависший вызов AI вешает весь разбор навсегда. */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  ms = AI_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(
+        `AI не ответил за ${Math.round(ms / 1000)}с. Проверь доступ к сети или VPN и попробуй ещё раз.`,
+      );
+    }
+    throw new Error(
+      "Не удалось связаться с AI. Проверь доступ к сети или VPN и попробуй ещё раз.",
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function callOpenAi(
   system: string,
   user: string,
@@ -85,7 +111,7 @@ async function callOpenAi(
   // Можно указать обходной адрес, если прямой доступ к OpenAI закрыт в стране.
   const baseRaw = process.env.OPENAI_BASE_URL?.trim();
   const base = (baseRaw || "https://api.openai.com/v1").replace(/\/$/, "");
-  const res = await fetch(`${base}/chat/completions`, {
+  const res = await fetchWithTimeout(`${base}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY!.trim()}`,
@@ -150,7 +176,7 @@ async function callAnthropic(
   options?: { temperature?: number; maxTokens?: number },
 ): Promise<AiResponse> {
   const model = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-20250514";
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": process.env.ANTHROPIC_API_KEY!.trim(),

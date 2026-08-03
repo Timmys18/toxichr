@@ -192,6 +192,13 @@ export async function runAnalysisPipeline(
     totalCost += extract.costUsd;
   } catch (error) {
     if (error instanceof AiConfigError) throw error;
+    // AI недоступен (таймаут/сеть) — нет смысла тянуть время на persona, падаем сразу.
+    if (
+      error instanceof Error &&
+      /не ответил|связаться с AI/.test(error.message)
+    ) {
+      throw error;
+    }
     console.error("[pipeline] extract stage failed, using heuristics", error);
   }
   emit({ type: "stage", stage: "extract", status: "done" });
