@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { SiteHeader } from "@/components/landing/site-header";
-import { SiteFooter } from "@/components/landing/site-footer";
+import { TopNav } from "@/components/shared/top-nav";
 import { prisma } from "@/lib/prisma";
 import type { PublicSharePayload } from "@/lib/public-share";
 import { appBaseUrl } from "@/lib/public-share";
@@ -16,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const share = await prisma.publicShare.findUnique({ where: { slug } });
 
   if (!share || !share.active || share.revokedAt) {
-    return { title: "Приговор не найден" };
+    return { title: "Карточка не найдена" };
   }
 
   const payload = share.publicPayload as PublicSharePayload;
@@ -25,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     share.description ??
     payload.quote.slice(0, 160) ??
-    "ToxicHR разобрал резюме. А твоё выживет?";
+    "ToxicHR разобрал резюме. А твоё?";
 
   const ogImage = `${appBaseUrl()}/api/cards/${slug}?format=og`;
 
@@ -66,9 +65,8 @@ export default async function ToastPage({ params }: Props) {
 
   return (
     <>
-      <SiteHeader />
+      <TopNav />
       <ToastClient slug={slug} payload={payload} />
-      <SiteFooter />
     </>
   );
 }

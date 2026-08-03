@@ -46,3 +46,6 @@ yarn-error.log*
 
 # dev diagnostics
 _diag/
+
+# dev launcher (Windows helper, not for repo)
+/ЗАПУСК-САЙТА.bat

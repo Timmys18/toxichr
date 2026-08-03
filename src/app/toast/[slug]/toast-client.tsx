@@ -2,10 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { VerdictCardPreview } from "@/components/share/verdict-card-preview";
 import type { PublicSharePayload } from "@/lib/public-share";
-import type { ShareMetricKey } from "@/lib/share-studio";
 
 type Props = {
   slug: string;
@@ -29,82 +26,131 @@ export function ToastClient({ slug, payload }: Props) {
     });
   }
 
-  const metrics = payload.metrics
-    .filter((m) => m.key !== "total")
-    .map((m) => ({
-      key: m.key as ShareMetricKey,
-      label: m.label,
-      value: m.value,
-    }));
+  const sub = [payload.roleLabel, payload.levelLabel]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <main className="relative flex flex-1 flex-col">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 dossier-grid opacity-35"
-      />
-      <div className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-5 py-12 sm:px-8">
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
-          Публичный приговор · {payload.personaName}
-        </p>
-        <h1 className="mt-4 font-display text-3xl leading-tight tracking-tight text-ink sm:text-4xl">
-          «{payload.verdictTitle}»
-        </h1>
-        <p className="mt-2 font-mono text-sm text-signal">
-          Выживаемость: {payload.scoreTotal}/100
-        </p>
-        <blockquote className="mt-5 border-l-2 border-toxic pl-4 text-muted leading-relaxed">
-          {payload.quote}
-        </blockquote>
+    <main id="main" className="toast">
+      <div className="wrap">
+        <div className="over thr-mono">
+          Публичная карточка · {payload.personaName}
+        </div>
+        <h1>«{payload.verdictTitle}»</h1>
+        <div className="score thr-mono">
+          Оценка {payload.personaName}: <b>{payload.scoreTotal}/100</b>
+        </div>
+        <blockquote>{payload.quote}</blockquote>
+        {sub ? <div className="sub thr-mono">{sub}</div> : null}
 
-        {(payload.roleLabel || payload.levelLabel) && (
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
-            {[payload.roleLabel, payload.levelLabel]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-        )}
-
-        <div className="mt-8">
-          <VerdictCardPreview
-            format="og"
-            personaId={payload.personaId}
-            verdictTitle={payload.verdictTitle}
-            quote={payload.quote}
-            scoreTotal={payload.scoreTotal}
-            metrics={metrics}
-            roleLabel={payload.roleLabel}
-            levelLabel={payload.levelLabel}
+        <div className="card">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/cards/${slug}?format=og`}
+            alt={`Карточка разбора · ${payload.verdictTitle}`}
+            loading="lazy"
           />
         </div>
 
-        <div className="mt-8 flex flex-col gap-3">
-          <Button
-            href={`/start?ref=${slug}&campaign=toast`}
-            className="w-full"
-            onClick={trackCta}
-          >
-            А моё резюме выживет?
-          </Button>
-          <Button
-            href={`/challenge/${slug}`}
-            variant="secondary"
-            className="w-full"
-            onClick={trackCta}
-          >
-            Принять challenge
-          </Button>
-          <p className="text-center font-mono text-[11px] text-muted">
-            Полный текст резюме не публикуется. Только вердикт и метрики.
-          </p>
-          <Link
-            href="/"
-            className="text-center text-sm text-muted underline-offset-4 hover:underline"
-          >
-            Что такое ToxicHR
-          </Link>
-        </div>
+        <Link href="/" className="thr-btn thr-btn-tox cta" onClick={trackCta}>
+          А моё резюме? Проверить →
+        </Link>
+        <p className="note">
+          Полный текст резюме не публикуется — только вердикт и метрики.
+        </p>
+        <Link href="/" className="what">
+          Что такое ToxicHR
+        </Link>
       </div>
+
+      <style jsx>{`
+        .toast {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 40px 20px 70px;
+        }
+        .wrap {
+          width: 100%;
+          max-width: 560px;
+          animation: thr-fade 0.6s var(--ease);
+        }
+        .over {
+          font-size: 11px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: var(--faint);
+        }
+        h1 {
+          font-weight: 800;
+          font-size: clamp(28px, 5vw, 40px);
+          line-height: 1.08;
+          letter-spacing: -0.035em;
+          margin-top: 16px;
+        }
+        .score {
+          margin-top: 12px;
+          font-size: 12.5px;
+          letter-spacing: 0.06em;
+          color: var(--dim);
+        }
+        .score b {
+          color: var(--tox);
+        }
+        blockquote {
+          margin: 20px 0 0;
+          border-left: 2px solid var(--tox);
+          padding-left: 16px;
+          font-size: 16px;
+          line-height: 1.6;
+          color: var(--dim);
+          font-style: italic;
+        }
+        .sub {
+          margin-top: 14px;
+          font-size: 11px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--faint);
+        }
+        .card {
+          margin-top: 26px;
+          border: 1px solid var(--hair2);
+          border-radius: 16px;
+          overflow: hidden;
+          background: var(--metal-1);
+        }
+        .card :global(img) {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+        .cta {
+          margin-top: 26px;
+          width: 100%;
+          height: 56px;
+          justify-content: center;
+          text-decoration: none;
+          font-size: 15.5px;
+        }
+        .note {
+          margin-top: 14px;
+          text-align: center;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          color: var(--faint);
+        }
+        .what {
+          display: block;
+          margin-top: 12px;
+          text-align: center;
+          font-size: 13.5px;
+          color: var(--dim);
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+      `}</style>
     </main>
   );
 }
