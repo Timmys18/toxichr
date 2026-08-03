@@ -223,7 +223,13 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         ) : null}
 
         {phase === "verdict" && report ? (
-          <Verdict report={report} hrName={hr.name} analysisId={analysisId} />
+          <Verdict
+            report={report}
+            hrName={hr.name}
+            analysisId={analysisId}
+            resumeId={resumeId ?? null}
+            personaCode={personaCode}
+          />
         ) : null}
       </div>
 
@@ -401,12 +407,17 @@ function Verdict({
   report,
   hrName,
   analysisId,
+  resumeId,
+  personaCode,
 }: {
   report: AnalysisReport;
   hrName: string;
   analysisId: string | null;
+  resumeId: string | null;
+  personaCode: PersonaId | null;
 }) {
   const { status } = useSession();
+  const otherHRs = ROSTER.filter((r) => r.id !== personaCode).slice(0, 3);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -548,22 +559,80 @@ function Verdict({
         </div>
       ) : null}
 
-      <div className="acts">
-        <Link href="/" className="thr-btn thr-btn-tox">
-          Исправить и переспросить
-        </Link>
+      <div className="sec-h next-h">
+        <span className="num thr-mono">04</span>
+        <h3>Что дальше</h3>
+      </div>
+
+      {/* Крючок 1 — поделиться на эмоциональном пике */}
+      <div className="hook share-hook">
+        <div className="hook-t">Приговор слишком хорош, чтобы держать в себе.</div>
+        <div className="hook-s">
+          Публичная карточка — без имени и компаний, только вердикт и метрики.
+        </div>
         <button
           type="button"
-          className="thr-btn thr-btn-line"
+          className="thr-btn thr-btn-tox hook-btn"
           onClick={doShare}
           disabled={sharing || !analysisId}
         >
           {sharing
             ? "Создаём ссылку…"
             : shareUrl
-              ? "Ссылка ниже ↓"
-              : "Поделиться"}
+              ? "Ссылка готова ↓"
+              : "Поделиться приговором"}
         </button>
+        {shareErr ? (
+          <p className="shareerr" role="alert">
+            {shareErr}
+          </p>
+        ) : null}
+        {shareUrl ? (
+          <div className="sharelink">
+            <span className="su">{shareUrl}</span>
+            <button type="button" onClick={copyLink}>
+              {copied ? "Скопировано" : "Копировать"}
+            </button>
+            <a href={shareUrl} target="_blank" rel="noreferrer">
+              Открыть
+            </a>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Крючок 2 — другой HR на том же резюме */}
+      {resumeId && otherHRs.length ? (
+        <div className="hook">
+          <div className="hook-t">А что скажет другой?</div>
+          <div className="hook-s">
+            Тот же файл — другая оптика и другой тип сарказма.
+          </div>
+          <div className="others">
+            {otherHRs.map((o) => (
+              <Link
+                key={o.id}
+                href={`/session?resumeId=${resumeId}&personaId=${o.id}`}
+                className="other"
+              >
+                <span
+                  className="oph thr-photo"
+                  style={{ backgroundImage: `url('${o.img}')` }}
+                />
+                <span className="oinfo">
+                  <span className="on">{o.name}</span>
+                  <span className="or">{o.role}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Крючок 3 — реванш и сохранение */}
+      <div className="acts">
+        <Link href="/" className="thr-btn thr-btn-line">
+          Исправить и переспросить
+        </Link>
         {status === "authenticated" ? (
           <Link href="/me" className="thr-btn thr-btn-line">
             В кабинет
@@ -577,23 +646,6 @@ function Verdict({
           </Link>
         )}
       </div>
-
-      {shareErr ? (
-        <p className="shareerr" role="alert">
-          {shareErr}
-        </p>
-      ) : null}
-      {shareUrl ? (
-        <div className="sharelink">
-          <span className="su">{shareUrl}</span>
-          <button type="button" onClick={copyLink}>
-            {copied ? "Скопировано" : "Копировать"}
-          </button>
-          <a href={shareUrl} target="_blank" rel="noreferrer">
-            Открыть
-          </a>
-        </div>
-      ) : null}
 
       <style jsx>{`
         .verdict {
@@ -727,18 +779,103 @@ function Verdict({
           color: var(--fg);
           margin-bottom: 10px;
         }
+        .next-h {
+          margin-top: 64px;
+        }
+        .hook {
+          margin-top: 16px;
+          border: 1px solid var(--hair2);
+          border-radius: 18px;
+          background: var(--metal-0);
+          padding: 24px 26px;
+          max-width: 64ch;
+        }
+        .share-hook {
+          border-color: rgba(44, 224, 139, 0.35);
+          background: linear-gradient(180deg, rgba(44, 224, 139, 0.05), var(--metal-0));
+        }
+        .hook-t {
+          font-weight: 700;
+          font-size: 18px;
+          letter-spacing: -0.02em;
+        }
+        .hook-s {
+          margin-top: 8px;
+          font-size: 14px;
+          color: var(--dim);
+          line-height: 1.5;
+        }
+        .hook-btn {
+          margin-top: 18px;
+          height: 52px;
+          padding: 0 28px;
+          font-size: 15px;
+        }
+        .others {
+          margin-top: 16px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+        }
+        @media (max-width: 620px) {
+          .others {
+            grid-template-columns: 1fr;
+          }
+        }
+        .other {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid var(--hair);
+          border-radius: 14px;
+          padding: 10px;
+          text-decoration: none;
+          color: inherit;
+          transition: 0.2s;
+        }
+        .other:hover {
+          border-color: var(--tox);
+          background: var(--tox-dim);
+        }
+        .oph {
+          width: 44px;
+          height: 44px;
+          border-radius: 11px;
+          flex-shrink: 0;
+          border: 1px solid var(--hair2);
+          background-position: center 18%;
+        }
+        .oinfo {
+          min-width: 0;
+        }
+        .on {
+          display: block;
+          font-weight: 600;
+          font-size: 14px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .or {
+          display: block;
+          font-size: 11.5px;
+          color: var(--faint);
+          margin-top: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
         .acts {
-          margin-top: 44px;
+          margin-top: 28px;
           display: flex;
           gap: 12px;
           flex-wrap: wrap;
-          padding-top: 28px;
-          border-top: 1px solid var(--hair);
         }
         .acts :global(.thr-btn) {
-          height: 52px;
-          padding: 0 28px;
-          font-size: 14.5px;
+          height: 50px;
+          padding: 0 26px;
+          font-size: 14px;
+          text-decoration: none;
         }
         .shareerr {
           margin-top: 14px;
