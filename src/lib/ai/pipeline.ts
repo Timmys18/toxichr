@@ -256,6 +256,28 @@ export async function runAnalysisPipeline(
   let past = false;
   let carry = "";
   let ai;
+  const personaUser = JSON.stringify({
+    persona: {
+      id: input.personaId,
+      name: persona?.name,
+      title: persona?.title,
+      tone: persona?.tone,
+      lenses: persona?.lenses,
+      question: persona?.question,
+    },
+    lockedScores: finalScore,
+    scoreReasons: {},
+    lockedMetrics: viralMetrics,
+    profile: finalProfile,
+    evidenceMap: evidenceMap
+      ? {
+          claims: evidenceMap.claims,
+          contradictions: evidenceMap.contradictions,
+          missing: evidenceMap.missing,
+        }
+      : { note: "evidence map недоступна — работай по тексту" },
+    resumeText: clipResume(input.resumeText),
+  });
   try {
     ai = await runAiStream(
       {
@@ -305,28 +327,7 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
 - Не используй слова: улики, суд, досье, приговор, следователь, выживаемость.
 - Баллы score уже посчитаны с обоснованиями (scoreReasons) — не спорь с цифрами, но используй обоснования в тексте.
 - Разбор (Часть 1) — главная ценность. Пиши плотно, конкретно, с отсылками к тексту. После маркера ===DATA=== — только валидный JSON.`,
-      user: JSON.stringify({
-        persona: {
-          id: input.personaId,
-          name: persona?.name,
-          title: persona?.title,
-          tone: persona?.tone,
-          lenses: persona?.lenses,
-          question: persona?.question,
-        },
-        lockedScores: finalScore,
-        scoreReasons: {},
-        lockedMetrics: viralMetrics,
-        profile: finalProfile,
-        evidenceMap: evidenceMap
-          ? {
-              claims: evidenceMap.claims,
-              contradictions: evidenceMap.contradictions,
-              missing: evidenceMap.missing,
-            }
-          : { note: "evidence map недоступна — работай по тексту" },
-        resumeText: clipResume(input.resumeText),
-      }),
+      user: personaUser,
       temperature: 0.9,
       maxTokens: 2600,
       },
@@ -364,10 +365,53 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
     totalCost += ai.costUsd;
   } catch (error) {
     if (error instanceof AiConfigError) throw error;
-    console.error("[pipeline] persona stage failed", error);
-    throw new Error(
-      error instanceof Error ? error.message : "AI не ответил. Попробуй ещё раз.",
+    // Стриминг упал/завис — не роняем разбор, доигрываем блокирующим вызовом.
+    console.error(
+      "[pipeline] стриминг персоны упал, доигрываю обычным вызовом",
+      error,
     );
+    emit({ type: "finding", stage: "persona", message: "Дописываю разбор…" });
+    try {
+      const fb = await runAi({
+        stage: "persona",
+        system: `${PERSONA_SYSTEM[input.personaId]}
+
+${voicePromptBlock(input.personaId, candidateFirstName)}
+
+Сделай РАЗВЁРНУТЫЙ разбор резюме как живой HR. Пиши по-русски. Бей по ТЕКСТУ резюме, не по личности.
+Верни СТРОГО JSON:
+{
+  "verdict": { "title": "короткий жёсткий заголовок", "comment": "2-4 предложения" },
+  "hrReview": {
+    "firstImpression": "2-3 абзаца",
+    "deepDive": "4-6 плотных абзацев с отсылками к цитатам из резюме",
+    "hiringTake": "1-2 абзаца",
+    "fixPriority": "2-3 абзаца"
+  },
+  "topProblems": [{ "severity": "critical|high|medium|low", "title": "...", "quote": "ТОЧНАЯ цитата из резюме", "roast": "...", "diagnosis": "...", "recommendation": "...", "suggestedRewrite": "каркас без выдуманных цифр" }],
+  "strengths": [{ "title": "", "quote": "опц. точная цитата", "comment": "" }],
+  "shareQuotes": [{ "kind": "precise|funny|safe", "text": "..." }],
+  "improvementPlan": [{ "horizon": "10m|30m|recall", "action": "..." }]
+}
+Правила: 4–7 problems; каждая quote дословно из резюме; не выдумывай цифры/компании/даты; не используй слова улики, суд, досье, приговор, следователь, выживаемость.`,
+        user: personaUser,
+        jsonSchemaName: "hr_full_review_v3",
+        temperature: 0.9,
+        maxTokens: 4500,
+      });
+      ai = fb;
+      dataText = fb.content;
+      roastText = "";
+      totalCost += fb.costUsd;
+    } catch (fbErr) {
+      if (fbErr instanceof AiConfigError) throw fbErr;
+      console.error("[pipeline] фолбэк персоны тоже упал", fbErr);
+      throw new Error(
+        fbErr instanceof Error
+          ? fbErr.message
+          : "AI не ответил. Попробуй ещё раз.",
+      );
+    }
   }
   emit({ type: "stage", stage: "persona", status: "done" });
 

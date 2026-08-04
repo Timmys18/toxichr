@@ -268,7 +268,14 @@ export async function runAiStream(
   const baseRaw = process.env.OPENAI_BASE_URL?.trim();
   const base = (baseRaw || "https://api.openai.com/v1").replace(/\/$/, "");
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS * 2);
+  // Таймаут по бездействию: сбрасывается на каждом токене. Не даёт зависнуть
+  // на старте/в середине, но не режет долгую живую генерацию.
+  let timer: ReturnType<typeof setTimeout>;
+  const arm = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  };
+  arm();
   let full = "";
 
   try {
@@ -321,6 +328,7 @@ export async function runAiStream(
           };
           const delta = j.choices?.[0]?.delta?.content ?? "";
           if (delta) {
+            arm(); // токен пришёл — сбрасываем сторож бездействия
             full += delta;
             onChunk(delta);
           }
@@ -333,7 +341,7 @@ export async function runAiStream(
     if (e instanceof AiConfigError) throw e;
     if (e instanceof Error && e.name === "AbortError") {
       throw new Error(
-        `AI не ответил за ${Math.round((AI_TIMEOUT_MS * 2) / 1000)}с. Проверь сеть или VPN.`,
+        `Поток молчал ${Math.round(AI_TIMEOUT_MS / 1000)}с. Проверь сеть или VPN.`,
       );
     }
     throw e;
