@@ -14,11 +14,11 @@ export function PricingClient({ analysisId, paywallOn = false }: Props) {
 
   async function buy() {
     if (!analysisId) {
-      window.location.href = "/start";
+      window.location.href = "/";
       return;
     }
     if (!paywallOn) {
-      window.location.href = `/report?analysisId=${analysisId}&full=1`;
+      window.location.href = `/session?view=${analysisId}`;
       return;
     }
     setLoading(true);

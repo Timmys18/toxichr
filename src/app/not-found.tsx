@@ -25,10 +25,10 @@ export default function NotFound() {
             На главную
           </Link>
           <Link
-            href="/start"
+            href="/"
             className="inline-flex h-11 items-center justify-center border border-ink/20 bg-surface px-5 text-sm font-medium text-ink hover:border-ink/40"
           >
-            Бросить резюме
+            Кинуть резюме
           </Link>
         </div>
       </div>

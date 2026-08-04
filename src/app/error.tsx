@@ -27,8 +27,7 @@ export default function Error({ error, reset }: Props) {
           Что-то пошло не так
         </h1>
         <p className="mt-4 text-muted leading-relaxed">
-          Сервис споткнулся. Можно попробовать снова или начать прожарку
-          заново.
+          Сервис споткнулся. Можно попробовать снова или начать разбор заново.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <button
@@ -39,10 +38,10 @@ export default function Error({ error, reset }: Props) {
             Попробовать снова
           </button>
           <Link
-            href="/start"
+            href="/"
             className="inline-flex h-11 items-center justify-center border border-ink/20 bg-surface px-5 text-sm font-medium text-ink hover:border-ink/40"
           >
-            Новая прожарка
+            Новый разбор
           </Link>
         </div>
       </div>
