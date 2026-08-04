@@ -189,6 +189,18 @@ export async function runAnalysisPipeline(
 
   /* ---------- Этап 1: Evidence Map ---------- */
   emit({ type: "stage", stage: "extract", status: "start" });
+  // Мгновенные честные строки — чтобы экран не был пустым, пока идёт извлечение
+  // (сетевой вызов ~6-11с). Это не фейк-анализ, а реальный статус работы.
+  emit({
+    type: "finding",
+    stage: "extract",
+    message: "Читаю резюме целиком, не по диагонали.",
+  });
+  emit({
+    type: "finding",
+    stage: "extract",
+    message: "Отделяю реальные результаты от общих слов.",
+  });
   let evidenceMap: EvidenceMap | null = null;
   try {
     const extract = await runExtractStage(input.resumeText);

@@ -14,6 +14,7 @@ export type AnalyticsEvent =
   | "share_variant_selected"
   | "share_text_copied"
   | "share_platform_opened"
+  | "share_created"
   | "public_share_created"
   | "public_share_revoked"
   | "public_share_viewed"

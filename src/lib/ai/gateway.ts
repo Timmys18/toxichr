@@ -270,7 +270,7 @@ export async function runAiStream(
   const controller = new AbortController();
   // Таймаут по бездействию: сбрасывается на каждом токене. Не даёт зависнуть
   // на старте/в середине, но не режет долгую живую генерацию.
-  let timer: ReturnType<typeof setTimeout>;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const arm = () => {
     clearTimeout(timer);
     timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);

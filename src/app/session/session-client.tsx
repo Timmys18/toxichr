@@ -51,12 +51,26 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
     if (started.current) return;
     started.current = true;
     let cancelled = false;
+    let settled = false;
+    // Сторож: если за 75с ничего не завершилось — не крутим спиннер вечно,
+    // показываем понятную ошибку с ретраем.
+    const watch = setTimeout(() => {
+      if (!cancelled && !settled) {
+        settled = true;
+        setError(
+          "Разбор идёт дольше обычного — похоже, ИИ сейчас недоступен. Проверь VPN и попробуй ещё раз.",
+        );
+        setPhase("error");
+      }
+    }, 75000);
 
     async function loadReport(id: string) {
       for (let i = 0; i < 10; i++) {
         const res = await fetch(`/api/analyses/${id}`);
         const data = await res.json();
         if (data.report) {
+          settled = true;
+          clearTimeout(watch);
           if (!cancelled) {
             setReport(data.report as AnalysisReport);
             if (data.personaId) setPersonaCode(data.personaId as PersonaId);
@@ -85,6 +99,8 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         setLiveRoast((prev) => prev + e.delta);
       } else if (e.type === "completed") void loadReport(e.analysisId);
       else if (e.type === "error") {
+        settled = true;
+        clearTimeout(watch);
         setError(e.message);
         setPhase("error");
       }
@@ -145,6 +161,8 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         const ok = await runStream();
         if (!ok && !cancelled) await runFallback();
       } catch (e) {
+        settled = true;
+        clearTimeout(watch);
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Ошибка анализа");
           setPhase("error");
@@ -154,6 +172,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
 
     return () => {
       cancelled = true;
+      clearTimeout(watch);
     };
   }, [resumeId, personaId, viewId]);
 
@@ -236,9 +255,18 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         {phase === "error" ? (
           <div className="errbox">
             <p>{error}</p>
-            <Link href="/" className="thr-btn thr-btn-line">
-              На главную
-            </Link>
+            <div className="errbtns">
+              <button
+                type="button"
+                className="thr-btn thr-btn-tox"
+                onClick={() => window.location.reload()}
+              >
+                Попробовать снова
+              </button>
+              <Link href="/" className="thr-btn thr-btn-line">
+                На главную
+              </Link>
+            </div>
           </div>
         ) : null}
 
@@ -427,6 +455,11 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           flex-direction: column;
           gap: 16px;
           align-items: flex-start;
+        }
+        .errbtns {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
         }
         .errbox p {
           color: var(--crit);
