@@ -27,7 +27,7 @@ npm run dev
 
 По умолчанию `DATABASE_URL=file:./.data/toxichr.db` (SQLite, без Docker).
 
-Открой [http://localhost:3000](http://localhost:3000).
+Открой [http://localhost:3100](http://localhost:3100).
 
 Поток: **главная → /start → HR → theatre → приговор → улики → share → pay**.
 
