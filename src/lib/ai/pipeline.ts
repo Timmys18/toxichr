@@ -15,7 +15,7 @@ import {
   type TheatreFinding,
 } from "@/lib/ai/schemas";
 import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
-import { AiConfigError, runAi, runAiStream } from "@/lib/ai/gateway";
+import { AiConfigError, runAi } from "@/lib/ai/gateway";
 import { groundReport, quoteInResume } from "@/lib/ai/grounding";
 import { voicePromptBlock } from "@/lib/ai/persona-voice";
 import { guessCandidateFirstName } from "@/lib/documents/candidate-name";
@@ -29,8 +29,7 @@ export type PipelineStage = "extract" | "score" | "persona";
 
 export type PipelineEvent =
   | { type: "stage"; stage: PipelineStage; status: "start" | "done" }
-  | { type: "finding"; stage: PipelineStage; message: string }
-  | { type: "roast"; delta: string };
+  | { type: "finding"; stage: PipelineStage; message: string };
 
 export type PipelineInput = {
   resumeText: string;
@@ -62,10 +61,6 @@ const PERSONA_SYSTEM: Record<PersonaId, string> = {
 
 type GptReportPayload = {
   verdict?: { title?: string; comment?: string };
-  // deepDive теперь приходит стримом (Часть 1), в JSON только эти три:
-  firstImpression?: string;
-  hiringTake?: string;
-  fixPriority?: string;
   hrReview?: {
     firstImpression?: string;
     deepDive?: string;
@@ -250,15 +245,9 @@ export async function runAnalysisPipeline(
   /* ---------- Этап 3: Персона ---------- */
   emit({ type: "stage", stage: "persona", status: "start" });
 
-  const DELIM = "===DATA===";
-  let roastText = "";
-  let dataText = "";
-  let past = false;
-  let carry = "";
   let ai;
   try {
-    ai = await runAiStream(
-      {
+    ai = await runAi({
       stage: "persona",
       system: `${PERSONA_SYSTEM[input.personaId]}
 
@@ -269,19 +258,15 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
 
 Тебе передана карта доказательств (evidenceMap): заявления резюме с признаками доказанности, противоречия и пробелы. Это результат аналитического этапа — строй разбор НА НЕЙ, а не на общих впечатлениях. Самые слабые места = claims с isGeneric/без метрик; самые важные пробелы = missing.
 
-ФОРМАТ ОТВЕТА — СТРОГО ДВЕ ЧАСТИ.
-
-ЧАСТЬ 1 — РАЗБОР (обычный текст, НЕ JSON): 4-6 плотных абзацев живой речью персонажа. Это главная ценность. Ссылайся на конкретные формулировки из резюме. Разные абзацы — разные углы, без повторов, без воды и вводных, сразу по делу.
-
-Затем на ОТДЕЛЬНОЙ строке ровно маркер:
-===DATA===
-
-ЧАСТЬ 2 — JSON (строго, без текста-разбора):
+СТРУКТУРА JSON (строго):
 {
   "verdict": { "title": "короткий жёсткий заголовок по ЭТОМУ резюме", "comment": "2-4 предложения от лица персонажа" },
-  "firstImpression": "2-3 абзаца: что видишь за 20 секунд",
-  "hiringTake": "1-2 абзаца: позвала бы / не позвала бы на следующий этап и почему",
-  "fixPriority": "2-3 абзаца: что править в первую очередь, в каком порядке",
+  "hrReview": {
+    "firstImpression": "2-3 абзаца: что видишь за 20 секунд",
+    "deepDive": "4-8 абзацев: развёрнутый разбор. Ссылайся на конкретные формулировки из резюме. Разные абзацы = разные углы. Не повторяй одно и то же.",
+    "hiringTake": "1-2 абзаца: позвала бы / не позвала бы на следующий этап и почему (как этот персонаж)",
+    "fixPriority": "2-3 абзаца: что править в первую очередь, в каком порядке"
+  },
   "topProblems": [
     {
       "severity": "critical|high|medium|low",
@@ -304,7 +289,7 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
 - Не выдумывай цифры, компании, должности, даты, метрики.
 - Не используй слова: улики, суд, досье, приговор, следователь, выживаемость.
 - Баллы score уже посчитаны с обоснованиями (scoreReasons) — не спорь с цифрами, но используй обоснования в тексте.
-- Разбор (Часть 1) — главная ценность. Пиши плотно, конкретно, с отсылками к тексту. После маркера ===DATA=== — только валидный JSON.`,
+- hrReview.deepDive — главная ценность. Пиши плотно, конкретно, с отсылками к тексту.`,
       user: JSON.stringify({
         persona: {
           id: input.personaId,
@@ -327,40 +312,9 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
           : { note: "evidence map недоступна — работай по тексту" },
         resumeText: clipResume(input.resumeText),
       }),
+      jsonSchemaName: "hr_full_review_v3",
       temperature: 0.9,
-      maxTokens: 2600,
-      },
-      (delta) => {
-        if (past) {
-          dataText += delta;
-          return;
-        }
-        carry += delta;
-        const idx = carry.indexOf(DELIM);
-        if (idx >= 0) {
-          const before = carry.slice(0, idx);
-          if (before) {
-            roastText += before;
-            emit({ type: "roast", delta: before });
-          }
-          dataText += carry.slice(idx + DELIM.length);
-          past = true;
-          carry = "";
-          return;
-        }
-        // придержим хвост длиной с маркер — вдруг он разорван между кусками
-        if (carry.length > DELIM.length) {
-          const flush = carry.slice(0, carry.length - DELIM.length);
-          roastText += flush;
-          emit({ type: "roast", delta: flush });
-          carry = carry.slice(carry.length - DELIM.length);
-        }
-      },
-    );
-    if (!past && carry) {
-      roastText += carry;
-      emit({ type: "roast", delta: carry });
-    }
+    });
     totalCost += ai.costUsd;
   } catch (error) {
     if (error instanceof AiConfigError) throw error;
@@ -371,15 +325,11 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
   }
   emit({ type: "stage", stage: "persona", status: "done" });
 
-  let parsed: GptReportPayload = {};
-  const jStart = dataText.indexOf("{");
-  const jEnd = dataText.lastIndexOf("}");
-  if (jStart >= 0 && jEnd > jStart) {
-    try {
-      parsed = JSON.parse(dataText.slice(jStart, jEnd + 1)) as GptReportPayload;
-    } catch {
-      /* JSON битый — уедем на эвристику/фолбэк ниже */
-    }
+  let parsed: GptReportPayload;
+  try {
+    parsed = JSON.parse(ai.content) as GptReportPayload;
+  } catch {
+    throw new Error("AI вернул нечитаемый ответ. Попробуй ещё раз.");
   }
 
   const resume = input.resumeText;
@@ -446,26 +396,18 @@ ${voicePromptBlock(input.personaId, candidateFirstName)}
       action: String(s.action).trim(),
     }));
 
-  // deepDive пришёл стримом (Часть 1); остальное — из JSON (или из вложенного hrReview для совместимости)
-  const deepDive = (roastText || parsed.hrReview?.deepDive || "").trim();
-  const firstImpression = (
-    parsed.firstImpression ||
-    parsed.hrReview?.firstImpression ||
-    ""
-  ).trim();
-  const hiringTake = (
-    parsed.hiringTake ||
-    parsed.hrReview?.hiringTake ||
-    ""
-  ).trim();
-  const fixPriority = (
-    parsed.fixPriority ||
-    parsed.hrReview?.fixPriority ||
-    ""
-  ).trim();
+  const hrReviewRaw = parsed.hrReview;
   const hrReview =
-    deepDive.length > 40 && firstImpression && hiringTake && fixPriority
-      ? { firstImpression, deepDive, hiringTake, fixPriority }
+    hrReviewRaw?.firstImpression &&
+    hrReviewRaw?.deepDive &&
+    hrReviewRaw?.hiringTake &&
+    hrReviewRaw?.fixPriority
+      ? {
+          firstImpression: hrReviewRaw.firstImpression.trim(),
+          deepDive: hrReviewRaw.deepDive.trim(),
+          hiringTake: hrReviewRaw.hiringTake.trim(),
+          fixPriority: hrReviewRaw.fixPriority.trim(),
+        }
       : null;
 
   const merged: AnalysisReport = {

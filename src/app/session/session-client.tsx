@@ -11,7 +11,6 @@ import { ROSTER } from "@/components/home/hr-roster";
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
   | { type: "finding"; stage: string; message: string }
-  | { type: "roast"; delta: string }
   | { type: "completed"; analysisId: string }
   | { type: "error"; message: string };
 
@@ -40,7 +39,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const hr = ROSTER.find((r) => r.id === personaCode) ?? ROSTER[0];
   const [phase, setPhase] = useState<Phase>("analyzing");
   const [findings, setFindings] = useState<{ id: string; msg: string }[]>([]);
-  const [liveRoast, setLiveRoast] = useState("");
   const [stage, setStage] = useState<string>(viewId ? "persona" : "extract");
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
@@ -80,9 +78,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
       else if (e.type === "finding") {
         const fid = `f${(FINDING_SEQ += 1)}`;
         setFindings((prev) => [...prev, { id: fid, msg: e.message }]);
-      } else if (e.type === "roast") {
-        setStage("persona");
-        setLiveRoast((prev) => prev + e.delta);
       } else if (e.type === "completed") void loadReport(e.analysisId);
       else if (e.type === "error") {
         setError(e.message);
@@ -210,26 +205,11 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
                 {f.msg}
               </p>
             ))}
-            {liveRoast ? (
-              <div className="roast-live">
-                {liveRoast.split(/\n{2,}/).map((para, i) =>
-                  para.trim() ? (
-                    <p key={`rl${i}`}>
-                      {para.trim()}
-                      {i === liveRoast.split(/\n{2,}/).length - 1 ? (
-                        <span className="caret" />
-                      ) : null}
-                    </p>
-                  ) : null,
-                )}
-              </div>
-            ) : (
-              <div className="typing" aria-label="HR думает">
-                <i />
-                <i />
-                <i />
-              </div>
-            )}
+            <div className="typing" aria-label="HR думает">
+              <i />
+              <i />
+              <i />
+            </div>
           </div>
         ) : null}
 
@@ -383,25 +363,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           padding: 13px 0;
           border-bottom: 1px solid var(--hair);
           animation: thr-fade 0.5s var(--ease);
-        }
-        .roast-live {
-          padding: 14px 0 8px;
-          animation: thr-fade 0.4s var(--ease);
-        }
-        .roast-live p {
-          font-size: 16px;
-          line-height: 1.7;
-          color: var(--fg);
-          margin: 0 0 15px;
-        }
-        .caret {
-          display: inline-block;
-          width: 8px;
-          height: 1.05em;
-          margin-left: 2px;
-          vertical-align: text-bottom;
-          background: var(--tox);
-          animation: thr-tblink 1s steps(2) infinite;
         }
         .typing {
           display: inline-flex;
