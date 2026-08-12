@@ -32,6 +32,15 @@ export async function DELETE() {
     },
   });
 
+  await prisma.resumeImprovement.deleteMany({
+    where: { OR: [{ userId }, { analysis: { userId } }] },
+  });
+
+  await prisma.resumeVersion.updateMany({
+    where: { resume: { userId } },
+    data: { structuredContent: { redacted: true } },
+  });
+
   const analyses = await prisma.analysis.findMany({
     where: { userId },
     select: { id: true },

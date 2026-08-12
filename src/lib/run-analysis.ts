@@ -55,8 +55,10 @@ export async function createAndRunAnalysis(
   await trackServer("analysis_started", { analysisId: analysis.id, personaId });
 
   try {
+    const versionContent = version.structuredContent as { text?: string } | null;
+    const resumeText = versionContent?.text?.trim() || resume.sanitizedText;
     const result = await runAnalysisPipeline({
-      resumeText: resume.sanitizedText,
+      resumeText,
       personaId,
       onEvent,
     });

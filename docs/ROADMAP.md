@@ -18,7 +18,8 @@
 | Viral (share / toast / challenge) | shipped |
 | Auth / history | shipped |
 | Product analytics / referral funnel | shipped in recovery branch |
-| Resume improvement / vacancy review | in progress |
+| Resume improvement | shipped in recovery branch |
+| Vacancy review | in progress |
 | Top-tier visual system | **in progress** |
 | Launch hardening | next |
 

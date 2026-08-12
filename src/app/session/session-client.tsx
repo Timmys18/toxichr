@@ -282,8 +282,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
             report={report}
             hrName={hr.name}
             analysisId={analysisId}
-            resumeId={resumeId ?? null}
-            personaCode={personaCode}
           />
         ) : null}
       </div>
@@ -486,17 +484,12 @@ function Verdict({
   report,
   hrName,
   analysisId,
-  resumeId,
-  personaCode,
 }: {
   report: AnalysisReport;
   hrName: string;
   analysisId: string | null;
-  resumeId: string | null;
-  personaCode: PersonaId | null;
 }) {
   const { status } = useSession();
-  const otherHRs = ROSTER.filter((r) => r.id !== personaCode).slice(0, 3);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -645,7 +638,7 @@ function Verdict({
 
       {/* Крючок 1 — поделиться на эмоциональном пике */}
       <div className="hook share-hook">
-        <div className="hook-t">Приговор слишком хорош, чтобы держать в себе.</div>
+        <div className="hook-t">Вердикт слишком хорош, чтобы держать в себе.</div>
         <div className="hook-s">
           Публичная карточка — без имени и компаний, только вердикт и метрики.
         </div>
@@ -679,39 +672,21 @@ function Verdict({
         ) : null}
       </div>
 
-      {/* Крючок 2 — другой HR на том же резюме */}
-      {resumeId && otherHRs.length ? (
-        <div className="hook">
-          <div className="hook-t">А что скажет другой?</div>
-          <div className="hook-s">
-            Тот же файл — другая оптика и другой тип сарказма.
-          </div>
-          <div className="others">
-            {otherHRs.map((o) => (
-              <Link
-                key={o.id}
-                href={`/session?resumeId=${resumeId}&personaId=${o.id}`}
-                className="other"
-              >
-                <span
-                  className="oph thr-photo"
-                  style={{ backgroundImage: `url('${o.img}')` }}
-                />
-                <span className="oinfo">
-                  <span className="on">{o.name}</span>
-                  <span className="or">{o.role}</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Крючок 3 — реванш и сохранение */}
-      <div className="acts">
-        <Link href="/" className="thr-btn thr-btn-line">
-          Исправить и переспросить
+      <div className="next-actions">
+        <Link
+          href={`/revenge?analysisId=${analysisId ?? ""}`}
+          className="next-card primary"
+          onClick={() =>
+            analysisId && track("resume_fix_opened", { analysisId, source: "result" })
+          }
+        >
+          <span className="nk thr-mono">Главное продолжение</span>
+          <b>Исправить это резюме</b>
+          <span>Ответить по слабым строкам и получить новую версию.</span>
         </Link>
+      </div>
+
+      <div className="acts">
         {status === "authenticated" ? (
           <Link href="/me" className="thr-btn thr-btn-line">
             В кабинет
@@ -774,7 +749,7 @@ function Verdict({
         }
         .facts {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: minmax(0, 560px);
           gap: 1px;
           background: var(--hair);
           border: 1px solid var(--hair);
@@ -943,6 +918,53 @@ function Verdict({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+        .next-actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          margin-top: 24px;
+        }
+        @media (max-width: 720px) {
+          .next-actions {
+            grid-template-columns: 1fr;
+          }
+        }
+        .next-card {
+          min-height: 172px;
+          padding: 22px;
+          border: 1px solid var(--hair2);
+          border-radius: 18px;
+          background: var(--metal-0);
+          color: inherit;
+          text-decoration: none;
+          display: flex;
+          flex-direction: column;
+          transition: 0.2s var(--ease);
+        }
+        .next-card:hover {
+          border-color: var(--tox);
+          transform: translateY(-2px);
+        }
+        .next-card.primary {
+          background: linear-gradient(145deg, var(--tox-dim), var(--metal-0));
+        }
+        .next-card .nk {
+          color: var(--tox);
+          font-size: 9.5px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+        .next-card b {
+          margin-top: 20px;
+          font-size: 20px;
+          letter-spacing: -0.02em;
+        }
+        .next-card > span:last-child {
+          margin-top: 8px;
+          color: var(--dim);
+          font-size: 13.5px;
+          line-height: 1.5;
         }
         .acts {
           margin-top: 28px;
