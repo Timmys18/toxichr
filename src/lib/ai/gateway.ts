@@ -10,7 +10,8 @@ export type AiStage =
   | "score"
   | "persona"
   | "grounding"
-  | "anti_generic";
+  | "anti_generic"
+  | "vacancy";
 
 export type AiProvider = "openai" | "anthropic";
 

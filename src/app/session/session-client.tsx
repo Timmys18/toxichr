@@ -684,6 +684,18 @@ function Verdict({
           <b>Исправить это резюме</b>
           <span>Ответить по слабым строкам и получить новую версию.</span>
         </Link>
+        <Link
+          href={`/vacancy?analysisId=${analysisId ?? ""}`}
+          className="next-card"
+          onClick={() =>
+            analysisId &&
+            track("vacancy_review_opened", { analysisId, source: "result" })
+          }
+        >
+          <span className="nk thr-mono">Под конкретный отклик</span>
+          <b>Разобрать вакансию</b>
+          <span>Понять, что уже доказано, а где опыта не видно.</span>
+        </Link>
       </div>
 
       <div className="acts">
@@ -749,7 +761,7 @@ function Verdict({
         }
         .facts {
           display: grid;
-          grid-template-columns: minmax(0, 560px);
+          grid-template-columns: 1fr 1fr;
           gap: 1px;
           background: var(--hair);
           border: 1px solid var(--hair);

@@ -26,6 +26,7 @@ export const ANALYTICS_EVENTS = [
   "referral_converted",
   "resume_fix_opened",
   "vacancy_review_opened",
+  "vacancy_review_completed",
   "auth_registered",
   "analysis_claimed",
   "account_deleted",

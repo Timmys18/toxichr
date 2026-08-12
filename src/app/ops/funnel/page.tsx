@@ -41,6 +41,7 @@ export default async function FunnelPage() {
     ["Дошли из карточки до результата", referralsCompleted],
     ["Нажали «Исправить»", count("resume_fix_opened")],
     ["Открыли разбор вакансии", count("vacancy_review_opened")],
+    ["Получили разбор вакансии", count("vacancy_review_completed")],
   ] as const;
 
   return (

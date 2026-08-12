@@ -36,6 +36,14 @@ export async function DELETE() {
     where: { OR: [{ userId }, { analysis: { userId } }] },
   });
 
+  await prisma.vacancyMatch.deleteMany({
+    where: {
+      OR: [{ userId }, { analysis: { userId } }, { vacancy: { userId } }],
+    },
+  });
+
+  await prisma.vacancy.deleteMany({ where: { userId } });
+
   await prisma.resumeVersion.updateMany({
     where: { resume: { userId } },
     data: { structuredContent: { redacted: true } },

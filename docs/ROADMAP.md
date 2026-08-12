@@ -19,7 +19,7 @@
 | Auth / history | shipped |
 | Product analytics / referral funnel | shipped in recovery branch |
 | Resume improvement | shipped in recovery branch |
-| Vacancy review | in progress |
+| Vacancy review / resume match | shipped in recovery branch |
 | Top-tier visual system | **in progress** |
 | Launch hardening | next |
 
@@ -40,7 +40,8 @@
 Бесплатный разбор и шаринг: **shipped**.
 
 ### Post-launch depth
-Исправление резюме, экспорт, сравнение до/после и разбор вакансии — текущий этап.
+Исправление резюме, экспорт, сравнение до/после и разбор вакансии готовы в recovery-ветке.
+Следующий этап — закрытый пилот, выкладка и исправления по поведению реальных пользователей.
 
 ### Монетизация
 

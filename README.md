@@ -5,7 +5,7 @@
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind
-- Prisma (SQLite local / PostgreSQL production)
+- Prisma + SQLite
 - Motion
 - AI Gateway (provider-agnostic)
 
@@ -28,10 +28,10 @@ npm run dev
 
 Открой [http://localhost:3100](http://localhost:3100).
 
-Поток: **главная → HR → разбор → публичная карточка → исправление**.
+Поток: **главная → HR → разбор → публичная карточка → исправление → вакансия**.
 
 ## Product loop
 
 ```text
-Upload → HR → Result → Share → Fix
+Upload → HR → Result → Share → Fix → Vacancy match
 ```

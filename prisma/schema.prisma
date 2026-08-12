@@ -45,6 +45,8 @@ model User {
   payments            Payment[]
   grants              AccessGrant[]
   improvements        ResumeImprovement[]
+  vacancies           Vacancy[]
+  vacancyMatches      VacancyMatch[]
 }
 
 model ProductEvent {
@@ -143,6 +145,7 @@ model Analysis {
   payments        Payment[]
   grants          AccessGrant[]
   improvements    ResumeImprovement[]
+  vacancyMatches  VacancyMatch[]
 }
 
 model ResumeImprovement {
@@ -162,6 +165,40 @@ model ResumeImprovement {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
+  @@index([userId, updatedAt])
+}
+
+model Vacancy {
+  id         String         @id @default(cuid())
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id])
+  sourceText String
+  title      String?
+  company    String?
+  review     Json?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  matches    VacancyMatch[]
+
+  @@index([userId, updatedAt])
+}
+
+model VacancyMatch {
+  id                 String   @id @default(cuid())
+  vacancyId          String
+  vacancy            Vacancy  @relation(fields: [vacancyId], references: [id])
+  analysisId         String
+  analysis           Analysis @relation(fields: [analysisId], references: [id])
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id])
+  result             Json
+  tailoredIntro      String?
+  coverLetter        String?
+  interviewQuestions Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([vacancyId, analysisId])
   @@index([userId, updatedAt])
 }
 
