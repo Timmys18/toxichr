@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type MouseEvent } from "react";
 import Link from "next/link";
 import type { PublicSharePayload } from "@/lib/public-share";
+import {
+  getOrCreateVisitorId,
+  rememberReferral,
+} from "@/lib/referral-client";
 
 type Props = {
   slug: string;
@@ -11,19 +15,42 @@ type Props = {
 
 export function ToastClient({ slug, payload }: Props) {
   useEffect(() => {
+    const visitorId = getOrCreateVisitorId();
     void fetch(`/api/public-shares/${slug}/events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "viewed" }),
+      body: JSON.stringify({ eventType: "viewed", sessionId: visitorId }),
     });
   }, [slug]);
 
-  function trackCta() {
-    void fetch(`/api/public-shares/${slug}/events`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "cta_clicked" }),
-    });
+  async function trackCta(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    const visitorId = getOrCreateVisitorId();
+    rememberReferral({ slug, campaign: "public_card" });
+
+    await Promise.allSettled([
+      fetch(`/api/public-shares/${slug}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "cta_clicked",
+          sessionId: visitorId,
+        }),
+        keepalive: true,
+      }),
+      fetch("/api/referrals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          visitorId,
+          campaign: "public_card",
+        }),
+        keepalive: true,
+      }),
+    ]);
+
+    window.location.href = `/?ref=${encodeURIComponent(slug)}`;
   }
 
   const sub = [payload.roleLabel, payload.levelLabel]

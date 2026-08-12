@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 /** Soft-delete user data: revoke shares, scrub analyses, mark resumes deleted. */
 export async function DELETE() {
@@ -58,7 +58,7 @@ export async function DELETE() {
     },
   });
 
-  trackServer("account_deleted", { userId });
+  await trackServer("account_deleted", { userId });
 
   return NextResponse.json({ ok: true });
 }

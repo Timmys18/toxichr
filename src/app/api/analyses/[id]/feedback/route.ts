@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 const FeedbackSchema = z.object({
   annotationId: z.string().min(1),
@@ -44,7 +44,7 @@ export async function POST(request: Request, { params }: Params) {
     },
   });
 
-  trackServer("annotation_feedback", {
+  await trackServer("annotation_feedback", {
     analysisId,
     annotationId,
     verdict,

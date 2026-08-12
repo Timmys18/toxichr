@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { auth } from "@/lib/auth";
-import { hasFullReportAccess } from "@/lib/payments";
-import { redactReportForFree } from "@/lib/report-access";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -25,36 +23,29 @@ export async function GET(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const unlocked = await hasFullReportAccess(id, session?.user?.id);
   const full = analysis.reportPayload as AnalysisReport | null;
   const normalized = full
     ? {
         ...full,
         hrReview: full.hrReview ?? {
-          firstImpression: full.verdict?.comment ?? "Разбор устарел — запусти новую прожарку.",
+          firstImpression: full.verdict?.comment ?? "Разбор устарел — запусти новый.",
           deepDive: (full.topProblems ?? [])
             .map((p) => `${p.title}. ${p.roast}`)
             .join("\n\n") || "Нет текста разбора.",
           hiringTake: `Оценка ${full.score?.total ?? "—"}/100 по убедительности текста.`,
-          fixPriority: "Запусти новую прожарку для полного письма HR.",
+          fixPriority: "Запусти новый разбор для полного заключения HR.",
         },
         improvementPlan: full.improvementPlan ?? [],
       }
     : null;
-  const report = normalized
-    ? unlocked
-      ? normalized
-      : redactReportForFree(normalized)
-    : null;
-
   return NextResponse.json({
     id: analysis.id,
     status: analysis.status,
     personaId: analysis.persona?.code ?? null,
     score: analysis.scorePayload,
-    report,
+    report: normalized,
     createdAt: analysis.createdAt,
-    unlocked,
+    unlocked: true,
     claimed: Boolean(analysis.userId),
   });
 }

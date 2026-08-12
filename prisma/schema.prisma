@@ -29,21 +29,35 @@ enum PaymentStatus {
 }
 
 model User {
-  id                  String         @id @default(cuid())
-  email               String?        @unique
+  id                  String        @id @default(cuid())
+  email               String?       @unique
   passwordHash        String?
   displayName         String?
-  locale              String         @default("ru")
+  locale              String        @default("ru")
   consentVersion      String?
-  marketingConsent    Boolean        @default(false)
+  marketingConsent    Boolean       @default(false)
   deletionRequestedAt DateTime?
-  createdAt           DateTime       @default(now())
+  createdAt           DateTime      @default(now())
   lastLoginAt         DateTime?
   resumes             Resume[]
   analyses            Analysis[]
   shares              PublicShare[]
   payments            Payment[]
   grants              AccessGrant[]
+}
+
+model ProductEvent {
+  id         String   @id @default(cuid())
+  eventName  String
+  userId     String?
+  visitorId  String?
+  sessionId  String?
+  properties Json?
+  createdAt  DateTime @default(now())
+
+  @@index([eventName, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Resume {
@@ -111,7 +125,7 @@ model Analysis {
   persona         Persona?           @relation(fields: [personaId], references: [id])
   userId          String?
   user            User?              @relation(fields: [userId], references: [id])
-  analysisType    String             @default("roast")
+  analysisType    String             @default("resume_review")
   modelProvider   String?
   modelName       String?
   schemaVersion   String             @default("v1")
@@ -190,7 +204,7 @@ model Payment {
   user        User?         @relation(fields: [userId], references: [id])
   analysisId  String?
   analysis    Analysis?     @relation(fields: [analysisId], references: [id])
-  provider    String        @default("stripe")
+  provider    String        @default("manual")
   externalId  String?       @unique
   productCode String
   amount      Int

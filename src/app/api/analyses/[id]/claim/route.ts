@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -36,7 +36,7 @@ export async function POST(_request: Request, { params }: Params) {
     data: { userId: session.user.id },
   });
 
-  trackServer("analysis_claimed", {
+  await trackServer("analysis_claimed", {
     analysisId: id,
     userId: session.user.id,
   });

@@ -34,7 +34,7 @@ export default function PricingPage() {
               Глубже — когда захочешь.
             </h1>
             <p>
-              Сейчас идёт закрытый тест: полный разбор открыт всем без оплаты.
+              Сейчас идёт закрытый тест: полный разбор открыт без оплаты.
             </p>
           </div>
 
@@ -43,7 +43,7 @@ export default function PricingPage() {
               <div className="c-top">
                 <div className="c-k thr-mono">Разбор</div>
                 <div className="price">
-                  0 ₽ <span>/ навсегда бесплатно в тесте</span>
+                  0 ₽ <span>/ во время теста</span>
                 </div>
               </div>
               <ul>
@@ -64,10 +64,10 @@ export default function PricingPage() {
             <div className="card pro">
               <div className="c-top">
                 <div className="c-k thr-mono">
-                  Карьерный пакет <span className="soon">скоро</span>
+                  Реванш <span className="soon">пилот</span>
                 </div>
                 <div className="price muted">
-                  по подписке <span>· цену настроишь сам</span>
+                  690 ₽ <span>· первые 20 участников</span>
                 </div>
               </div>
               <ul>
@@ -78,15 +78,15 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <span className="thr-btn thr-btn-line cta disabled">
-                Появится после запуска
-              </span>
+              <Link href="/" className="thr-btn thr-btn-line cta">
+                Сначала разобрать резюме
+              </Link>
             </div>
           </div>
 
           <p className="note">
-            Оплата подключается через провайдера (Stripe / YooKassa) — включается
-            одним флагом, когда придёт время. Пока платить не нужно.
+            Платить нужно будет за готовую исправленную версию, а не за
+            дополнительные объяснения того же диагноза.
           </p>
         </section>
       </main>

@@ -87,7 +87,7 @@ export async function renderShareCard(
                 textTransform: "uppercase",
               }}
             >
-              ToxicHR · прожарка
+              ToxicHR · разбор
             </div>
             <div
               style={{

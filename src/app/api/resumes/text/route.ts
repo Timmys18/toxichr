@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError, readJson } from "@/lib/api";
 import { redactPii } from "@/lib/documents/redact-pii";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 type Body = { text?: string };
 
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const raw = body?.text?.trim();
 
   if (!raw || raw.length < 80) {
-    return jsonError("Слишком коротко — даже прожаривать нечего.", 400);
+    return jsonError("Слишком коротко — разбирать пока нечего.", 400);
   }
 
   const { sanitizedText } = redactPii(raw);
@@ -35,7 +35,10 @@ export async function POST(request: Request) {
     include: { versions: true },
   });
 
-  trackServer("resume_uploaded", { resumeId: resume.id, mime: "text/plain" });
+  await trackServer("resume_uploaded", {
+    resumeId: resume.id,
+    mime: "text/plain",
+  });
 
   return NextResponse.json({
     resumeId: resume.id,

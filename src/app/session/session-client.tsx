@@ -7,6 +7,7 @@ import type { PersonaId } from "@/lib/personas";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
+import { updateReferral } from "@/lib/referral-client";
 
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
@@ -77,6 +78,12 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
             setAnalysisId(id);
             setPhase("verdict");
             track("verdict_viewed", { analysisId: id });
+            if (resumeId) {
+              await updateReferral("completed", {
+                resumeId,
+                analysisId: id,
+              }).catch(() => undefined);
+            }
           }
           return;
         }

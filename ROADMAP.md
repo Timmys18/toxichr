@@ -1,18 +1,15 @@
 # ToxicHR — Roadmap
 
-Полная дорожная карта релизов: [`docs/ROADMAP.md`](./docs/ROADMAP.md)
+Полная дорожная карта: [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 
-Живой burndown и доклады: [`BURNDOWN.md`](./BURNDOWN.md)
+Живой прогресс: [`BURNDOWN.md`](./BURNDOWN.md)
 
-## Коротко
+| Этап | Цель |
+|---|---|
+| Разбор | Загрузка → HR → точный результат |
+| Виральность | Публичная карточка → новый пользователь → новый разбор |
+| Реванш | Вопросы → исправленная версия → экспорт → оценка до/после |
+| Вакансия | Разбор требований → честное сопоставление → версия для отклика |
+| Монетизация | Оплата за готовый результат, а не за скрытую часть разбора |
 
-| Релиз | Цель |
-|-------|------|
-| **R0** Foundation | Репо, дизайн, env, landing |
-| **R1** Roast Loop | Upload → HR → приговор → короткий отчёт |
-| **R2** Viral | Share Studio + `/toast/{slug}` + Telegram |
-| **R3** Money | Auth after value + Stripe + полный отчёт |
-| **R4** Depth | Editor, vacancy, battle |
-| **R5** RU Contour | YooKassa + РФ storage |
-
-**MVP = R0 → R3.** Язык: RU. Infra MVP: Vercel + Stripe.
+Язык первой версии: русский. Первый платный продукт: «Реванш».

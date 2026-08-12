@@ -1,7 +1,7 @@
 # ToxicHR — Roadmap
 
-> Пользователь приходит поржать → остаётся из‑за точности → делится → платит.  
-> Язык: RU. Платежи: Stripe → позже YooKassa / РФ-контур.
+> Пользователь приходит проверить резюме → остаётся из‑за точности → делится → платит за сделанную работу.
+> Язык: RU. Первый платный продукт — готовая исправленная версия резюме.
 
 Живой прогресс: [`BURNDOWN.md`](../BURNDOWN.md)
 
@@ -14,9 +14,11 @@
 
 | Слой | Статус |
 |------|--------|
-| Roast loop | shipped |
+| Review loop | shipped |
 | Viral (share / toast / challenge) | shipped |
-| Money (auth / Stripe / full report) | shipped |
+| Auth / history | shipped |
+| Product analytics / referral funnel | shipped in recovery branch |
+| Resume improvement / vacancy review | in progress |
 | Top-tier visual system | **in progress** |
 | Launch hardening | next |
 
@@ -34,16 +36,17 @@
 
 ## Feature board
 
-Продуктовый loop R0–R3: **shipped**.
+Бесплатный разбор и шаринг: **shipped**.
 
 ### Post-launch depth
-Editor, vacancy match, battle UI, admin — после сигнала с рынка.
+Исправление резюме, экспорт, сравнение до/после и разбор вакансии — текущий этап.
 
-### RU Contour
-YooKassa, S3 РФ, data residency.
+### Монетизация
+
+Сначала ручной пилот «Реванша»: 690 ₽ для первых 20 пользователей, затем 990 ₽. Оплата только за готовую исправленную версию, не за полный разбор.
 
 ---
 
 ## NOT now
 
-Мягкий режим, голосовые персонажи, мобильное приложение, лента, B2B, автоотклики, десятки персонажей.
+Мягкий режим, голосовые персонажи, мобильное приложение, лента, B2B, автоотклики, десятки персонажей, батлы резюме.

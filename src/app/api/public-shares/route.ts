@@ -10,7 +10,7 @@ import {
   publicToastUrl,
   resolveMetricValues,
 } from "@/lib/public-share";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 import { auth } from "@/lib/auth";
 
 export async function POST(request: Request) {
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     },
   });
 
-  trackServer("public_share_created", {
+  await trackServer("public_share_created", {
     analysisId,
     slug: share.slug,
     mode,

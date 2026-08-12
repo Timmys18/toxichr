@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
+import { updateReferral } from "@/lib/referral-client";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
@@ -16,9 +17,14 @@ export function HomeClient() {
   const fileRef = useRef<HTMLInputElement>(null);
   const dockRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    track("landing_viewed", {});
+  }, []);
+
   const select = useCallback((id: PersonaId) => {
     setSel(id);
     setError(null);
+    track("persona_selected", { persona: id });
     setTimeout(
       () => dockRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
       120,
@@ -51,6 +57,9 @@ export function HomeClient() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Не удалось загрузить файл");
         track("resume_uploaded", { mime: file.type || "unknown" });
+        await updateReferral("started", { resumeId: data.resumeId }).catch(
+          () => undefined,
+        );
         router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Ошибка загрузки");

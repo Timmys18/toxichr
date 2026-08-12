@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 const StartSchema = z.object({
   slug: z.string().min(1),
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
         where: { id: existing.id },
         data: { startedResumeId: resumeId },
       });
-      trackServer("challenge_joined", {
+      await trackServer("challenge_joined", {
         slug: existing.publicShare.slug,
         referralId: existing.id,
       });
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         },
       });
 
-      trackServer("referral_converted", {
+      await trackServer("referral_converted", {
         slug: existing.publicShare.slug,
         referralId: existing.id,
         analysisId,
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
     },
   });
 
-  trackServer("challenge_created", {
+  await trackServer("challenge_created", {
     slug,
     referralId: session.id,
     campaign,

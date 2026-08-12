@@ -6,7 +6,7 @@
 import { runAnalysisPipeline, type PipelineEvent } from "@/lib/ai/pipeline";
 import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 export const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
@@ -52,7 +52,7 @@ export async function createAndRunAnalysis(
     },
   });
 
-  trackServer("analysis_started", { analysisId: analysis.id, personaId });
+  await trackServer("analysis_started", { analysisId: analysis.id, personaId });
 
   try {
     const result = await runAnalysisPipeline({
@@ -92,7 +92,7 @@ export async function createAndRunAnalysis(
       },
     });
 
-    trackServer("analysis_completed", { analysisId: analysis.id });
+    await trackServer("analysis_completed", { analysisId: analysis.id });
     return { analysisId: analysis.id };
   } catch (error) {
     await prisma.analysis.update({

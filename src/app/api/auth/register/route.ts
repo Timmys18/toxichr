@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 const RegisterSchema = z.object({
   email: z.string().email(),
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     });
   }
 
-  trackServer("auth_registered", { userId: user.id });
+  await trackServer("auth_registered", { userId: user.id });
 
   return NextResponse.json({
     id: user.id,

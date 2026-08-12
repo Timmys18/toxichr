@@ -8,7 +8,6 @@
 - Prisma (SQLite local / PostgreSQL production)
 - Motion
 - AI Gateway (provider-agnostic)
-- Stripe → later YooKassa
 
 ## Docs
 
@@ -29,10 +28,10 @@ npm run dev
 
 Открой [http://localhost:3100](http://localhost:3100).
 
-Поток: **главная → /start → HR → theatre → приговор → улики → share → pay**.
+Поток: **главная → HR → разбор → публичная карточка → исправление**.
 
 ## Product loop
 
 ```text
-Upload → HR → Verdict → Share → Pay → Plan
+Upload → HR → Result → Share → Fix
 ```

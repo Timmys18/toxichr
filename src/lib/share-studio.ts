@@ -111,7 +111,7 @@ export function buildShareCaption(input: {
       ].join("\n");
     case "progress":
       return [
-        `Прожарка резюме${roleBit}: ${input.score}/100.`,
+        `Разбор резюме${roleBit}: ${input.score}/100.`,
         `«${input.quote}»`,
         "",
         "Разбор честный. Дальше — правки по плану из отчёта.",

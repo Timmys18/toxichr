@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 
 const EventSchema = z.object({
   eventType: z.enum([
@@ -54,7 +54,11 @@ export async function POST(request: Request, { params }: Params) {
           ? "share_platform_opened"
           : "share_text_copied";
 
-  trackServer(analyticsEvent, { slug, platform: platform ?? null });
+  await trackServer(analyticsEvent, {
+    slug,
+    platform: platform ?? null,
+    visitorId: sessionId,
+  });
 
   return NextResponse.json({ ok: true });
 }
