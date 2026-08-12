@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const FeedbackSchema = z.object({
   annotationId: z.string().min(1),
@@ -12,6 +13,10 @@ const FeedbackSchema = z.object({
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, { params }: Params) {
+  const limited = rateLimit(`feedback:${clientIp(request)}`, 30, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: "Слишком много оценок." }, { status: 429 });
+  }
   const { id: analysisId } = await params;
 
   const analysis = await prisma.analysis.findUnique({
@@ -23,7 +28,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = FeedbackSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -44,7 +49,7 @@ export async function POST(request: Request, { params }: Params) {
     },
   });
 
-  trackServer("annotation_feedback", {
+  await trackServer("annotation_feedback", {
     analysisId,
     annotationId,
     verdict,

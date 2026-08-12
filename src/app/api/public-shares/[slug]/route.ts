@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { PublicSharePayload } from "@/lib/public-share";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 import { auth } from "@/lib/auth";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -59,7 +59,7 @@ export async function DELETE(_request: Request, { params }: Params) {
     data: { active: false, revokedAt: new Date() },
   });
 
-  trackServer("public_share_revoked", { slug });
+  await trackServer("public_share_revoked", { slug });
 
   return NextResponse.json({ ok: true });
 }

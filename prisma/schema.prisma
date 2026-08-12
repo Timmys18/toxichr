@@ -29,21 +29,38 @@ enum PaymentStatus {
 }
 
 model User {
-  id                  String         @id @default(cuid())
-  email               String?        @unique
+  id                  String              @id @default(cuid())
+  email               String?             @unique
   passwordHash        String?
   displayName         String?
-  locale              String         @default("ru")
+  locale              String              @default("ru")
   consentVersion      String?
-  marketingConsent    Boolean        @default(false)
+  marketingConsent    Boolean             @default(false)
   deletionRequestedAt DateTime?
-  createdAt           DateTime       @default(now())
+  createdAt           DateTime            @default(now())
   lastLoginAt         DateTime?
   resumes             Resume[]
   analyses            Analysis[]
   shares              PublicShare[]
   payments            Payment[]
   grants              AccessGrant[]
+  improvements        ResumeImprovement[]
+  vacancies           Vacancy[]
+  vacancyMatches      VacancyMatch[]
+}
+
+model ProductEvent {
+  id         String   @id @default(cuid())
+  eventName  String
+  userId     String?
+  visitorId  String?
+  sessionId  String?
+  properties Json?
+  createdAt  DateTime @default(now())
+
+  @@index([eventName, createdAt])
+  @@index([visitorId, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Resume {
@@ -65,16 +82,17 @@ model Resume {
 }
 
 model ResumeVersion {
-  id                String            @id @default(cuid())
+  id                String             @id @default(cuid())
   resumeId          String
-  resume            Resume            @relation(fields: [resumeId], references: [id])
+  resume            Resume             @relation(fields: [resumeId], references: [id])
   parentVersionId   String?
-  versionNumber     Int               @default(1)
+  versionNumber     Int                @default(1)
   structuredContent Json?
-  source            String            @default("upload")
-  createdAt         DateTime          @default(now())
+  source            String             @default("upload")
+  createdAt         DateTime           @default(now())
   candidateProfile  CandidateProfile?
   analyses          Analysis[]
+  improvement       ResumeImprovement?
 }
 
 model CandidateProfile {
@@ -104,28 +122,84 @@ model Persona {
 }
 
 model Analysis {
-  id              String             @id @default(cuid())
+  id              String              @id @default(cuid())
   resumeVersionId String
-  resumeVersion   ResumeVersion      @relation(fields: [resumeVersionId], references: [id])
+  resumeVersion   ResumeVersion       @relation(fields: [resumeVersionId], references: [id])
   personaId       String?
-  persona         Persona?           @relation(fields: [personaId], references: [id])
+  persona         Persona?            @relation(fields: [personaId], references: [id])
   userId          String?
-  user            User?              @relation(fields: [userId], references: [id])
-  analysisType    String             @default("roast")
+  user            User?               @relation(fields: [userId], references: [id])
+  analysisType    String              @default("resume_review")
   modelProvider   String?
   modelName       String?
-  schemaVersion   String             @default("v1")
-  status          AnalysisStatus     @default(QUEUED)
+  schemaVersion   String              @default("v1")
+  status          AnalysisStatus      @default(QUEUED)
   scorePayload    Json?
   reportPayload   Json?
   cost            Float?
   tokensIn        Int?
   tokensOut       Int?
-  createdAt       DateTime           @default(now())
+  createdAt       DateTime            @default(now())
   shares          PublicShare[]
   feedback        AnalysisFeedback[]
   payments        Payment[]
   grants          AccessGrant[]
+  improvements    ResumeImprovement[]
+  vacancyMatches  VacancyMatch[]
+}
+
+model ResumeImprovement {
+  id              String         @id @default(cuid())
+  analysisId      String         @unique
+  analysis        Analysis       @relation(fields: [analysisId], references: [id])
+  userId          String?
+  user            User?          @relation(fields: [userId], references: [id])
+  resumeVersionId String?        @unique
+  resumeVersion   ResumeVersion? @relation(fields: [resumeVersionId], references: [id])
+  status          String         @default("questions")
+  answers         Json?
+  replacements    Json?
+  improvedText    String?
+  beforeScore     Int
+  afterScore      Int?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model Vacancy {
+  id         String         @id @default(cuid())
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id])
+  sourceText String
+  title      String?
+  company    String?
+  review     Json?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  matches    VacancyMatch[]
+
+  @@index([userId, updatedAt])
+}
+
+model VacancyMatch {
+  id                 String   @id @default(cuid())
+  vacancyId          String
+  vacancy            Vacancy  @relation(fields: [vacancyId], references: [id])
+  analysisId         String
+  analysis           Analysis @relation(fields: [analysisId], references: [id])
+  userId             String?
+  user               User?    @relation(fields: [userId], references: [id])
+  result             Json
+  tailoredIntro      String?
+  coverLetter        String?
+  interviewQuestions Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([vacancyId, analysisId])
+  @@index([userId, updatedAt])
 }
 
 model AnalysisFeedback {
@@ -190,7 +264,7 @@ model Payment {
   user        User?         @relation(fields: [userId], references: [id])
   analysisId  String?
   analysis    Analysis?     @relation(fields: [analysisId], references: [id])
-  provider    String        @default("stripe")
+  provider    String        @default("manual")
   externalId  String?       @unique
   productCode String
   amount      Int

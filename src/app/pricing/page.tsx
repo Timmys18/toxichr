@@ -34,7 +34,7 @@ export default function PricingPage() {
               Глубже — когда захочешь.
             </h1>
             <p>
-              Сейчас идёт закрытый тест: полный разбор открыт всем без оплаты.
+              До подключения оплаты весь карьерный цикл открыт без ограничений.
             </p>
           </div>
 
@@ -43,7 +43,7 @@ export default function PricingPage() {
               <div className="c-top">
                 <div className="c-k thr-mono">Разбор</div>
                 <div className="price">
-                  0 ₽ <span>/ навсегда бесплатно в тесте</span>
+                  0 ₽ <span>/ во время теста</span>
                 </div>
               </div>
               <ul>
@@ -64,10 +64,10 @@ export default function PricingPage() {
             <div className="card pro">
               <div className="c-top">
                 <div className="c-k thr-mono">
-                  Карьерный пакет <span className="soon">скоро</span>
+                  Карьерный цикл <span className="soon">закрытый тест</span>
                 </div>
                 <div className="price muted">
-                  по подписке <span>· цену настроишь сам</span>
+                  0 ₽ <span>· все функции открыты</span>
                 </div>
               </div>
               <ul>
@@ -78,21 +78,21 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <span className="thr-btn thr-btn-line cta disabled">
-                Появится после запуска
-              </span>
+              <Link href="/" className="thr-btn thr-btn-line cta">
+                Начать полный цикл
+              </Link>
             </div>
           </div>
 
           <p className="note">
-            Оплата подключается через провайдера (Stripe / YooKassa) — включается
-            одним флагом, когда придёт время. Пока платить не нужно.
+            После пилота платной станет сделанная работа: готовая версия под
+            вакансию. Сам разбор и объяснения останутся бесплатными.
           </p>
         </section>
       </main>
 
       <style>{`
-        .pricing { max-width: 1000px; margin: 0 auto; padding: 48px 40px 90px; }
+        .pricing { width: 100%; max-width: 1000px; box-sizing: border-box; margin: 0 auto; padding: 48px 40px 90px; }
         @media (max-width: 720px) { .pricing { padding: 32px 18px 70px; } }
         .pricing .ph { text-align: center; max-width: 640px; margin: 0 auto; }
         .pricing .over { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }

@@ -4,6 +4,7 @@ import { TopNav } from "@/components/shared/top-nav";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
+import { PERSONAS } from "@/lib/personas";
 import { CabinetClient, type CabItem } from "./cabinet-client";
 
 export const metadata: Metadata = { title: "Центр карьеры" };
@@ -21,24 +22,29 @@ export default async function MePage() {
     redirect("/auth?next=/me");
   }
 
-  const analyses = await prisma.analysis.findMany({
-    where: { userId: session.user.id, status: "COMPLETED" },
-    include: {
-      persona: true,
-      resumeVersion: { include: { resume: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 30,
-  });
+  const [analyses, vacancyCount] = await Promise.all([
+    prisma.analysis.findMany({
+      where: { userId: session.user.id, status: "COMPLETED" },
+      include: {
+        persona: true,
+        resumeVersion: { include: { resume: true } },
+        improvements: { orderBy: { updatedAt: "desc" }, take: 1 },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+    }),
+    prisma.vacancy.count({ where: { userId: session.user.id } }),
+  ]);
 
   const items: CabItem[] = analyses
     .map((a): CabItem | null => {
       const report = a.reportPayload as AnalysisReport | null;
       if (!report) return null;
       const code = a.persona?.code ?? report.recommendedPersonaId ?? "lera";
+      const persona = PERSONAS.find((item) => item.id === code);
       return {
         id: a.id,
-        personaName: a.persona?.name ?? report.candidateProfile.primaryRole,
+        personaName: persona?.name ?? a.persona?.name ?? report.candidateProfile.primaryRole,
         img: IMG[code] ?? "/hr/lera.jpg",
         verdictTitle: report.verdict.title,
         score: report.score.total,
@@ -47,6 +53,8 @@ export default async function MePage() {
         achievements: report.viralMetrics.achievementsCount,
         unproven: report.viralMetrics.unprovenClaimsCount,
         filename: a.resumeVersion?.resume?.originalFilename ?? "резюме",
+        afterScore: a.improvements[0]?.afterScore ?? null,
+        hasImprovement: a.improvements[0]?.status === "ready",
       };
     })
     .filter((x): x is CabItem => x !== null);
@@ -60,7 +68,7 @@ export default async function MePage() {
     <>
       <TopNav />
       <main id="main" className="flex flex-1 flex-col">
-        <CabinetClient name={name} items={items} />
+        <CabinetClient name={name} items={items} vacancyCount={vacancyCount} />
       </main>
     </>
   );

@@ -10,12 +10,17 @@ import {
   publicToastUrl,
   resolveMetricValues,
 } from "@/lib/public-share";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 import { auth } from "@/lib/auth";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(`share-create:${clientIp(request)}`, 12, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: "Слишком много ссылок. Подожди минуту." }, { status: 429 });
+  }
   const session = await auth();
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = CreatePublicShareSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -119,7 +124,7 @@ export async function POST(request: Request) {
     },
   });
 
-  trackServer("public_share_created", {
+  await trackServer("public_share_created", {
     analysisId,
     slug: share.slug,
     mode,

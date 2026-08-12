@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
+import { deleteUpload } from "@/lib/storage";
 
-/** Soft-delete user data: revoke shares, scrub analyses, mark resumes deleted. */
+/** Revoke public data, remove uploads, and irreversibly anonymize the account. */
 export async function DELETE() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -11,54 +12,72 @@ export async function DELETE() {
   }
 
   const userId = session.user.id;
-
-  // Revoke shares owned by user OR attached to their analyses
-  await prisma.publicShare.updateMany({
-    where: {
-      active: true,
-      OR: [{ userId }, { analysis: { userId } }],
-    },
-    data: { active: false, revokedAt: new Date() },
+  const storedFiles = await prisma.resume.findMany({
+    where: { userId, privateStorageKey: { not: null } },
+    select: { privateStorageKey: true },
   });
 
-  await prisma.resume.updateMany({
-    where: { userId, deletedAt: null },
-    data: {
-      deletedAt: new Date(),
-      status: "DELETED",
-      sanitizedText: null,
-      extractedTextEncrypted: null,
-      privateStorageKey: null,
-    },
-  });
+  // Delete physical files before removing their database pointers. The action
+  // stays safely retryable because a missing file is treated as already gone.
+  await Promise.all(
+    storedFiles
+      .map((resume) => resume.privateStorageKey)
+      .filter((key): key is string => Boolean(key))
+      .map((key) => deleteUpload(key)),
+  );
 
-  const analyses = await prisma.analysis.findMany({
-    where: { userId },
-    select: { id: true },
-  });
-
-  for (const a of analyses) {
-    await prisma.analysis.update({
-      where: { id: a.id },
+  const deletedAt = new Date();
+  await prisma.$transaction([
+    prisma.publicShare.updateMany({
+      where: {
+        active: true,
+        OR: [{ userId }, { analysis: { userId } }],
+      },
+      data: { active: false, revokedAt: deletedAt },
+    }),
+    prisma.resumeImprovement.deleteMany({
+      where: { OR: [{ userId }, { analysis: { userId } }] },
+    }),
+    prisma.vacancyMatch.deleteMany({
+      where: {
+        OR: [{ userId }, { analysis: { userId } }, { vacancy: { userId } }],
+      },
+    }),
+    prisma.vacancy.deleteMany({ where: { userId } }),
+    prisma.analysis.updateMany({
+      where: { userId },
       data: {
         reportPayload: { redacted: true },
         scorePayload: { redacted: true },
         status: "FAILED",
       },
-    });
-  }
+    }),
+    prisma.resumeVersion.updateMany({
+      where: { resume: { userId } },
+      data: { structuredContent: { redacted: true } },
+    }),
+    prisma.resume.updateMany({
+      where: { userId, deletedAt: null },
+      data: {
+        deletedAt,
+        status: "DELETED",
+        sanitizedText: null,
+        extractedTextEncrypted: null,
+        privateStorageKey: null,
+      },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        deletionRequestedAt: deletedAt,
+        email: `deleted_${userId}@invalid.local`,
+        passwordHash: null,
+        displayName: "удалён",
+      },
+    }),
+  ]);
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      deletionRequestedAt: new Date(),
-      email: `deleted_${userId}@invalid.local`,
-      passwordHash: null,
-      displayName: "удалён",
-    },
-  });
-
-  trackServer("account_deleted", { userId });
+  await trackServer("account_deleted", { userId });
 
   return NextResponse.json({ ok: true });
 }

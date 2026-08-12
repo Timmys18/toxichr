@@ -4,7 +4,7 @@ import { extractTextFromBuffer } from "@/lib/documents/extract-text";
 import { redactPii } from "@/lib/documents/redact-pii";
 import { prisma } from "@/lib/prisma";
 import { saveUpload } from "@/lib/storage";
-import { trackServer } from "@/lib/analytics";
+import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -28,6 +28,14 @@ export async function POST(request: Request) {
   if (file.size > MAX_BYTES) {
     return jsonError("Файл больше 8 МБ.", 400);
   }
+  const supported =
+    file.type === "application/pdf" ||
+    file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    /\.(pdf|docx)$/i.test(file.name);
+  if (!supported) {
+    return jsonError("Поддерживаются только PDF и DOCX.", 415);
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -39,7 +47,9 @@ export async function POST(request: Request) {
       file.name,
     );
   } catch {
-    trackServer("resume_parse_failed", { reason: "unsupported_or_corrupt" });
+    await trackServer("resume_parse_failed", {
+      reason: "unsupported_or_corrupt",
+    });
     return jsonError(
       "Ваше резюме технически победило искусственный интеллект. Попробуй другой файл или вставь текст.",
       422,
@@ -48,7 +58,7 @@ export async function POST(request: Request) {
 
   if (extracted.text.trim().length < 80) {
     return jsonError(
-      "Резюме настолько краткое, что даже прожаривать пока нечего.",
+      "Резюме настолько краткое, что разбирать пока нечего.",
       422,
     );
   }
@@ -76,7 +86,7 @@ export async function POST(request: Request) {
     include: { versions: true },
   });
 
-  trackServer("resume_uploaded", {
+  await trackServer("resume_uploaded", {
     resumeId: resume.id,
     mime: file.type || "unknown",
   });

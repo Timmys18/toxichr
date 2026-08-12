@@ -7,48 +7,50 @@ Production readiness before public traffic.
 | Variable | Notes |
 |----------|--------|
 | `NEXT_PUBLIC_APP_URL` | Public HTTPS origin |
-| `DATABASE_URL` | Postgres in prod; SQLite ok for local |
+| `DATABASE_URL` | SQLite-файл на постоянном диске для текущей версии |
 | `AUTH_SECRET` | Long random (`openssl rand -base64 32`) |
-| `STRIPE_SECRET_KEY` | Live key for real charges |
-| `STRIPE_WEBHOOK_SECRET` | From Stripe webhook endpoint |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Browser key |
-| `STRIPE_PRICE_FULL_REPORT` | Cents, default 990 |
+| `OPS_EMAILS` | Emails allowed to open `/ops/funnel` |
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Required for live persona voice (`AI_PROVIDER` ≠ `mock`) |
 | `AI_PROVIDER` | `mock` (heuristics only) \| `openai` \| `anthropic` |
-| `ALLOW_MOCK_CHECKOUT` | Optional; set `false` to disable local mock unlock |
 
 Copy from `.env.example`. Never commit `.env`.
-
-**Fail-closed payments:** in `NODE_ENV=production`, checkout without a valid `STRIPE_SECRET_KEY` returns **503** — never a free unlock.
 
 ## Pre-deploy
 
 1. `npm run db:push` (or migrate) against prod DB
 2. `npm run build` green
-3. Stripe webhook → `POST /api/payments/webhook`
-4. Confirm production checkout fails closed without Stripe (503, not free unlock)
-5. Confirm mock unlock only in non-production when Stripe unset
-6. OG card: open `/toast/{slug}` in Telegram / LinkedIn debugger
-7. Auth: register → claim analysis → history
-8. Delete account path: settings → УДАЛИТЬ
-9. With AI keys: persona voice differs from heuristic; quotes still grounded
-10. Without AI keys: honest heuristic path still ships plan + rewrites
+3. OG card: open `/toast/{slug}` in Telegram / LinkedIn debugger
+4. Auth: register → claim analysis → history
+5. Delete account path: settings → УДАЛИТЬ
+6. With AI keys: persona voice differs from heuristic; quotes still grounded
+7. Without AI keys: honest heuristic path still ships plan + rewrites
+8. `/ops/funnel` is hidden without an email from `OPS_EMAILS`
+9. Improvement: answer questions → create version → download DOCX → open print view
+10. Vacancy: standalone review → match against saved resume
+11. Second opinion: run another HR against the same saved resume
+12. `GET /api/health` returns `200` with the production database available
+13. GitHub Actions is green on the release commit
+14. Playwright desktop core loop and mobile viewport checks are green
 
 ## Smoke path
 
 ```text
-/ → /start → /personas → /analyzing → /verdict
-→ /report → checkout → full report
-→ /share → publish → /toast/{slug} → /challenge/{slug}
-→ /auth → /history → /settings
+/ → /session → result → public card → /toast/{slug}
+→ new visitor → upload → result
+→ /revenge → DOCX / print
+→ /vacancy → match against resume
+→ /auth → /me → /settings
 ```
 
 ## Security defaults
 
 - Public shares: no name/companies in payload
-- Full report redacted without AccessGrant
+- Full report is free; paid value starts with a corrected document
 - PII redacted before AI
-- Rate limits on upload/analysis (verify under load)
+- Rate limits on file/text upload, analysis, vacancy review and registration (verify under load)
+- Auth `next` redirects accept internal paths only
+- Account deletion removes database data and locally stored uploads
+- Baseline HTTP hardening headers are enabled in `next.config.ts`
 
 ## Visual QA (mobile)
 
@@ -57,3 +59,7 @@ Copy from `.env.example`. Never commit `.env`.
 - [ ] Verdict score + CTAs thumb-friendly
 - [ ] Share Studio sticky preview usable
 - [ ] History row actions wrap cleanly
+- [ ] Vacancy draft survives resume upload and returns to matching
+- [ ] Second-opinion cards fit without horizontal page overflow
+- [ ] Editor draft → save → DOCX/PDF/vacancy all use the same final text
+- [ ] Saved vacancy reopens from `/vacancies` without losing its result

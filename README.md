@@ -1,14 +1,13 @@
 # ToxicHR
 
-Самый честный карьерный сервис: сначала смеётся над резюме, потом показывает, почему оно не работает, и даёт план правок без выдуманных фактов.
+Самый честный карьерный сервис: четыре HR по-разному разбирают одно резюме, показывают, почему оно не работает, и доводят его до конкретной вакансии без выдуманных фактов.
 
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind
-- Prisma (SQLite local / PostgreSQL production)
+- Prisma + SQLite
 - Motion
 - AI Gateway (provider-agnostic)
-- Stripe → later YooKassa
 
 ## Docs
 
@@ -29,10 +28,25 @@ npm run dev
 
 Открой [http://localhost:3100](http://localhost:3100).
 
-Поток: **главная → /start → HR → theatre → приговор → улики → share → pay**.
+Поток: **главная → HR → разбор → второе мнение → исправление → вакансия**.
 
 ## Product loop
 
 ```text
-Upload → HR → Verdict → Share → Pay → Plan
+Upload → HR → Result → Second opinion → Fix → Vacancy match → Repeat
 ```
+
+Главная продуктовая фишка — не одноразовый AI-ответ, а цикл из четырёх разных
+взглядов на те же факты резюме. Любое улучшение проходит проверку качества:
+сервис не придумывает опыт и не применяет замену, если она делает текст слабее.
+
+## Проверки
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+npm run test:e2e
+```
+
+Playwright проверяет полный пользовательский цикл в Chromium и мобильную вёрстку.

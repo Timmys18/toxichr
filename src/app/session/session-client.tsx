@@ -7,6 +7,8 @@ import type { PersonaId } from "@/lib/personas";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
+import { updateReferral } from "@/lib/referral-client";
+import { readPendingVacancy } from "@/lib/pending-vacancy";
 
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
@@ -44,6 +46,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const [stage, setStage] = useState<string>(viewId ? "persona" : "extract");
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
+  const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeId ?? null);
   const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
 
@@ -74,9 +77,16 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           if (!cancelled) {
             setReport(data.report as AnalysisReport);
             if (data.personaId) setPersonaCode(data.personaId as PersonaId);
+            if (data.resumeId) setActiveResumeId(data.resumeId as string);
             setAnalysisId(id);
             setPhase("verdict");
             track("verdict_viewed", { analysisId: id });
+            if (resumeId) {
+              await updateReferral("completed", {
+                resumeId,
+                analysisId: id,
+              }).catch(() => undefined);
+            }
           }
           return;
         }
@@ -275,7 +285,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
             report={report}
             hrName={hr.name}
             analysisId={analysisId}
-            resumeId={resumeId ?? null}
+            resumeId={activeResumeId}
             personaCode={personaCode}
           />
         ) : null}
@@ -283,10 +293,12 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
 
       <style jsx>{`
         .session {
+          width: 100%;
           display: grid;
           grid-template-columns: 330px 1fr;
           gap: 40px;
           max-width: 1160px;
+          box-sizing: border-box;
           margin: 0 auto;
           padding: 36px 40px 90px;
           align-items: start;
@@ -306,7 +318,24 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           .presence {
             position: relative;
             top: 0;
+            display: grid;
+            grid-template-columns: minmax(150px, 220px) 1fr;
+            gap: 12px;
+            align-items: stretch;
           }
+          .presence .hrcard { aspect-ratio: auto; min-height: 210px; }
+          .presence .meta { margin-top: 0; display: flex; flex-direction: column; justify-content: center; }
+          .presence .back { grid-column: 1 / -1; margin-top: 0; }
+        }
+        @media (max-width: 520px) {
+          .presence { grid-template-columns: 116px 1fr; }
+          .presence .hrcard { min-height: 160px; border-radius: 17px; }
+          .presence .info { padding: 12px; }
+          .presence .nm { font-size: 16px; }
+          .presence .rl { display: none; }
+          .presence .st { margin-top: 8px; font-size: 8px; letter-spacing: .08em; }
+          .presence .meta { padding: 12px 14px; }
+          .presence .row { align-items: flex-start; flex-direction: column; gap: 3px; font-size: 11.5px; }
         }
         .hrcard {
           position: relative;
@@ -489,11 +518,19 @@ function Verdict({
   personaCode: PersonaId | null;
 }) {
   const { status } = useSession();
-  const otherHRs = ROSTER.filter((r) => r.id !== personaCode).slice(0, 3);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareErr, setShareErr] = useState<string | null>(null);
+  const [hasPendingVacancy, setHasPendingVacancy] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setHasPendingVacancy(Boolean(readPendingVacancy())),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function doShare() {
     if (!analysisId || sharing) return;
@@ -638,7 +675,7 @@ function Verdict({
 
       {/* Крючок 1 — поделиться на эмоциональном пике */}
       <div className="hook share-hook">
-        <div className="hook-t">Приговор слишком хорош, чтобы держать в себе.</div>
+        <div className="hook-t">Разбор слишком точный, чтобы держать в себе.</div>
         <div className="hook-s">
           Публичная карточка — без имени и компаний, только вердикт и метрики.
         </div>
@@ -652,7 +689,7 @@ function Verdict({
             ? "Создаём ссылку…"
             : shareUrl
               ? "Ссылка готова ↓"
-              : "Поделиться приговором"}
+              : "Поделиться результатом"}
         </button>
         {shareErr ? (
           <p className="shareerr" role="alert">
@@ -672,27 +709,54 @@ function Verdict({
         ) : null}
       </div>
 
-      {/* Крючок 2 — другой HR на том же резюме */}
-      {resumeId && otherHRs.length ? (
-        <div className="hook">
-          <div className="hook-t">А что скажет другой?</div>
+      <div className="next-actions">
+        <Link
+          href={`/revenge?analysisId=${analysisId ?? ""}`}
+          className="next-card primary"
+          onClick={() =>
+            analysisId && track("resume_fix_opened", { analysisId, source: "result" })
+          }
+        >
+          <span className="nk thr-mono">Главное продолжение</span>
+          <b>Исправить это резюме</b>
+          <span>Ответить по слабым строкам и получить новую версию.</span>
+        </Link>
+        <Link
+          href={`/vacancy?analysisId=${analysisId ?? ""}`}
+          className={`next-card ${hasPendingVacancy ? "pending" : ""}`}
+          onClick={() =>
+            analysisId &&
+            track("vacancy_review_opened", { analysisId, source: "result" })
+          }
+        >
+          <span className="nk thr-mono">
+            {hasPendingVacancy ? "Вакансия уже сохранена" : "Под конкретный отклик"}
+          </span>
+          <b>{hasPendingVacancy ? "Сопоставить сейчас" : "Разобрать вакансию"}</b>
+          <span>{hasPendingVacancy ? "Текст на месте — повторно вставлять ничего не нужно." : "Понять, что уже доказано, а где опыта не видно."}</span>
+        </Link>
+      </div>
+
+      {resumeId ? (
+        <div className="opinion">
+          <div className="hook-t">Одно резюме. Четыре разных фильтра.</div>
           <div className="hook-s">
-            Тот же файл — другая оптика и другой тип сарказма.
+            Проверь, за что зацепится другой HR — файл загружать повторно не нужно.
           </div>
           <div className="others">
-            {otherHRs.map((o) => (
+            {ROSTER.filter((person) => person.id !== personaCode).map((person) => (
               <Link
-                key={o.id}
-                href={`/session?resumeId=${resumeId}&personaId=${o.id}`}
+                key={person.id}
+                href={`/session?resumeId=${resumeId}&personaId=${person.id}`}
                 className="other"
               >
                 <span
                   className="oph thr-photo"
-                  style={{ backgroundImage: `url('${o.img}')` }}
+                  style={{ backgroundImage: `url('${person.img}')` }}
                 />
                 <span className="oinfo">
-                  <span className="on">{o.name}</span>
-                  <span className="or">{o.role}</span>
+                  <span className="on">{person.name}</span>
+                  <span className="or">{person.role}</span>
                 </span>
               </Link>
             ))}
@@ -700,11 +764,7 @@ function Verdict({
         </div>
       ) : null}
 
-      {/* Крючок 3 — реванш и сохранение */}
       <div className="acts">
-        <Link href="/" className="thr-btn thr-btn-line">
-          Исправить и переспросить
-        </Link>
         {status === "authenticated" ? (
           <Link href="/me" className="thr-btn thr-btn-line">
             В кабинет
@@ -936,6 +996,66 @@ function Verdict({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+        .next-actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+          margin-top: 24px;
+        }
+        @media (max-width: 720px) {
+          .next-actions {
+            grid-template-columns: 1fr;
+          }
+        }
+        .next-card {
+          min-height: 172px;
+          padding: 22px;
+          border: 1px solid var(--hair2);
+          border-radius: 18px;
+          background: var(--metal-0);
+          color: inherit;
+          text-decoration: none;
+          display: flex;
+          flex-direction: column;
+          transition: 0.2s var(--ease);
+        }
+        .next-card:hover {
+          border-color: var(--tox);
+          transform: translateY(-2px);
+        }
+        .next-card.primary {
+          background: linear-gradient(145deg, var(--tox-dim), var(--metal-0));
+        }
+        .next-card.pending {
+          border-color: rgba(106,155,255,.4);
+          background: linear-gradient(145deg, rgba(106,155,255,.1), var(--metal-0));
+        }
+        .next-card.pending .nk { color: var(--data); }
+        .next-card .nk {
+          color: var(--tox);
+          font-size: 9.5px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+        .next-card b {
+          margin-top: 20px;
+          font-size: 20px;
+          letter-spacing: -0.02em;
+        }
+        .next-card > span:last-child {
+          margin-top: 8px;
+          color: var(--dim);
+          font-size: 13.5px;
+          line-height: 1.5;
+        }
+        .opinion {
+          margin-top: 16px;
+          padding: 22px 24px;
+          border: 1px solid var(--hair);
+          border-radius: 18px;
+          background: var(--metal-0);
+          max-width: 64ch;
         }
         .acts {
           margin-top: 28px;
