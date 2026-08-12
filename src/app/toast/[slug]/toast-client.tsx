@@ -2,6 +2,7 @@
 
 import { useEffect, type MouseEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { PublicSharePayload } from "@/lib/public-share";
 import {
   getOrCreateVisitorId,
@@ -14,6 +15,8 @@ type Props = {
 };
 
 export function ToastClient({ slug, payload }: Props) {
+  const router = useRouter();
+
   useEffect(() => {
     const visitorId = getOrCreateVisitorId();
     void fetch(`/api/public-shares/${slug}/events`, {
@@ -50,7 +53,7 @@ export function ToastClient({ slug, payload }: Props) {
       }),
     ]);
 
-    window.location.assign(`/?ref=${encodeURIComponent(slug)}`);
+    router.push(`/?ref=${encodeURIComponent(slug)}`);
   }
 
   const sub = [payload.roleLabel, payload.levelLabel]

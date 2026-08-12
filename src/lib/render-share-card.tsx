@@ -80,6 +80,7 @@ export async function renderShareCard(
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
+                display: "flex",
                 fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                 fontSize: 18,
                 letterSpacing: 4,
@@ -91,6 +92,7 @@ export async function renderShareCard(
             </div>
             <div
               style={{
+                display: "flex",
                 marginTop: 12,
                 fontSize: isStory ? 42 : 36,
                 lineHeight: 1.1,
@@ -100,6 +102,7 @@ export async function renderShareCard(
             </div>
             <div
               style={{
+                display: "flex",
                 marginTop: 6,
                 fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                 fontSize: 18,
@@ -121,6 +124,7 @@ export async function renderShareCard(
           >
             <div
               style={{
+                display: "flex",
                 fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                 fontSize: 14,
                 letterSpacing: 2,
@@ -132,6 +136,8 @@ export async function renderShareCard(
             </div>
             <div
               style={{
+                display: "flex",
+                alignItems: "baseline",
                 fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                 fontSize: 48,
                 color: "#c8f135",
@@ -157,6 +163,7 @@ export async function renderShareCard(
           {metaLine ? (
             <div
               style={{
+                display: "flex",
                 fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                 fontSize: 16,
                 letterSpacing: 2,
@@ -170,15 +177,17 @@ export async function renderShareCard(
           ) : null}
           <div
             style={{
+              display: "flex",
               fontSize: isStory ? 52 : 40,
               lineHeight: 1.15,
               maxWidth: 980,
             }}
           >
-            «{title}»
+            {`«${title}»`}
           </div>
           <div
             style={{
+              display: "flex",
               marginTop: 20,
               borderLeft: "3px solid rgba(200,241,53,0.7)",
               paddingLeft: 16,
@@ -210,6 +219,7 @@ export async function renderShareCard(
                 >
                   <div
                     style={{
+                      display: "flex",
                       fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                       fontSize: 14,
                       letterSpacing: 2,
@@ -221,6 +231,7 @@ export async function renderShareCard(
                   </div>
                   <div
                     style={{
+                      display: "flex",
                       fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
                       fontSize: 32,
                       marginTop: 4,
@@ -234,6 +245,7 @@ export async function renderShareCard(
           ) : null}
           <div
             style={{
+              display: "flex",
               marginTop: 24,
               fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
               fontSize: 16,

@@ -27,6 +27,8 @@ type Result = {
   improvedText: string;
 };
 
+type ResultView = "changes" | "compare" | "editor";
+
 export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -36,6 +38,12 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [originalText, setOriginalText] = useState("");
+  const [editorText, setEditorText] = useState("");
+  const [savedEditorText, setSavedEditorText] = useState("");
+  const [resultView, setResultView] = useState<ResultView>("changes");
+  const [editorSaving, setEditorSaving] = useState(false);
+  const [editorMessage, setEditorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     track("resume_fix_opened", { analysisId });
@@ -53,6 +61,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         if (!response.ok) throw new Error(data.error ?? "Разбор не найден");
         setQuestions(data.questions);
         setBeforeScore(data.beforeScore);
+        setOriginalText(data.originalText ?? "");
         let savedAnswers: Record<string, string> = {};
         if (Array.isArray(data.improvement?.answers)) {
           savedAnswers = Object.fromEntries(
@@ -66,13 +75,24 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         }
         setAnswers({ ...localAnswers, ...savedAnswers });
         if (data.improvement?.ready) {
+          const serverText = data.improvement.improvedText ?? "";
+          let draftText = serverText;
+          try {
+            draftText =
+              window.localStorage.getItem(`toxichr:editor:${analysisId}`) ||
+              serverText;
+          } catch {
+            draftText = serverText;
+          }
           setResult({
             ready: true,
             beforeScore: data.beforeScore,
             afterScore: data.improvement.afterScore,
             replacements: data.improvement.replacements ?? [],
-            improvedText: data.improvement.improvedText ?? "",
+            improvedText: serverText,
           });
+          setEditorText(draftText);
+          setSavedEditorText(serverText);
         }
       })
       .catch((reason) =>
@@ -83,11 +103,35 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
 
   useEffect(() => {
     if (loading) return;
-    window.localStorage.setItem(
-      `toxichr:revenge:${analysisId}`,
-      JSON.stringify(answers),
-    );
+    try {
+      window.localStorage.setItem(
+        `toxichr:revenge:${analysisId}`,
+        JSON.stringify(answers),
+      );
+    } catch {
+      // Ответы всё равно останутся в текущей вкладке.
+    }
   }, [analysisId, answers, loading]);
+
+  useEffect(() => {
+    if (!result || !editorText) return;
+    try {
+      window.localStorage.setItem(`toxichr:editor:${analysisId}`, editorText);
+    } catch {
+      // Серверное сохранение остаётся доступно даже без localStorage.
+    }
+  }, [analysisId, editorText, result]);
+
+  const hasUnsavedEditorChanges = Boolean(
+    result && editorText.trim() !== savedEditorText.trim(),
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedEditorChanges) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [hasUnsavedEditorChanges]);
 
   async function submit() {
     setSaving(true);
@@ -106,6 +150,9 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Не удалось собрать версию");
       setResult(data as Result);
+      setEditorText(data.improvedText ?? "");
+      setSavedEditorText(data.improvedText ?? "");
+      setResultView("changes");
       window.setTimeout(
         () => document.getElementById("revenge-result")?.scrollIntoView({ behavior: "smooth" }),
         80,
@@ -114,6 +161,43 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       setError(reason instanceof Error ? reason.message : "Ошибка сохранения");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveEditor() {
+    if (!result || editorText.trim().length < 80) return;
+    setEditorSaving(true);
+    setEditorMessage(null);
+    setError(null);
+    try {
+      const response = await fetch(`/api/improvements/${analysisId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ improvedText: editorText }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Не удалось сохранить текст");
+      setSavedEditorText(data.improvedText);
+      setEditorText(data.improvedText);
+      setResult((currentResult) =>
+        currentResult
+          ? {
+              ...currentResult,
+              improvedText: data.improvedText,
+              afterScore: data.afterScore,
+            }
+          : currentResult,
+      );
+      setEditorMessage("Сохранено. DOCX, PDF и проверка вакансией используют эту версию.");
+      try {
+        window.localStorage.setItem(`toxichr:editor:${analysisId}`, data.improvedText);
+      } catch {
+        // Сервер уже сохранил версию.
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Ошибка сохранения");
+    } finally {
+      setEditorSaving(false);
     }
   }
 
@@ -208,27 +292,122 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
             <i>→</i>
             <span className="after"><b>{result.afterScore ?? "—"}</b> стало</span>
           </div>
-          <h2>Что изменилось</h2>
-          <div className="replacements">
-            {result.replacements.map((replacement) => (
-              <article key={replacement.problemId}>
-                <p className="old">Было: {replacement.original}</p>
-                <p className="new">Стало: {replacement.replacement}</p>
-              </article>
+          <div className="result-head">
+            <div>
+              <h2>Новая версия готова</h2>
+              <p>Проверь изменения, сравни тексты или отредактируй всё вручную.</p>
+            </div>
+            <span className={`save-state ${hasUnsavedEditorChanges ? "dirty" : "clean"}`}>
+              {hasUnsavedEditorChanges ? "Есть несохранённые правки" : "Версия сохранена"}
+            </span>
+          </div>
+
+          <div className="result-tabs" role="tablist" aria-label="Режим просмотра версии">
+            {([
+              ["changes", "Что изменилось"],
+              ["compare", "Сравнить до / после"],
+              ["editor", "Редактор"],
+            ] as Array<[ResultView, string]>).map(([view, label]) => (
+              <button
+                key={view}
+                type="button"
+                role="tab"
+                aria-selected={resultView === view}
+                className={resultView === view ? "active" : ""}
+                onClick={() => {
+                  setResultView(view);
+                  setEditorMessage(null);
+                }}
+              >
+                {label}
+              </button>
             ))}
           </div>
-          <div className="exports">
-            <a className="thr-btn thr-btn-tox" href={`/api/improvements/${analysisId}/docx`}>
-              Скачать DOCX
-            </a>
-            <Link className="thr-btn thr-btn-line" href={`/revenge/${analysisId}/print`} target="_blank">
-              Открыть PDF / печать
-            </Link>
-            <Link className="thr-btn vacancy-next" href={`/vacancy?analysisId=${analysisId}`}>
-              Проверить под вакансию →
-            </Link>
+
+          {resultView === "changes" ? (
+            <div className="replacements" role="tabpanel">
+              {result.replacements.map((replacement) => (
+                <article key={replacement.problemId}>
+                  <p className="old">Было: {replacement.original}</p>
+                  <p className="new">Стало: {replacement.replacement}</p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {resultView === "compare" ? (
+            <div className="compare" role="tabpanel">
+              <article>
+                <div className="compare-label thr-mono">До · оценка {beforeScore}</div>
+                <pre>{originalText}</pre>
+              </article>
+              <article className="after-copy">
+                <div className="compare-label thr-mono">После · оценка {result.afterScore ?? "—"}</div>
+                <pre>{editorText}</pre>
+              </article>
+            </div>
+          ) : null}
+
+          {resultView === "editor" ? (
+            <div className="editor" role="tabpanel">
+              <div className="editor-meta">
+                <div>
+                  <b>Полный текст новой версии</b>
+                  <span>Можно менять любые строки. Сервис пересчитает оценку после сохранения.</span>
+                </div>
+                <span className="thr-mono">{editorText.trim().length} знаков</span>
+              </div>
+              <textarea
+                value={editorText}
+                onChange={(event) => {
+                  setEditorText(event.target.value);
+                  setEditorMessage(null);
+                }}
+                rows={24}
+                maxLength={60_000}
+                aria-label="Редактор новой версии резюме"
+              />
+              <div className="editor-actions">
+                <button
+                  type="button"
+                  className="thr-btn thr-btn-tox"
+                  onClick={() => void saveEditor()}
+                  disabled={editorSaving || !hasUnsavedEditorChanges || editorText.trim().length < 80}
+                >
+                  {editorSaving ? "Сохраняем…" : "Сохранить версию"}
+                </button>
+                {hasUnsavedEditorChanges ? (
+                  <button
+                    type="button"
+                    className="reset"
+                    onClick={() => setEditorText(savedEditorText)}
+                  >
+                    Отменить несохранённые правки
+                  </button>
+                ) : null}
+              </div>
+              {editorMessage ? <p className="editor-message" role="status">{editorMessage}</p> : null}
+            </div>
+          ) : null}
+
+          {hasUnsavedEditorChanges ? (
+            <div className="export-lock" role="status">
+              Сохрани изменения в редакторе — после этого экспорт и проверка вакансией обновятся.
+            </div>
+          ) : (
+            <div className="exports">
+              <a className="thr-btn thr-btn-tox" href={`/api/improvements/${analysisId}/docx`}>
+                Скачать DOCX
+              </a>
+              <Link className="thr-btn thr-btn-line" href={`/revenge/${analysisId}/print`} target="_blank">
+                Открыть PDF / печать
+              </Link>
+              <Link className="thr-btn vacancy-next" href={`/vacancy?analysisId=${analysisId}`}>
+                Проверить под вакансию →
+              </Link>
+            </div>
+          )}
           </div>
-        </div>
       ) : null}
 
       <style jsx>{`
@@ -259,11 +438,36 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         .scores b { font-size: 46px; color: var(--crit); }
         .scores .after b { color: var(--tox); }
         .scores i { color: var(--dim); font-size: 28px; }
-        .result > h2 { margin-top: 34px; font-size: 28px; }
+        .result-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-top: 30px; }
+        .result-head h2 { font-size: 28px; }
+        .result-head p { margin-top: 6px; color: var(--dim); font-size: 13.5px; line-height: 1.5; }
+        .save-state { flex-shrink: 0; padding: 7px 10px; border-radius: 999px; font: 9px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+        .save-state.clean { color: var(--tox); background: var(--tox-dim); }
+        .save-state.dirty { color: #ffd166; background: rgba(255,209,102,.1); }
+        .result-tabs { display: flex; gap: 6px; margin-top: 24px; padding: 5px; border: 1px solid var(--hair); border-radius: 14px; background: var(--metal-0); }
+        .result-tabs button { flex: 1; min-height: 42px; padding: 8px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--dim); font: inherit; font-size: 12.5px; cursor: pointer; }
+        .result-tabs button.active { background: var(--metal-2); color: var(--fg); box-shadow: inset 0 0 0 1px var(--hair); }
         .replacements { display: grid; gap: 12px; margin-top: 18px; }
         .replacements article { padding: 20px; border: 1px solid var(--hair); border-radius: 16px; background: var(--metal-0); }
         .old { color: var(--faint); text-decoration: line-through; line-height: 1.5; }
         .new { margin-top: 12px; color: var(--fg); line-height: 1.55; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+        .compare article { min-width: 0; border: 1px solid var(--hair); border-radius: 16px; background: var(--metal-0); overflow: hidden; }
+        .compare article.after-copy { border-color: rgba(44,224,139,.24); }
+        .compare-label { padding: 12px 15px; border-bottom: 1px solid var(--hair); color: var(--faint); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+        .compare .after-copy .compare-label { color: var(--tox); }
+        .compare pre { max-height: 560px; overflow: auto; padding: 18px; color: var(--dim); font: 12px/1.65 var(--font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
+        .editor { margin-top: 18px; padding: 20px; border: 1px solid var(--hair); border-radius: 16px; background: var(--metal-0); }
+        .editor-meta { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+        .editor-meta b { display: block; font-size: 16px; }
+        .editor-meta div span { display: block; margin-top: 5px; color: var(--dim); font-size: 12.5px; line-height: 1.45; }
+        .editor-meta > span { flex-shrink: 0; color: var(--faint); font-size: 9px; }
+        .editor textarea { min-height: 520px; background: var(--metal-1); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; }
+        .editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 14px; }
+        .editor-actions :global(.thr-btn) { min-height: 48px; padding: 0 22px; }
+        .reset { border: 0; background: transparent; color: var(--faint); font: inherit; font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+        .editor-message { margin-top: 14px; color: var(--tox); font-size: 12.5px; line-height: 1.5; }
+        .export-lock { margin-top: 20px; padding: 15px 17px; border: 1px solid rgba(255,209,102,.2); border-radius: 14px; background: rgba(255,209,102,.06); color: rgba(255,226,153,.78); font-size: 12.5px; line-height: 1.5; }
         .exports { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
         .exports :global(.thr-btn) { min-height: 50px; padding: 0 22px; text-decoration: none; }
         .exports :global(.vacancy-next) { color: var(--data); border: 1px solid rgba(106,155,255,.3); background: rgba(106,155,255,.07); }
@@ -273,6 +477,12 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
           .progress-head span:last-child { max-width: 18ch; text-align: right; }
           .questions article { padding: 22px 18px; }
           .step-actions :global(.thr-btn) { min-width: 0; flex: 1; }
+          .result-head { align-items: flex-start; flex-direction: column; }
+          .result-tabs { overflow-x: auto; }
+          .result-tabs button { flex: 0 0 auto; min-width: 142px; }
+          .compare { grid-template-columns: 1fr; }
+          .editor { padding: 18px 14px; }
+          .editor-meta { flex-direction: column; gap: 8px; }
         }
       `}</style>
     </section>

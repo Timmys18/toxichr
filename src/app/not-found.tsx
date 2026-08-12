@@ -19,7 +19,7 @@ export default function NotFound() {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/"
+            href="/vacancy"
             className="inline-flex h-11 items-center justify-center bg-toxic px-5 text-sm font-medium text-ink hover:bg-toxic-hot"
           >
             На главную
@@ -28,7 +28,7 @@ export default function NotFound() {
             href="/"
             className="inline-flex h-11 items-center justify-center border border-ink/20 bg-surface px-5 text-sm font-medium text-ink hover:border-ink/40"
           >
-            Кинуть резюме
+            Разобрать вакансию
           </Link>
         </div>
       </div>

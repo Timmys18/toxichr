@@ -15,6 +15,9 @@ import {
 } from "@/lib/improvement-server";
 import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
+import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
+import { trackServer } from "@/lib/analytics-server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const BodySchema = z.object({
   answers: z
@@ -25,6 +28,10 @@ const BodySchema = z.object({
       }),
     )
     .max(7),
+});
+
+const EditorSchema = z.object({
+  improvedText: z.string().trim().min(80).max(60_000),
 });
 
 async function context(analysisId: string) {
@@ -52,11 +59,15 @@ export async function GET(
     const analysis = await context(analysisId);
     const report = analysis.reportPayload as AnalysisReport;
     const saved = analysis.improvements[0] ?? null;
+    const originalText = await loadOriginalResumeText(
+      analysis.resumeVersion.resume,
+    );
 
     return NextResponse.json({
       analysisId,
       questions: buildImprovementQuestions(report),
       beforeScore: report.score.total,
+      originalText,
       improvement: saved
         ? {
             answers: saved.answers,
@@ -77,6 +88,13 @@ export async function POST(
   { params }: { params: Promise<{ analysisId: string }> },
 ) {
   try {
+    const limited = rateLimit(`improvement:${clientIp(request)}`, 20, 60_000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: `Слишком много сохранений. Подожди ${limited.retryAfterSec}с.` },
+        { status: 429 },
+      );
+    }
     const { analysisId } = await params;
     const parsed = BodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
@@ -183,6 +201,86 @@ export async function POST(
       afterScore: saved.afterScore,
       replacements: saved.replacements,
       improvedText: saved.improvedText,
+    });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ analysisId: string }> },
+) {
+  try {
+    const limited = rateLimit(`editor:${clientIp(request)}`, 30, 60_000);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: `Слишком много сохранений. Подожди ${limited.retryAfterSec}с.` },
+        { status: 429 },
+      );
+    }
+
+    const { analysisId } = await params;
+    const parsed = EditorSchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Версия должна содержать от 80 до 60 000 знаков." },
+        { status: 400 },
+      );
+    }
+
+    const analysis = await context(analysisId);
+    const improvement = analysis.improvements[0];
+    if (!improvement?.resumeVersionId) {
+      return NextResponse.json(
+        { error: "Сначала собери новую версию по ответам." },
+        { status: 409 },
+      );
+    }
+
+    const report = analysis.reportPayload as AnalysisReport;
+    const personaId = (analysis.persona?.code ?? "lera") as PersonaId;
+    const originalText = analysis.resumeVersion.resume.sanitizedText ?? "";
+    const baseline = runHeuristicAnalysis(originalText, personaId).score.total;
+    const edited = runHeuristicAnalysis(parsed.data.improvedText, personaId).score.total;
+    const afterScore = Math.max(
+      0,
+      Math.min(100, report.score.total + edited - baseline),
+    );
+    const replacements = improvement.replacements ?? [];
+
+    await prisma.$transaction([
+      prisma.resumeVersion.update({
+        where: { id: improvement.resumeVersionId },
+        data: {
+          structuredContent: {
+            text: parsed.data.improvedText,
+            replacements,
+            editedManually: true,
+          } as Prisma.InputJsonValue,
+        },
+      }),
+      prisma.resumeImprovement.update({
+        where: { analysisId },
+        data: {
+          improvedText: parsed.data.improvedText,
+          afterScore,
+          status: "ready",
+        },
+      }),
+    ]);
+
+    await trackServer("resume_editor_saved", {
+      analysisId,
+      afterScore,
+      length: parsed.data.improvedText.length,
+    });
+
+    return NextResponse.json({
+      ready: true,
+      improvedText: parsed.data.improvedText,
+      afterScore,
+      savedAt: new Date().toISOString(),
     });
   } catch (error) {
     return errorResponse(error);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const StartSchema = z.object({
   slug: z.string().min(1),
@@ -19,7 +20,11 @@ const CompleteSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const limited = rateLimit(`referral:${clientIp(request)}`, 60, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+  const body = await request.json().catch(() => null);
 
   // Complete / update path
   if (body?.stage === "started" || body?.stage === "completed") {

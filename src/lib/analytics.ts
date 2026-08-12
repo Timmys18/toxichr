@@ -25,6 +25,7 @@ export const ANALYTICS_EVENTS = [
   "challenge_joined",
   "referral_converted",
   "resume_fix_opened",
+  "resume_editor_saved",
   "vacancy_review_opened",
   "vacancy_review_completed",
   "auth_registered",

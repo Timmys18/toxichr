@@ -59,14 +59,17 @@ export function SettingsClient() {
           <Link href="/me" className="thr-btn thr-btn-line">
             В кабинет
           </Link>
+          <Link href="/privacy" className="thr-btn thr-btn-line">
+            Правила приватности
+          </Link>
         </div>
       </section>
 
       <section className="panel danger">
         <h2>Удалить данные</h2>
         <p>
-          Отключим публичные ссылки, пометим резюме удалёнными и обезличим
-          аккаунт. Действие необратимо.
+          Отключим публичные ссылки, удалим загруженные файлы и тексты,
+          затем обезличим аккаунт. Действие необратимо.
         </p>
         <label>
           <span className="lab thr-mono">Напиши УДАЛИТЬ</span>

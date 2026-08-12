@@ -30,6 +30,7 @@ Copy from `.env.example`. Never commit `.env`.
 11. Second opinion: run another HR against the same saved resume
 12. `GET /api/health` returns `200` with the production database available
 13. GitHub Actions is green on the release commit
+14. Playwright desktop core loop and mobile viewport checks are green
 
 ## Smoke path
 
@@ -60,3 +61,5 @@ Copy from `.env.example`. Never commit `.env`.
 - [ ] History row actions wrap cleanly
 - [ ] Vacancy draft survives resume upload and returns to matching
 - [ ] Second-opinion cards fit without horizontal page overflow
+- [ ] Editor draft → save → DOCX/PDF/vacancy all use the same final text
+- [ ] Saved vacancy reopens from `/vacancies` without losing its result

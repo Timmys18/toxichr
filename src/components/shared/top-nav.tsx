@@ -12,6 +12,7 @@ export async function TopNav() {
       <div className="links">
         <Link href="/hr">HR-состав</Link>
         <Link href="/vacancy">Разобрать вакансию</Link>
+        {authed ? <Link href="/vacancies">Мои вакансии</Link> : null}
         <Link href="/pricing">Цены</Link>
       </div>
       <Link href={authed ? "/me" : "/auth"} className="login">

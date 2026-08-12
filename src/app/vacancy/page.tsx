@@ -7,14 +7,14 @@ export const metadata: Metadata = { title: "Разбор вакансии" };
 export default async function VacancyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ analysisId?: string }>;
+  searchParams: Promise<{ analysisId?: string; vacancyId?: string }>;
 }) {
-  const { analysisId } = await searchParams;
+  const { analysisId, vacancyId } = await searchParams;
   return (
     <>
       <TopNav />
       <main id="main" className="flex flex-1 flex-col">
-        <VacancyClient analysisId={analysisId} />
+        <VacancyClient analysisId={analysisId} vacancyId={vacancyId} />
       </main>
     </>
   );

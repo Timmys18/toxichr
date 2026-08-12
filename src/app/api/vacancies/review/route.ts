@@ -16,6 +16,7 @@ import { reviewVacancy } from "@/lib/vacancy";
 const BodySchema = z.object({
   text: z.string().trim().min(80).max(30_000),
   analysisId: z.string().min(1).optional(),
+  vacancyId: z.string().min(1).optional(),
 });
 
 export async function POST(request: Request) {
@@ -54,21 +55,57 @@ export async function POST(request: Request) {
       report,
     });
 
-    const vacancy = await prisma.vacancy.create({
-      data: {
-        userId: session?.user?.id ?? analysis?.userId ?? null,
-        sourceText: parsed.data.text,
-        title: result.title,
-        review: result as Prisma.InputJsonValue,
-      },
-    });
+    const ownerId = session?.user?.id ?? analysis?.userId ?? null;
+    const existingVacancy = parsed.data.vacancyId
+      ? await prisma.vacancy.findFirst({
+          where: {
+            id: parsed.data.vacancyId,
+            OR: [{ userId: ownerId }, { userId: null }],
+          },
+        })
+      : null;
+    if (parsed.data.vacancyId && !existingVacancy) {
+      return NextResponse.json({ error: "Вакансия не найдена." }, { status: 404 });
+    }
+
+    const vacancy = existingVacancy
+      ? await prisma.vacancy.update({
+          where: { id: existingVacancy.id },
+          data: {
+            userId: ownerId,
+            sourceText: parsed.data.text,
+            title: result.title,
+            review: result as Prisma.InputJsonValue,
+          },
+        })
+      : await prisma.vacancy.create({
+          data: {
+            userId: ownerId,
+            sourceText: parsed.data.text,
+            title: result.title,
+            review: result as Prisma.InputJsonValue,
+          },
+        });
 
     if (analysis) {
-      await prisma.vacancyMatch.create({
-        data: {
+      await prisma.vacancyMatch.upsert({
+        where: {
+          vacancyId_analysisId: {
+            vacancyId: vacancy.id,
+            analysisId: analysis.id,
+          },
+        },
+        create: {
           vacancyId: vacancy.id,
           analysisId: analysis.id,
-          userId: session?.user?.id ?? analysis.userId ?? null,
+          userId: ownerId,
+          result: result as Prisma.InputJsonValue,
+          tailoredIntro: result.tailoredIntro,
+          coverLetter: result.coverLetter,
+          interviewQuestions: result.interviewQuestions as Prisma.InputJsonValue,
+        },
+        update: {
+          userId: ownerId,
           result: result as Prisma.InputJsonValue,
           tailoredIntro: result.tailoredIntro,
           coverLetter: result.coverLetter,

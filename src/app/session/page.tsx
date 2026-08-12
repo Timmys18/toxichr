@@ -22,7 +22,7 @@ export default async function SessionPage({ searchParams }: Props) {
       <>
         <TopNav />
         <main id="main" className="flex flex-1 flex-col">
-          <SessionClient viewId={view} />
+          <SessionClient key={`view:${view}`} viewId={view} />
         </main>
       </>
     );
@@ -37,6 +37,7 @@ export default async function SessionPage({ searchParams }: Props) {
       <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <SessionClient
+          key={`${resumeId}:${personaId}`}
           resumeId={resumeId!}
           personaId={personaId as PersonaId}
         />

@@ -69,7 +69,7 @@ export default function HrPage() {
       </main>
 
       <style>{`
-        .cast { max-width: 1100px; margin: 0 auto; padding: 48px 40px 90px; }
+        .cast { width: 100%; max-width: 1100px; box-sizing: border-box; margin: 0 auto; padding: 48px 40px 90px; }
         @media (max-width: 720px){ .cast { padding: 32px 18px 70px; } }
         .cast .ph { text-align: center; max-width: 680px; margin: 0 auto; }
         .cast .over { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }

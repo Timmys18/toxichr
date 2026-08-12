@@ -293,10 +293,12 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
 
       <style jsx>{`
         .session {
+          width: 100%;
           display: grid;
           grid-template-columns: 330px 1fr;
           gap: 40px;
           max-width: 1160px;
+          box-sizing: border-box;
           margin: 0 auto;
           padding: 36px 40px 90px;
           align-items: start;

@@ -14,6 +14,8 @@ export type CabItem = {
   achievements: number;
   unproven: number;
   filename: string;
+  afterScore: number | null;
+  hasImprovement: boolean;
 };
 
 function timeAgo(iso: string): string {
@@ -29,11 +31,14 @@ function timeAgo(iso: string): string {
 export function CabinetClient({
   name,
   items,
+  vacancyCount,
 }: {
   name: string;
   items: CabItem[];
+  vacancyCount: number;
 }) {
   const last = items[0];
+  const improved = items.filter((item) => item.hasImprovement);
   const status =
     !last
       ? "ждёт разбора"
@@ -95,14 +100,14 @@ export function CabinetClient({
                 <div className="k">оценка убедительности</div>
               </div>
             </div>
-            <Link href="/" className="thr-btn thr-btn-line rebtn">
-              Исправил? Проверь заново — покажем динамику
+            <Link href={`/revenge?analysisId=${last.id}`} className="thr-btn thr-btn-line rebtn">
+              {last.hasImprovement ? "Открыть новую версию и сравнение" : "Исправить и сравнить до / после"}
             </Link>
           </div>
 
           <div>
             <div className="panel">
-              <div className="p-t thr-mono">
+              <div className="p-t thr-mono" aria-label={`Мои разборы: ${items.length}`}>
                 <span>Мои разборы</span>
                 <span>{items.length}</span>
               </div>
@@ -127,14 +132,37 @@ export function CabinetClient({
 
             <div className="panel" style={{ marginTop: 18 }}>
               <div className="p-t thr-mono">
-                <span>Батлы</span>
+                <span>Версии до / после</span>
+                <span>{improved.length}</span>
               </div>
-              <div className="empty">
-                Пока пусто. <b>Вызови друга</b> — чьё резюме переживёт HR?
-                <br />
-                <span className="soon">скоро</span>
-              </div>
+              {improved.length ? (
+                <div className="versions">
+                  {improved.slice(0, 5).map((item) => (
+                    <Link key={item.id} href={`/revenge?analysisId=${item.id}`} className="version">
+                      <span><b>{item.score}</b> было</span>
+                      <i>→</i>
+                      <span className="up"><b>{item.afterScore ?? item.score}</b> стало</span>
+                      <em>Открыть</em>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty">
+                  После первого улучшения здесь появится честное сравнение двух версий.
+                  <br />
+                  <Link href={`/revenge?analysisId=${last.id}`}>Собрать новую версию →</Link>
+                </div>
+              )}
             </div>
+
+            <Link href="/vacancies" className="vacancy-panel">
+              <span>
+                <b>Мои вакансии</b>
+                <small>Разборы, сопоставления и тексты для отклика</small>
+              </span>
+              <strong>{vacancyCount}</strong>
+              <i>→</i>
+            </Link>
           </div>
         </div>
       ) : (
@@ -153,7 +181,9 @@ export function CabinetClient({
 
       <style jsx>{`
         .cab {
+          width: 100%;
           max-width: 1160px;
+          box-sizing: border-box;
           margin: 0 auto;
           padding: 40px 40px 80px;
           animation: thr-fade 0.6s var(--ease);
@@ -354,18 +384,21 @@ export function CabinetClient({
         .empty b {
           color: var(--fg);
         }
-        .empty .soon {
-          display: inline-block;
-          margin-top: 8px;
-          font-family: var(--font-mono);
-          font-size: 10px;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: var(--faint);
-          border: 1px solid var(--hair);
-          padding: 4px 10px;
-          border-radius: 999px;
-        }
+        .empty :global(a) { display: inline-block; margin-top: 8px; color: var(--tox); text-decoration: none; }
+        .versions { display: grid; gap: 8px; }
+        .version { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--hair); border-radius: 13px; background: var(--metal-1); color: var(--faint); text-decoration: none; font-size: 10.5px; }
+        .version span { display: flex; align-items: baseline; gap: 4px; }
+        .version b { color: var(--crit); font-size: 19px; }
+        .version .up b { color: var(--tox); }
+        .version i { color: var(--hair2); font-style: normal; }
+        .version em { margin-left: auto; color: var(--dim); font-style: normal; }
+        .vacancy-panel { display: flex; align-items: center; gap: 16px; margin-top: 18px; padding: 20px 22px; border: 1px solid rgba(106,155,255,.24); border-radius: 18px; background: rgba(106,155,255,.06); color: inherit; text-decoration: none; transition: .2s var(--ease); }
+        .vacancy-panel:hover { transform: translateY(-2px); border-color: rgba(106,155,255,.42); }
+        .vacancy-panel > span { min-width: 0; flex: 1; }
+        .vacancy-panel b { display: block; font-size: 16px; }
+        .vacancy-panel small { display: block; margin-top: 4px; color: var(--faint); font-size: 11.5px; line-height: 1.4; }
+        .vacancy-panel strong { color: var(--data); font-size: 26px; }
+        .vacancy-panel i { color: var(--data); font-style: normal; }
         .empty-big {
           margin-top: 60px;
           border: 1px solid var(--hair);
@@ -409,6 +442,13 @@ export function CabinetClient({
         }
         .footer :global(a):hover {
           color: var(--dim);
+        }
+        @media (max-width: 520px) {
+          .last { align-items: flex-start; }
+          .delta .c { padding: 14px 8px; }
+          .delta .v { font-size: 20px; }
+          .delta .k { font-size: 9.5px; }
+          .version { flex-wrap: wrap; }
         }
       `}</style>
     </div>

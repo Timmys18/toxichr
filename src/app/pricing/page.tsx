@@ -34,7 +34,7 @@ export default function PricingPage() {
               Глубже — когда захочешь.
             </h1>
             <p>
-              Сейчас идёт закрытый тест: полный разбор открыт без оплаты.
+              До подключения оплаты весь карьерный цикл открыт без ограничений.
             </p>
           </div>
 
@@ -64,10 +64,10 @@ export default function PricingPage() {
             <div className="card pro">
               <div className="c-top">
                 <div className="c-k thr-mono">
-                  Реванш <span className="soon">пилот</span>
+                  Карьерный цикл <span className="soon">закрытый тест</span>
                 </div>
                 <div className="price muted">
-                  690 ₽ <span>· первые 20 участников</span>
+                  0 ₽ <span>· все функции открыты</span>
                 </div>
               </div>
               <ul>
@@ -79,20 +79,20 @@ export default function PricingPage() {
                 ))}
               </ul>
               <Link href="/" className="thr-btn thr-btn-line cta">
-                Сначала разобрать резюме
+                Начать полный цикл
               </Link>
             </div>
           </div>
 
           <p className="note">
-            Платить нужно будет за готовую исправленную версию, а не за
-            дополнительные объяснения того же разбора.
+            После пилота платной станет сделанная работа: готовая версия под
+            вакансию. Сам разбор и объяснения останутся бесплатными.
           </p>
         </section>
       </main>
 
       <style>{`
-        .pricing { max-width: 1000px; margin: 0 auto; padding: 48px 40px 90px; }
+        .pricing { width: 100%; max-width: 1000px; box-sizing: border-box; margin: 0 auto; padding: 48px 40px 90px; }
         @media (max-width: 720px) { .pricing { padding: 32px 18px 70px; } }
         .pricing .ph { text-align: center; max-width: 640px; margin: 0 auto; }
         .pricing .over { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }

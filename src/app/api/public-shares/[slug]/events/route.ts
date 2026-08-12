@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const EventSchema = z.object({
   eventType: z.enum([
@@ -17,6 +18,10 @@ const EventSchema = z.object({
 type Params = { params: Promise<{ slug: string }> };
 
 export async function POST(request: Request, { params }: Params) {
+  const limited = rateLimit(`share-event:${clientIp(request)}`, 120, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: "Too many events" }, { status: 429 });
+  }
   const { slug } = await params;
 
   const share = await prisma.publicShare.findUnique({
@@ -28,7 +33,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = EventSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

@@ -143,6 +143,7 @@ export function HomeClient() {
             className={`hr ${sel === p.id ? "sel" : ""}`}
             onClick={() => select(p.id)}
             aria-pressed={sel === p.id}
+            aria-label={`${p.name} — ${p.role}`}
           >
             <span
               className="hr-photo thr-photo"
@@ -242,7 +243,7 @@ export function HomeClient() {
                 <b>Резюме без файла</b>
                 <span>Скопируй текст из документа или профиля — форматирование не важно.</span>
               </div>
-              <span className="thr-mono">{pastedText.trim().length} знаков</span>
+              <span className="thr-mono">{pastedText.trim().length} / 60 000</span>
             </div>
             <textarea
               value={pastedText}
@@ -250,6 +251,7 @@ export function HomeClient() {
               placeholder="Опыт, проекты, результаты, образование…"
               rows={8}
               aria-label="Текст резюме"
+              maxLength={60_000}
             />
             <button
               type="button"
@@ -281,7 +283,9 @@ export function HomeClient() {
 
       <style jsx>{`
         .home {
+          width: 100%;
           max-width: 1160px;
+          box-sizing: border-box;
           margin: 0 auto;
           padding: 24px 40px 64px;
           animation: thr-fade 0.6s var(--ease);

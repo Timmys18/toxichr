@@ -22,6 +22,7 @@ export function AuthClient() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,7 @@ export function AuthClient() {
             password,
             displayName: name || undefined,
             analysisId,
+            consent,
           }),
         });
         const data = await res.json();
@@ -104,6 +106,19 @@ export function AuthClient() {
             required
             autoComplete="email"
           />
+          {mode === "register" ? (
+            <label className="consent">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => setConsent(event.target.checked)}
+                required
+              />
+              <span>
+                Согласен с <Link href="/privacy" target="_blank">правилами приватности</Link> и обработкой резюме для работы сервиса.
+              </span>
+            </label>
+          ) : null}
           <input
             type="password"
             placeholder={mode === "register" ? "Пароль (от 8 символов)" : "Пароль"}
@@ -123,7 +138,7 @@ export function AuthClient() {
           <button
             type="submit"
             className="thr-btn thr-btn-tox sub"
-            disabled={busy}
+            disabled={busy || (mode === "register" && !consent)}
           >
             {busy ? "Секунду…" : mode === "login" ? "Войти" : "Создать аккаунт"}
           </button>
@@ -213,6 +228,9 @@ export function AuthClient() {
         input::placeholder {
           color: var(--faint);
         }
+        .consent { display: flex; align-items: flex-start; gap: 10px; color: var(--dim); font-size: 11.5px; line-height: 1.45; cursor: pointer; }
+        .consent input { width: 17px; height: 17px; min-width: 17px; margin-top: 1px; accent-color: var(--tox); }
+        .consent :global(a) { color: var(--tox); text-underline-offset: 3px; }
         .err {
           color: var(--crit);
           font-size: 13px;

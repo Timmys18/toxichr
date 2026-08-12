@@ -28,6 +28,14 @@ export async function POST(request: Request) {
   if (file.size > MAX_BYTES) {
     return jsonError("Файл больше 8 МБ.", 400);
   }
+  const supported =
+    file.type === "application/pdf" ||
+    file.type ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    /\.(pdf|docx)$/i.test(file.name);
+  if (!supported) {
+    return jsonError("Поддерживаются только PDF и DOCX.", 415);
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
