@@ -103,6 +103,15 @@ export async function POST(
       answers: answers as ImprovementAnswer[],
       personaId: (analysis.persona?.code ?? "lera") as PersonaId,
     });
+    if (result.replacements.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Пока фактов недостаточно, чтобы сделать текст сильнее. Добавь личное действие, масштаб или проверяемый результат хотя бы в один ответ.",
+        },
+        { status: 422 },
+      );
+    }
     const originalText = await loadOriginalResumeText(
       analysis.resumeVersion.resume,
     );

@@ -11,7 +11,11 @@ type Mode = "login" | "register";
 export function AuthClient() {
   const router = useRouter();
   const params = useSearchParams();
-  const nextUrl = params.get("next") || "/me";
+  const requestedNext = params.get("next");
+  const nextUrl =
+    requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/me";
   const analysisId = params.get("analysisId") || undefined;
 
   const [mode, setMode] = useState<Mode>(analysisId ? "register" : "login");

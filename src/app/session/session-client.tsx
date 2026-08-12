@@ -8,6 +8,7 @@ import type { AnalysisReport } from "@/lib/ai/schemas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
+import { readPendingVacancy } from "@/lib/pending-vacancy";
 
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
@@ -45,6 +46,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const [stage, setStage] = useState<string>(viewId ? "persona" : "extract");
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
+  const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeId ?? null);
   const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
 
@@ -75,6 +77,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           if (!cancelled) {
             setReport(data.report as AnalysisReport);
             if (data.personaId) setPersonaCode(data.personaId as PersonaId);
+            if (data.resumeId) setActiveResumeId(data.resumeId as string);
             setAnalysisId(id);
             setPhase("verdict");
             track("verdict_viewed", { analysisId: id });
@@ -282,6 +285,8 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
             report={report}
             hrName={hr.name}
             analysisId={analysisId}
+            resumeId={activeResumeId}
+            personaCode={personaCode}
           />
         ) : null}
       </div>
@@ -311,7 +316,24 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           .presence {
             position: relative;
             top: 0;
+            display: grid;
+            grid-template-columns: minmax(150px, 220px) 1fr;
+            gap: 12px;
+            align-items: stretch;
           }
+          .presence .hrcard { aspect-ratio: auto; min-height: 210px; }
+          .presence .meta { margin-top: 0; display: flex; flex-direction: column; justify-content: center; }
+          .presence .back { grid-column: 1 / -1; margin-top: 0; }
+        }
+        @media (max-width: 520px) {
+          .presence { grid-template-columns: 116px 1fr; }
+          .presence .hrcard { min-height: 160px; border-radius: 17px; }
+          .presence .info { padding: 12px; }
+          .presence .nm { font-size: 16px; }
+          .presence .rl { display: none; }
+          .presence .st { margin-top: 8px; font-size: 8px; letter-spacing: .08em; }
+          .presence .meta { padding: 12px 14px; }
+          .presence .row { align-items: flex-start; flex-direction: column; gap: 3px; font-size: 11.5px; }
         }
         .hrcard {
           position: relative;
@@ -484,16 +506,29 @@ function Verdict({
   report,
   hrName,
   analysisId,
+  resumeId,
+  personaCode,
 }: {
   report: AnalysisReport;
   hrName: string;
   analysisId: string | null;
+  resumeId: string | null;
+  personaCode: PersonaId | null;
 }) {
   const { status } = useSession();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareErr, setShareErr] = useState<string | null>(null);
+  const [hasPendingVacancy, setHasPendingVacancy] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setHasPendingVacancy(Boolean(readPendingVacancy())),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function doShare() {
     if (!analysisId || sharing) return;
@@ -638,7 +673,7 @@ function Verdict({
 
       {/* Крючок 1 — поделиться на эмоциональном пике */}
       <div className="hook share-hook">
-        <div className="hook-t">Вердикт слишком хорош, чтобы держать в себе.</div>
+        <div className="hook-t">Разбор слишком точный, чтобы держать в себе.</div>
         <div className="hook-s">
           Публичная карточка — без имени и компаний, только вердикт и метрики.
         </div>
@@ -652,7 +687,7 @@ function Verdict({
             ? "Создаём ссылку…"
             : shareUrl
               ? "Ссылка готова ↓"
-              : "Поделиться приговором"}
+              : "Поделиться результатом"}
         </button>
         {shareErr ? (
           <p className="shareerr" role="alert">
@@ -686,17 +721,46 @@ function Verdict({
         </Link>
         <Link
           href={`/vacancy?analysisId=${analysisId ?? ""}`}
-          className="next-card"
+          className={`next-card ${hasPendingVacancy ? "pending" : ""}`}
           onClick={() =>
             analysisId &&
             track("vacancy_review_opened", { analysisId, source: "result" })
           }
         >
-          <span className="nk thr-mono">Под конкретный отклик</span>
-          <b>Разобрать вакансию</b>
-          <span>Понять, что уже доказано, а где опыта не видно.</span>
+          <span className="nk thr-mono">
+            {hasPendingVacancy ? "Вакансия уже сохранена" : "Под конкретный отклик"}
+          </span>
+          <b>{hasPendingVacancy ? "Сопоставить сейчас" : "Разобрать вакансию"}</b>
+          <span>{hasPendingVacancy ? "Текст на месте — повторно вставлять ничего не нужно." : "Понять, что уже доказано, а где опыта не видно."}</span>
         </Link>
       </div>
+
+      {resumeId ? (
+        <div className="opinion">
+          <div className="hook-t">Одно резюме. Четыре разных фильтра.</div>
+          <div className="hook-s">
+            Проверь, за что зацепится другой HR — файл загружать повторно не нужно.
+          </div>
+          <div className="others">
+            {ROSTER.filter((person) => person.id !== personaCode).map((person) => (
+              <Link
+                key={person.id}
+                href={`/session?resumeId=${resumeId}&personaId=${person.id}`}
+                className="other"
+              >
+                <span
+                  className="oph thr-photo"
+                  style={{ backgroundImage: `url('${person.img}')` }}
+                />
+                <span className="oinfo">
+                  <span className="on">{person.name}</span>
+                  <span className="or">{person.role}</span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="acts">
         {status === "authenticated" ? (
@@ -961,6 +1025,11 @@ function Verdict({
         .next-card.primary {
           background: linear-gradient(145deg, var(--tox-dim), var(--metal-0));
         }
+        .next-card.pending {
+          border-color: rgba(106,155,255,.4);
+          background: linear-gradient(145deg, rgba(106,155,255,.1), var(--metal-0));
+        }
+        .next-card.pending .nk { color: var(--data); }
         .next-card .nk {
           color: var(--tox);
           font-size: 9.5px;
@@ -977,6 +1046,14 @@ function Verdict({
           color: var(--dim);
           font-size: 13.5px;
           line-height: 1.5;
+        }
+        .opinion {
+          margin-top: 16px;
+          padding: 22px 24px;
+          border: 1px solid var(--hair);
+          border-radius: 18px;
+          background: var(--metal-0);
+          max-width: 64ch;
         }
         .acts {
           margin-top: 28px;

@@ -64,6 +64,11 @@ export function aiLiveEnabled(): boolean {
   return hasAnthropicKey();
 }
 
+/** Локальный честный режим для разработки и smoke-тестов без внешнего AI. */
+export function aiMockEnabled(): boolean {
+  return (process.env.AI_PROVIDER ?? "").trim().toLowerCase() === "mock";
+}
+
 /** Понятная ошибка, если ключа нет. */
 export function assertAiReady(): void {
   const provider = resolveProvider();

@@ -15,7 +15,12 @@ import {
   type TheatreFinding,
 } from "@/lib/ai/schemas";
 import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
-import { AiConfigError, runAi, runAiStream } from "@/lib/ai/gateway";
+import {
+  AiConfigError,
+  aiMockEnabled,
+  runAi,
+  runAiStream,
+} from "@/lib/ai/gateway";
 import { groundReport, quoteInResume } from "@/lib/ai/grounding";
 import { voicePromptBlock } from "@/lib/ai/persona-voice";
 import { guessCandidateFirstName } from "@/lib/documents/candidate-name";
@@ -186,6 +191,26 @@ export async function runAnalysisPipeline(
   const heuristicBase = groundReport(heuristic, input.resumeText);
   const persona = PERSONAS.find((p) => p.id === input.personaId);
   const candidateFirstName = guessCandidateFirstName(input.resumeText);
+
+  if (aiMockEnabled()) {
+    emit({ type: "stage", stage: "extract", status: "start" });
+    for (const finding of heuristicBase.theatreFindings) {
+      emit({ type: "finding", stage: "extract", message: finding.message });
+    }
+    emit({ type: "stage", stage: "extract", status: "done" });
+    emit({ type: "stage", stage: "score", status: "start" });
+    emit({ type: "stage", stage: "score", status: "done" });
+    emit({ type: "stage", stage: "persona", status: "start" });
+    emit({ type: "roast", delta: heuristicBase.hrReview.deepDive });
+    emit({ type: "stage", stage: "persona", status: "done" });
+
+    return {
+      report: heuristicBase,
+      provider: "mock",
+      model: "heuristic-v1",
+      costUsd: 0,
+    };
+  }
 
   /* ---------- Этап 1: Evidence Map ---------- */
   emit({ type: "stage", stage: "extract", status: "start" });

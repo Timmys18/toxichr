@@ -6,6 +6,7 @@ import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
+import { readPendingVacancy } from "@/lib/pending-vacancy";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
@@ -14,11 +15,20 @@ export function HomeClient() {
   const [sel, setSel] = useState<PersonaId | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [showPaste, setShowPaste] = useState(false);
+  const [pastedText, setPastedText] = useState("");
+  const [hasPendingVacancy, setHasPendingVacancy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const dockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     track("landing_viewed", {});
+    const timer = window.setTimeout(
+      () => setHasPendingVacancy(Boolean(readPendingVacancy())),
+      0,
+    );
+    return () => window.clearTimeout(timer);
   }, []);
 
   const select = useCallback((id: PersonaId) => {
@@ -69,6 +79,30 @@ export function HomeClient() {
     [sel, router],
   );
 
+  const pasteResume = useCallback(async () => {
+    if (!sel || pastedText.trim().length < 80) return;
+    setBusy(true);
+    setError(null);
+    track("resume_upload_started", { source: "paste", persona: sel });
+    try {
+      const res = await fetch("/api/resumes/text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: pastedText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Не удалось прочитать текст");
+      track("resume_uploaded", { mime: "text/plain" });
+      await updateReferral("started", { resumeId: data.resumeId }).catch(
+        () => undefined,
+      );
+      router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+      setBusy(false);
+    }
+  }, [pastedText, router, sel]);
+
   const selEntry = ROSTER.find((r) => r.id === sel);
 
   return (
@@ -78,10 +112,24 @@ export function HomeClient() {
           Токсичный <i>HR</i>
         </h1>
         <p>
-          Точный диагноз вместо корпоративной{" "}
-          <b>политкорректности.</b>
+          Хирургическая точность без корпоративной <b>политкорректности.</b>
         </p>
       </div>
+
+      <div className="journey" aria-label="Что произойдёт дальше">
+        <span><b>01</b> честный разбор</span>
+        <i aria-hidden>→</i>
+        <span><b>02</b> новая версия</span>
+        <i aria-hidden>→</i>
+        <span><b>03</b> проверка вакансией</span>
+      </div>
+
+      {hasPendingVacancy ? (
+        <div className="vacancy-return" role="status">
+          <span className="thr-mono">Вакансия сохранена</span>
+          Сначала проверим резюме, затем вернёмся к сопоставлению — текст не потеряется.
+        </div>
+      ) : null}
 
       <div className="pick">
         Выбери своего <b>HR</b>
@@ -128,8 +176,20 @@ export function HomeClient() {
         <div className="dock-in thr-card">
           <button
             type="button"
-            className="drop"
+            className={`drop ${dragActive ? "drag" : ""}`}
             onClick={() => fileRef.current?.click()}
+            onDragEnter={(event) => {
+              event.preventDefault();
+              setDragActive(true);
+            }}
+            onDragOver={(event) => event.preventDefault()}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragActive(false);
+              const file = event.dataTransfer.files?.[0];
+              if (file) void upload(file);
+            }}
             disabled={busy}
           >
             <span className="drop-ic" aria-hidden>
@@ -145,7 +205,11 @@ export function HomeClient() {
             </span>
             <span>
               <span className="drop-t1">
-                {busy ? "Читаем документ…" : "Кидай резюме"}
+                {busy
+                  ? "Читаем документ…"
+                  : dragActive
+                    ? "Отпускай — берём в работу"
+                    : "Кидай резюме"}
               </span>
               <span className="drop-t2 thr-mono">PDF / DOCX · ДО 8 МБ · ПРИВАТНО</span>
             </span>
@@ -161,8 +225,42 @@ export function HomeClient() {
             >
               {busy ? "Загрузка…" : "Получить разбор"}
             </button>
+            <button
+              type="button"
+              className="paste-toggle"
+              onClick={() => setShowPaste((current) => !current)}
+              disabled={busy}
+            >
+              {showPaste ? "Скрыть поле" : "Или вставить текст"}
+            </button>
           </div>
         </div>
+        {showPaste ? (
+          <div className="paste-panel thr-card">
+            <div className="paste-head">
+              <div>
+                <b>Резюме без файла</b>
+                <span>Скопируй текст из документа или профиля — форматирование не важно.</span>
+              </div>
+              <span className="thr-mono">{pastedText.trim().length} знаков</span>
+            </div>
+            <textarea
+              value={pastedText}
+              onChange={(event) => setPastedText(event.target.value)}
+              placeholder="Опыт, проекты, результаты, образование…"
+              rows={8}
+              aria-label="Текст резюме"
+            />
+            <button
+              type="button"
+              className="thr-btn thr-btn-tox paste-submit"
+              onClick={() => void pasteResume()}
+              disabled={busy || pastedText.trim().length < 80}
+            >
+              {busy ? "Читаем текст…" : `Отдать текст · ${selEntry?.name ?? "HR"}`}
+            </button>
+          </div>
+        ) : null}
         {error ? (
           <p className="err" role="alert">
             {error}
@@ -232,6 +330,36 @@ export function HomeClient() {
           color: var(--fg);
           font-weight: 500;
         }
+        .journey {
+          width: fit-content;
+          margin: 26px auto 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: var(--faint);
+          font-family: var(--font-mono), monospace;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .journey b { color: var(--tox); font-weight: 500; }
+        .journey i { font-style: normal; color: var(--hair2); }
+        @media (max-width: 620px) {
+          .journey { width: 100%; justify-content: center; gap: 7px; font-size: 8.5px; letter-spacing: 0.03em; }
+        }
+        .vacancy-return {
+          max-width: 720px;
+          margin: 24px auto 0;
+          padding: 14px 18px;
+          border: 1px solid rgba(106, 155, 255, 0.28);
+          border-radius: 14px;
+          background: rgba(106, 155, 255, 0.07);
+          color: var(--dim);
+          font-size: 13px;
+          line-height: 1.5;
+          text-align: center;
+        }
+        .vacancy-return span { color: var(--data); margin-right: 10px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
         .pick {
           text-align: center;
           margin: 36px 0 18px;
@@ -257,8 +385,17 @@ export function HomeClient() {
         }
         @media (max-width: 520px) {
           .roster {
-            grid-template-columns: 1fr;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            margin-left: -18px;
+            margin-right: -18px;
+            padding: 0 18px 14px;
+            scrollbar-width: none;
           }
+          .roster::-webkit-scrollbar { display: none; }
+          .hr { min-width: min(76vw, 290px); scroll-snap-align: center; }
         }
         .hr {
           display: flex;
@@ -367,7 +504,7 @@ export function HomeClient() {
           transition: 0.6s var(--ease);
         }
         .dock.open {
-          max-height: 340px;
+          max-height: 980px;
           opacity: 1;
         }
         .dock-in {
@@ -403,6 +540,11 @@ export function HomeClient() {
         .drop:hover {
           border-color: var(--tox);
           background: var(--tox-dim);
+        }
+        .drop.drag {
+          border-color: var(--tox);
+          background: var(--tox-dim);
+          box-shadow: inset 0 0 0 1px var(--tox);
         }
         .drop-ic {
           width: 46px;
@@ -461,6 +603,45 @@ export function HomeClient() {
           margin-top: 14px;
           font-size: 14px;
         }
+        .paste-toggle {
+          margin-top: 10px;
+          border: 0;
+          background: transparent;
+          color: var(--dim);
+          font: inherit;
+          font-size: 12.5px;
+          text-decoration: underline;
+          text-underline-offset: 4px;
+          cursor: pointer;
+        }
+        .paste-panel {
+          margin-top: 12px;
+          padding: 22px;
+          background: var(--metal-0);
+        }
+        .paste-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 20px;
+        }
+        .paste-head b { display: block; font-size: 16px; }
+        .paste-head div span { display: block; margin-top: 4px; color: var(--dim); font-size: 13px; line-height: 1.45; }
+        .paste-head > span { flex-shrink: 0; color: var(--faint); font-size: 10px; }
+        .paste-panel textarea {
+          width: 100%;
+          margin-top: 16px;
+          padding: 16px;
+          border: 1px solid var(--hair2);
+          border-radius: 14px;
+          resize: vertical;
+          background: var(--metal-1);
+          color: var(--fg);
+          font: inherit;
+          line-height: 1.55;
+        }
+        .paste-panel textarea:focus { outline: 1px solid var(--tox); border-color: var(--tox); }
+        .paste-submit { min-height: 50px; margin-top: 14px; padding: 0 24px; }
         .err {
           margin-top: 12px;
           font-size: 13.5px;

@@ -25,7 +25,13 @@ export async function TopNav() {
         .brand{font-weight:700;font-size:15px;letter-spacing:.02em;color:var(--fg);text-decoration:none}
         .brand i{font-style:normal;color:var(--tox)}
         .links{display:flex;gap:30px}
-        @media(max-width:720px){.links{display:none}}
+        @media(max-width:720px){
+          .topnav{height:62px;gap:12px}
+          .links{margin-left:auto}
+          .links a{display:none}
+          .links a:nth-child(2){display:block;font-size:12px;color:var(--dim)}
+          .login{padding:9px 13px;font-size:12px}
+        }
         .links a{font-size:13.5px;font-weight:500;color:var(--dim);text-decoration:none;transition:.2s}
         .links a:hover{color:var(--fg)}
         .login{font-size:13.5px;font-weight:600;color:var(--fg);text-decoration:none;

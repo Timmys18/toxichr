@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
+import { deleteUpload } from "@/lib/storage";
 
 /** Soft-delete user data: revoke shares, scrub analyses, mark resumes deleted. */
 export async function DELETE() {
@@ -11,6 +12,10 @@ export async function DELETE() {
   }
 
   const userId = session.user.id;
+  const storedFiles = await prisma.resume.findMany({
+    where: { userId, privateStorageKey: { not: null } },
+    select: { privateStorageKey: true },
+  });
 
   // Revoke shares owned by user OR attached to their analyses
   await prisma.publicShare.updateMany({
@@ -31,6 +36,13 @@ export async function DELETE() {
       privateStorageKey: null,
     },
   });
+
+  await Promise.all(
+    storedFiles
+      .map((resume) => resume.privateStorageKey)
+      .filter((key): key is string => Boolean(key))
+      .map((key) => deleteUpload(key)),
+  );
 
   await prisma.resumeImprovement.deleteMany({
     where: { OR: [{ userId }, { analysis: { userId } }] },

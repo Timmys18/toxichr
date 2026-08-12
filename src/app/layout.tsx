@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "ToxicHR — самый токсичный HR для твоего резюме",
+    default: "ToxicHR — честный разбор резюме без корпоративной политкорректности",
     template: "%s · ToxicHR",
   },
   description:
-    "Самый честный и саркастично объективный комментарий вашего резюме. Каждое слово — на основании фактов.",
+    "Четыре HR-персонажа разбирают резюме по фактам, помогают исправить слабые строки и сопоставить новую версию с вакансией.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),

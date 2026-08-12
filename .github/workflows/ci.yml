@@ -1,0 +1,30 @@
+name: Проверка ToxicHR
+
+on:
+  push:
+    branches: [master, "codex/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: file:/tmp/toxichr-ci.db
+      AUTH_SECRET: ci-only-secret
+      AI_PROVIDER: mock
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma db push
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run build

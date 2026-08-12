@@ -21,7 +21,7 @@ export default function Error({ error, reset }: Props) {
       />
       <div className="relative z-10 max-w-lg text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-roast">
-          сбой · улики потеряны
+          сбой · разбор прерван
         </p>
         <h1 className="mt-4 font-display text-4xl tracking-tight text-ink sm:text-5xl">
           Что-то пошло не так

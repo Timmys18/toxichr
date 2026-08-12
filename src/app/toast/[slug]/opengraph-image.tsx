@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { PublicSharePayload } from "@/lib/public-share";
 import { OG_SIZE, renderShareCard } from "@/lib/render-share-card";
 
-export const alt = "ToxicHR — приговор резюме";
+export const alt = "ToxicHR — честный разбор резюме";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 export const runtime = "nodejs";

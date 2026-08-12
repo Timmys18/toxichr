@@ -110,7 +110,7 @@ export async function buildImprovedResume(input: {
     .map((answer) => answer.answer)
     .join("\n")}`;
 
-  const replacements: ImprovementReplacement[] = problems.map((problem) => {
+  const candidates: ImprovementReplacement[] = problems.map((problem) => {
     const answer = answerMap.get(problem.id) ?? "";
     const candidate = ai[problem.id] || fallbackReplacement(problem, answer);
     const safe = groundedNumbers(candidate, source)
@@ -125,19 +125,35 @@ export async function buildImprovedResume(input: {
   });
 
   let improvedText = input.resumeText;
-  for (const replacement of replacements) {
+  const replacements: ImprovementReplacement[] = [];
+  const baselineHeuristic = runHeuristicAnalysis(
+    input.resumeText,
+    input.personaId,
+  ).score.total;
+  let currentHeuristic = baselineHeuristic;
+
+  for (const replacement of candidates) {
     if (replacement.original && improvedText.includes(replacement.original)) {
-      improvedText = improvedText.replace(
+      const proposedText = improvedText.replace(
         replacement.original,
         replacement.replacement,
       );
+      const proposedScore = runHeuristicAnalysis(
+        proposedText,
+        input.personaId,
+      ).score.total;
+      if (proposedScore >= currentHeuristic) {
+        improvedText = proposedText;
+        currentHeuristic = proposedScore;
+        replacements.push(replacement);
+      }
     }
   }
 
-  const rescored = runHeuristicAnalysis(improvedText, input.personaId);
+  const positiveDelta = Math.max(0, currentHeuristic - baselineHeuristic);
   return {
     improvedText,
     replacements,
-    afterScore: rescored.score.total,
+    afterScore: Math.min(100, input.report.score.total + positiveDelta),
   };
 }

@@ -27,6 +27,9 @@ Copy from `.env.example`. Never commit `.env`.
 8. `/ops/funnel` is hidden without an email from `OPS_EMAILS`
 9. Improvement: answer questions → create version → download DOCX → open print view
 10. Vacancy: standalone review → match against saved resume
+11. Second opinion: run another HR against the same saved resume
+12. `GET /api/health` returns `200` with the production database available
+13. GitHub Actions is green on the release commit
 
 ## Smoke path
 
@@ -43,7 +46,10 @@ Copy from `.env.example`. Never commit `.env`.
 - Public shares: no name/companies in payload
 - Full report is free; paid value starts with a corrected document
 - PII redacted before AI
-- Rate limits on upload/analysis/vacancy review (verify under load)
+- Rate limits on file/text upload, analysis, vacancy review and registration (verify under load)
+- Auth `next` redirects accept internal paths only
+- Account deletion removes database data and locally stored uploads
+- Baseline HTTP hardening headers are enabled in `next.config.ts`
 
 ## Visual QA (mobile)
 
@@ -52,3 +58,5 @@ Copy from `.env.example`. Never commit `.env`.
 - [ ] Verdict score + CTAs thumb-friendly
 - [ ] Share Studio sticky preview usable
 - [ ] History row actions wrap cleanly
+- [ ] Vacancy draft survives resume upload and returns to matching
+- [ ] Second-opinion cards fit without horizontal page overflow

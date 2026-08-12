@@ -6,6 +6,16 @@
 type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
+let callsSinceCleanup = 0;
+
+function cleanupExpired(now: number) {
+  callsSinceCleanup += 1;
+  if (callsSinceCleanup < 250 && buckets.size < 5_000) return;
+  callsSinceCleanup = 0;
+  for (const [key, bucket] of buckets) {
+    if (now >= bucket.resetAt) buckets.delete(key);
+  }
+}
 
 export function rateLimit(
   key: string,
@@ -13,6 +23,7 @@ export function rateLimit(
   windowMs: number,
 ): { ok: boolean; remaining: number; retryAfterSec: number } {
   const now = Date.now();
+  cleanupExpired(now);
   const current = buckets.get(key);
 
   if (!current || now >= current.resetAt) {

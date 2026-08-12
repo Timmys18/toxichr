@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import type { MatchCategory, VacancyReview } from "@/lib/vacancy";
+import {
+  clearPendingVacancy,
+  readPendingVacancy,
+  savePendingVacancy,
+} from "@/lib/pending-vacancy";
 
 const LABELS: Record<MatchCategory, string> = {
   proven: "Доказано",
@@ -11,6 +16,43 @@ const LABELS: Record<MatchCategory, string> = {
   clarify: "Нужно уточнить",
   missing: "Опыта не видно",
 };
+
+function CopyBlock({ title, text }: { title: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyFailed(false);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopyFailed(true);
+      window.setTimeout(() => setCopyFailed(false), 2000);
+    }
+  }
+
+  return (
+    <div className="output">
+      <div className="output-head">
+        <h3>{title}</h3>
+        <button type="button" onClick={() => void copy()}>
+          {copyFailed ? "Выдели текст" : copied ? "Скопировано" : "Копировать"}
+        </button>
+      </div>
+      <p>{text}</p>
+      <style jsx>{`
+        .output { margin-top: 14px; padding: 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
+        .output-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        h3 { font-size: 17px; }
+        button { border: 1px solid var(--hair2); border-radius: 999px; background: transparent; color: var(--dim); padding: 7px 12px; font: inherit; font-size: 11.5px; cursor: pointer; }
+        button:hover { color: var(--fg); border-color: var(--dim); }
+        p { margin-top: 12px; color: var(--dim); line-height: 1.65; }
+      `}</style>
+    </div>
+  );
+}
 
 export function VacancyClient({ analysisId }: { analysisId?: string }) {
   const [text, setText] = useState("");
@@ -23,6 +65,13 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
       analysisId: analysisId ?? null,
       source: analysisId ? "resume_result" : "direct",
     });
+    if (analysisId) {
+      const timer = window.setTimeout(() => {
+        const pending = readPendingVacancy();
+        if (pending) setText(pending);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
   }, [analysisId]);
 
   async function submit() {
@@ -37,6 +86,7 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
       setResult(data.result as VacancyReview);
+      if (analysisId) clearPendingVacancy();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Ошибка разбора");
     } finally {
@@ -52,6 +102,10 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
         }),
       )
     : [];
+  const strongMatches = result?.requirements.filter(
+    (item) => item.category === "proven" || item.category === "hidden",
+  ).length ?? 0;
+  const matchTotal = result?.requirements.filter((item) => item.category).length ?? 0;
 
   return (
     <section className="vacancy">
@@ -70,7 +124,12 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
         onChange={(event) => setText(event.target.value)}
         rows={14}
         placeholder="Вставь сюда текст вакансии целиком…"
+        aria-label="Текст вакансии"
       />
+      <div className="input-meta">
+        <span>{analysisId && text ? "Сохранённая вакансия уже здесь" : "Можно вставить весь текст без очистки"}</span>
+        <b className="thr-mono">{text.trim().length} / 30 000</b>
+      </div>
       {error ? <p className="error" role="alert">{error}</p> : null}
       <button className="thr-btn thr-btn-tox submit" onClick={submit} disabled={busy || text.trim().length < 80}>
         {busy ? "Разбираем требования…" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}
@@ -81,6 +140,13 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
           <p className="over thr-mono">Результат</p>
           <h2>{result.title}</h2>
           <p className="summary">{result.summary}</p>
+
+          {analysisId && matchTotal ? (
+            <div className="match-score">
+              <b>{strongMatches}</b>
+              <span>из {matchTotal} требований уже подтверждены или спрятаны в тексте</span>
+            </div>
+          ) : null}
 
           {analysisId ? (
             <div className="groups">
@@ -112,18 +178,24 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
             </div>
           ) : null}
 
-          {result.tailoredIntro ? (
-            <div className="output"><h3>Вступление для версии под вакансию</h3><p>{result.tailoredIntro}</p></div>
-          ) : null}
-          {result.coverLetter ? (
-            <div className="output"><h3>Основа сопроводительного письма</h3><p>{result.coverLetter}</p></div>
-          ) : null}
+          {result.tailoredIntro ? <CopyBlock title="Вступление для версии под вакансию" text={result.tailoredIntro} /> : null}
+          {result.coverLetter ? <CopyBlock title="Основа сопроводительного письма" text={result.coverLetter} /> : null}
           {result.interviewQuestions.length ? (
             <div className="output"><h3>Что могут спросить</h3><ol>{result.interviewQuestions.map((item) => <li key={item}>{item}</li>)}</ol></div>
           ) : null}
           {!analysisId ? (
-            <Link href="/" className="thr-btn thr-btn-line resume-cta">Проверить моё резюме под эту роль</Link>
-          ) : null}
+            <Link
+              href="/?from=vacancy"
+              className="thr-btn thr-btn-tox resume-cta"
+              onClick={() => savePendingVacancy(text)}
+            >
+              Добавить резюме и сопоставить
+            </Link>
+          ) : (
+            <Link href={`/revenge?analysisId=${analysisId}`} className="thr-btn thr-btn-line resume-cta">
+              Усилить резюме по найденным пробелам
+            </Link>
+          )}
         </div>
       ) : null}
 
@@ -135,11 +207,16 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
         .intro > p:last-child { margin-top: 18px; color: var(--dim); font-size: 17px; line-height: 1.6; }
         .vacancy > textarea { width: 100%; margin-top: 34px; padding: 20px; border: 1px solid var(--hair2); border-radius: 18px; background: var(--metal-0); color: var(--fg); font: inherit; line-height: 1.55; resize: vertical; }
         textarea:focus { outline: 1px solid var(--tox); border-color: var(--tox); }
-        .submit { min-height: 54px; margin-top: 16px; padding: 0 26px; }
+        .input-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 9px; color: var(--faint); font-size: 11.5px; }
+        .input-meta b { font-weight: 400; font-size: 10px; }
+        .submit { min-height: 54px; margin-top: 18px; padding: 0 26px; }
         .error { margin-top: 14px; color: var(--crit); }
         .result { margin-top: 52px; padding-top: 40px; border-top: 1px solid var(--hair); }
         .result > h2 { margin-top: 10px; font-size: clamp(28px,4vw,42px); }
         .summary { margin-top: 14px; color: var(--dim); line-height: 1.6; max-width: 72ch; }
+        .match-score { display: flex; align-items: center; gap: 15px; margin-top: 22px; padding: 18px 20px; border: 1px solid rgba(44,224,139,.28); border-radius: 16px; background: rgba(44,224,139,.06); }
+        .match-score b { color: var(--tox); font-size: 32px; line-height: 1; }
+        .match-score span { max-width: 42ch; color: var(--dim); font-size: 13px; line-height: 1.45; }
         .groups { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 30px; }
         @media (max-width: 760px) { .groups { grid-template-columns: 1fr; } }
         .group { padding: 20px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
@@ -156,11 +233,10 @@ export function VacancyClient({ analysisId }: { analysisId?: string }) {
         .requirements { margin-top: 26px; padding: 8px 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
         .signals { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
         @media (max-width: 700px) { .signals { grid-template-columns: 1fr; } }
-        .signals > div,.output { padding: 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
+        .signals > div { padding: 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
         .signals p { margin-top: 10px; color: var(--dim); font-size: 13.5px; line-height: 1.5; }
-        .output { margin-top: 14px; }
-        .output p,.output ol { margin-top: 12px; color: var(--dim); line-height: 1.6; }
-        .output ol { padding-left: 20px; }
+        .result > .output { margin-top: 14px; padding: 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
+        .output ol { margin-top: 12px; padding-left: 20px; color: var(--dim); line-height: 1.6; }
         .resume-cta { min-height: 50px; margin-top: 18px; padding: 0 22px; text-decoration: none; }
       `}</style>
     </section>

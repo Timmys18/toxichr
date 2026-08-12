@@ -11,7 +11,7 @@ export async function GET(_request: Request, { params }: Params) {
 
   const analysis = await prisma.analysis.findUnique({
     where: { id },
-    include: { persona: true },
+    include: { persona: true, resumeVersion: { select: { resumeId: true } } },
   });
 
   if (!analysis) {
@@ -42,6 +42,7 @@ export async function GET(_request: Request, { params }: Params) {
     id: analysis.id,
     status: analysis.status,
     personaId: analysis.persona?.code ?? null,
+    resumeId: analysis.resumeVersion.resumeId,
     score: analysis.scorePayload,
     report: normalized,
     createdAt: analysis.createdAt,

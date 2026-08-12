@@ -116,6 +116,12 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--tox);
+  outline-offset: 3px;
 }
 
 body {

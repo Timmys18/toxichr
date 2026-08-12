@@ -109,7 +109,7 @@ export function resolveMetricValues(
   keys: MetricSelection,
 ): { key: string; label: string; value: number }[] {
   const labels: Record<ShareMetricKey, string> = {
-    total: "Выживаемость",
+    total: "Общая оценка",
     evidence: "Доказанность",
     positioning: "Ясность",
     corporateWater: "Корп. вода",

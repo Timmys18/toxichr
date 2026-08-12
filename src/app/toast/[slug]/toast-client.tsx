@@ -23,12 +23,12 @@ export function ToastClient({ slug, payload }: Props) {
     });
   }, [slug]);
 
-  async function trackCta(event: MouseEvent<HTMLAnchorElement>) {
+  function trackCta(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
     const visitorId = getOrCreateVisitorId();
     rememberReferral({ slug, campaign: "public_card" });
 
-    await Promise.allSettled([
+    void Promise.allSettled([
       fetch(`/api/public-shares/${slug}/events`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,7 +50,7 @@ export function ToastClient({ slug, payload }: Props) {
       }),
     ]);
 
-    window.location.href = `/?ref=${encodeURIComponent(slug)}`;
+    window.location.assign(`/?ref=${encodeURIComponent(slug)}`);
   }
 
   const sub = [payload.roleLabel, payload.levelLabel]
