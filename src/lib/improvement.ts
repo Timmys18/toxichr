@@ -142,35 +142,80 @@ export function isGroundedImprovementText(
 
 export function isUsefulImprovementAnswer(answer: string): boolean {
   const clean = answer.replace(/\s+/g, " ").trim();
-  if (clean.length < 10) return false;
+  return usefulImprovementFact(clean) !== null;
+}
+
+const NON_FACTUAL_ANSWER_WORDS = new Set([
+  "без",
+  "вспомнить",
+  "добавить",
+  "данных",
+  "знаю",
+  "информации",
+  "могу",
+  "меня",
+  "не",
+  "неизвестно",
+  "нет",
+  "ничего",
+  "пока",
+  "помню",
+  "получается",
+  "сказать",
+  "точная",
+  "точно",
+  "точного",
+  "точной",
+  "точную",
+  "точные",
+  "точных",
+  "уверен",
+  "уверена",
+  "уточнить",
+  "цифр",
+  "цифра",
+  "цифры",
+  "цифру",
+]);
+
+function usefulImprovementFact(answer: string): string | null {
+  const clean = answer.replace(/\s+/g, " ").trim();
+  if (clean.length < 2) return null;
   const normalized = clean
     .toLowerCase()
     .replace(/ё/g, "е")
     .replace(/[.,!?;:—–-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const hasUsefulContinuation = /(?:^|\s)(?:но|зато|однако|при этом)(?:\s|$)/.test(
-    normalized,
-  );
-  if (
-    /^(?:нет|никак|хз|нечего добавить|без понятия)$/.test(normalized) ||
-    (/^не (?:знаю|помню|уверен)(?:\s|$)/.test(normalized) &&
-      !hasUsefulContinuation)
-  ) {
-    return false;
+  if (/^(?:нет|никак|хз|нечего добавить|без понятия)$/.test(normalized)) {
+    return null;
   }
-  const tokens = contentTokens(clean);
-  return tokens.length >= 2 || (numbers(clean).length > 0 && tokens.length >= 1);
+
+  if (/^не (?:знаю|помню|уверен)(?:\s|$)/.test(normalized)) {
+    const continuation = clean.match(
+      /(?:^|[\s,;:—–-])(?:но|зато|однако|при этом)(?:[\s,;:—–-]+)(.+)$/iu,
+    )?.[1];
+    return continuation ? usefulImprovementFact(continuation) : null;
+  }
+
+  const factualTokens = contentTokens(clean).filter(
+    (token) => !NON_FACTUAL_ANSWER_WORDS.has(token),
+  );
+  const useful =
+    factualTokens.length >= 2 ||
+    (numbers(clean).length > 0 && factualTokens.length >= 1);
+  return useful ? clean : null;
 }
 
 function fallbackReplacement(problem: Problem, answer: string): string {
-  const clean = answer.replace(/\s+/g, " ").trim();
-  if (!isUsefulImprovementAnswer(clean)) return problem.quote;
+  const clean = usefulImprovementFact(answer);
+  if (!clean) return problem.quote;
   const quote = problem.quote.replace(/\s+/g, " ").trim();
   if (isOrderedSubsequence(contentTokens(quote), contentTokens(clean))) {
     return clean;
   }
-  return `${quote.replace(/[.!?;:]+$/, "")}. ${clean}`;
+  const sentence = `${clean.charAt(0).toUpperCase()}${clean.slice(1)}`;
+  return `${quote.replace(/[.!?;:]+$/, "")}. ${sentence}`;
 }
 
 export function selectSafeReplacement(
@@ -179,9 +224,10 @@ export function selectSafeReplacement(
   aiCandidate?: string,
 ): string {
   const fallback = fallbackReplacement(problem, answer);
+  const usefulAnswer = usefulImprovementFact(answer) ?? "";
   const candidate = aiCandidate?.replace(/\s+/g, " ").trim();
   if (!candidate) return fallback;
-  return isGroundedImprovementText(candidate, [problem.quote, answer])
+  return isGroundedImprovementText(candidate, [problem.quote, usefulAnswer])
     ? candidate
     : fallback;
 }
@@ -245,19 +291,24 @@ export async function buildImprovedResume(input: {
   const problems = input.report.topProblems.filter((problem) =>
     isUsefulImprovementAnswer(answerMap.get(problem.id) ?? ""),
   );
+  const usefulAnswers = input.answers.flatMap((answer) => {
+    const fact = usefulImprovementFact(answer.answer);
+    return fact ? [{ ...answer, answer: fact }] : [];
+  });
   const ai: Record<string, string> = await aiReplacements({
     problems,
-    answers: input.answers,
+    answers: usefulAnswers,
     resumeText: input.resumeText,
   }).catch(() => ({} as Record<string, string>));
   const candidates: ImprovementReplacement[] = problems.map((problem) => {
     const answer = answerMap.get(problem.id) ?? "";
+    const usefulAnswer = usefulImprovementFact(answer) ?? "";
     const safe = selectSafeReplacement(problem, answer, ai[problem.id]);
     return {
       problemId: problem.id,
       original: problem.quote,
       replacement: safe,
-      grounded: isGroundedImprovementText(safe, [problem.quote, answer]),
+      grounded: isGroundedImprovementText(safe, [problem.quote, usefulAnswer]),
     };
   });
 

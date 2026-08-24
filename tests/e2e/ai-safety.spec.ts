@@ -110,11 +110,22 @@ test("бессодержательный ответ не считается фа
     false,
   );
   expect(isUsefulImprovementAnswer("Команда из 5 человек.")).toBe(true);
+  expect(isUsefulImprovementAnswer("5 человек")).toBe(true);
+  expect(isUsefulImprovementAnswer("2 года")).toBe(true);
+  expect(
+    isUsefulImprovementAnswer("Не знаю точной цифры, но и вспомнить не могу."),
+  ).toBe(false);
   expect(
     isUsefulImprovementAnswer(
       "Не помню точную цифру, но руководил командой разработки.",
     ),
   ).toBe(true);
+  expect(
+    selectSafeReplacement(
+      PROBLEM,
+      "Не помню точную цифру, но провёл интервью с пользователями.",
+    ),
+  ).toBe("Проводил интервью с пользователями. Провёл интервью с пользователями.");
 });
 
 test("сломанный JSON вакансии отклоняется до использования в интерфейсе", () => {
