@@ -44,11 +44,6 @@ function numbers(text: string): string[] {
   return text.match(/\d+(?:[.,]\d+)?/g) ?? [];
 }
 
-function groundedNumbers(text: string, source: string): boolean {
-  const allowed = new Set(numbers(source).map((value) => value.replace(",", ".")));
-  return numbers(text).every((value) => allowed.has(value.replace(",", ".")));
-}
-
 const FUNCTION_WORDS = new Set([
   "а",
   "был",
@@ -99,13 +94,25 @@ const FUNCTION_WORDS = new Set([
 ]);
 
 function contentTokens(text: string): string[] {
-  return (text.toLowerCase().replace(/ё/g, "е").match(/[\p{L}\p{N}+#.-]+/gu) ?? [])
+  return groundingTokens(text).filter(
+    (token) => !/^\d+(?:[.]\d+)?$/.test(token),
+  );
+}
+
+function groundingTokens(text: string): string[] {
+  return (
+    text
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .match(/\d+(?:[.,]\d+)?|[\p{L}+#.-]+/gu) ?? []
+  )
     .map((token) => token.replace(/^[.+-]+|[.+-]+$/g, ""))
+    .map((token) =>
+      /^\d+(?:[.,]\d+)?$/.test(token) ? token.replace(",", ".") : token,
+    )
     .filter(
       (token) =>
-        token.length > 0 &&
-        !/^\d+(?:[.,]\d+)?$/.test(token) &&
-        !FUNCTION_WORDS.has(token),
+        token.length > 0 && !FUNCTION_WORDS.has(token),
     );
 }
 
@@ -125,7 +132,8 @@ function isOrderedSubsequence(candidate: string[], source: string[]): boolean {
 /**
  * Консервативная граница доверия для AI-редактуры: модель может убрать повторы
  * и переставить служебные слова, но не может добавить ни одного нового
- * содержательного слова, числа или изменить порядок фактических опор.
+ * содержательного слова, числа или изменить порядок фактических опор. Числа
+ * входят в ту же последовательность, поэтому сохраняют связь с локальным фактом.
  */
 export function isGroundedImprovementText(
   candidate: string,
@@ -135,14 +143,91 @@ export function isGroundedImprovementText(
   if (clean.length < 3) return false;
   return sources.some(
     (source) =>
-      groundedNumbers(clean, source) &&
-      isOrderedSubsequence(contentTokens(clean), contentTokens(source)),
+      isOrderedSubsequence(groundingTokens(clean), groundingTokens(source)),
   );
 }
 
-function fallbackReplacement(problem: Problem, answer: string): string {
+export function isUsefulImprovementAnswer(answer: string): boolean {
   const clean = answer.replace(/\s+/g, " ").trim();
-  return clean || problem.quote;
+  return usefulImprovementFact(clean) !== null;
+}
+
+const NON_FACTUAL_ANSWER_WORDS = new Set([
+  "без",
+  "вспомнить",
+  "добавить",
+  "данных",
+  "знаю",
+  "информации",
+  "могу",
+  "меня",
+  "не",
+  "неизвестно",
+  "нет",
+  "ничего",
+  "пока",
+  "позже",
+  "помню",
+  "потом",
+  "получается",
+  "сказать",
+  "сейчас",
+  "сегодня",
+  "точная",
+  "точно",
+  "точного",
+  "точной",
+  "точную",
+  "точные",
+  "точных",
+  "уверен",
+  "уверена",
+  "уточнить",
+  "цифр",
+  "цифра",
+  "цифры",
+  "цифру",
+  "завтра",
+]);
+
+function usefulImprovementFact(answer: string): string | null {
+  const clean = answer.replace(/\s+/g, " ").trim();
+  if (clean.length < 2) return null;
+  const normalized = clean
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[.,!?;:—–-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/^(?:нет|никак|хз|нечего добавить)$/.test(normalized)) {
+    return null;
+  }
+
+  if (
+    /^(?:не (?:знаю|помню|уверен|уверена)|(?:пока|точно) не знаю|без понятия|нет (?:данных|цифр|информации)|не могу (?:вспомнить|уточнить|сказать)|не ?известно|непонятно|неясно|затрудняюсь|(?:сложно|трудно) сказать)(?:\s|$)/.test(
+      normalized,
+    )
+  ) {
+    return null;
+  }
+
+  const factualTokens = contentTokens(clean).filter(
+    (token) => !NON_FACTUAL_ANSWER_WORDS.has(token),
+  );
+  const hasNumberFact = numbers(clean).length > 0 && factualTokens.length >= 1;
+  const useful = factualTokens.length >= 2 || hasNumberFact;
+  return useful ? clean : null;
+}
+
+function fallbackReplacement(problem: Problem, answer: string): string {
+  const clean = usefulImprovementFact(answer);
+  if (!clean) return problem.quote;
+  const quote = problem.quote.replace(/\s+/g, " ").trim();
+  if (isOrderedSubsequence(contentTokens(quote), contentTokens(clean))) {
+    return clean;
+  }
+  const sentence = `${clean.charAt(0).toUpperCase()}${clean.slice(1)}`;
+  return `${quote.replace(/[.!?;:]+$/, "")}. ${sentence}`;
 }
 
 export function selectSafeReplacement(
@@ -151,9 +236,10 @@ export function selectSafeReplacement(
   aiCandidate?: string,
 ): string {
   const fallback = fallbackReplacement(problem, answer);
+  const usefulAnswer = usefulImprovementFact(answer) ?? "";
   const candidate = aiCandidate?.replace(/\s+/g, " ").trim();
   if (!candidate) return fallback;
-  return isGroundedImprovementText(candidate, [answer, problem.quote])
+  return isGroundedImprovementText(candidate, [problem.quote, usefulAnswer])
     ? candidate
     : fallback;
 }
@@ -215,21 +301,26 @@ export async function buildImprovedResume(input: {
     input.answers.map((answer) => [answer.problemId, answer.answer.trim()]),
   );
   const problems = input.report.topProblems.filter((problem) =>
-    answerMap.get(problem.id),
+    isUsefulImprovementAnswer(answerMap.get(problem.id) ?? ""),
   );
+  const usefulAnswers = input.answers.flatMap((answer) => {
+    const fact = usefulImprovementFact(answer.answer);
+    return fact ? [{ ...answer, answer: fact }] : [];
+  });
   const ai: Record<string, string> = await aiReplacements({
     problems,
-    answers: input.answers,
+    answers: usefulAnswers,
     resumeText: input.resumeText,
   }).catch(() => ({} as Record<string, string>));
   const candidates: ImprovementReplacement[] = problems.map((problem) => {
     const answer = answerMap.get(problem.id) ?? "";
+    const usefulAnswer = usefulImprovementFact(answer) ?? "";
     const safe = selectSafeReplacement(problem, answer, ai[problem.id]);
     return {
       problemId: problem.id,
       original: problem.quote,
       replacement: safe,
-      grounded: isGroundedImprovementText(safe, [answer, problem.quote]),
+      grounded: isGroundedImprovementText(safe, [problem.quote, usefulAnswer]),
     };
   });
 
