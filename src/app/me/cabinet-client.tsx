@@ -167,10 +167,18 @@ export function CabinetClient({
         </div>
       ) : (
         <div className="empty-big">
-          <p>Тут появятся твои разборы. Пока ни одного — начнём?</p>
-          <Link href="/" className="thr-btn thr-btn-tox">
-            Кинуть резюме на разбор
-          </Link>
+          <h2>С чего начнём?</h2>
+          <p>
+            Можно проверить резюме или сначала разобрать вакансию. Если начать с вакансии, её текст сохранится до сопоставления.
+          </p>
+          <div className="empty-actions">
+            <Link href="/" className="thr-btn thr-btn-tox">
+              Проверить резюме
+            </Link>
+            <Link href="/vacancy" className="thr-btn thr-btn-line">
+              Разобрать вакансию{vacancyCount > 0 ? ` · ${vacancyCount}` : ""}
+            </Link>
+          </div>
         </div>
       )}
 
@@ -410,11 +418,16 @@ export function CabinetClient({
         .empty-big p {
           font-size: 17px;
           color: var(--dim);
-          margin-bottom: 22px;
+          margin: 12px auto 22px;
+          max-width: 52ch;
+          line-height: 1.55;
         }
+        .empty-big h2 { font-size: clamp(26px,4vw,38px); letter-spacing: -.035em; }
+        .empty-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
         .empty-big :global(.thr-btn) {
           height: 52px;
           padding: 0 28px;
+          text-decoration: none;
         }
         .footer {
           margin-top: 40px;
@@ -449,6 +462,9 @@ export function CabinetClient({
           .delta .v { font-size: 20px; }
           .delta .k { font-size: 9.5px; }
           .version { flex-wrap: wrap; }
+          .empty-big { margin-top: 34px; padding: 38px 18px; }
+          .empty-actions { flex-direction: column; }
+          .empty-actions :global(.thr-btn) { width: 100%; justify-content: center; }
         }
       `}</style>
     </div>

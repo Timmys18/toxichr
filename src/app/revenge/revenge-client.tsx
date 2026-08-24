@@ -44,6 +44,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [resultView, setResultView] = useState<ResultView>("changes");
   const [editorSaving, setEditorSaving] = useState(false);
   const [editorMessage, setEditorMessage] = useState<string | null>(null);
+  const [restoredAnswersCount, setRestoredAnswersCount] = useState(0);
 
   useEffect(() => {
     track("resume_fix_opened", { analysisId });
@@ -73,7 +74,18 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
             ),
           );
         }
-        setAnswers({ ...localAnswers, ...savedAnswers });
+        const mergedAnswers = { ...localAnswers, ...savedAnswers };
+        const restoredCount = data.questions.filter(
+          (question: Question) => (mergedAnswers[question.problemId] ?? "").trim(),
+        ).length;
+        setAnswers(mergedAnswers);
+        setRestoredAnswersCount(restoredCount);
+        if (restoredCount > 0 && restoredCount < data.questions.length) {
+          const firstUnanswered = data.questions.findIndex(
+            (question: Question) => !(mergedAnswers[question.problemId] ?? "").trim(),
+          );
+          setCurrentStep(Math.max(0, firstUnanswered));
+        }
         if (data.improvement?.ready) {
           const serverText = data.improvement.improvedText ?? "";
           let draftText = serverText;
@@ -218,6 +230,12 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
           сервис соберёт честную формулировку без неё.
         </p>
       </div>
+
+      {restoredAnswersCount > 0 && !result ? (
+        <div className="restored" role="status">
+          <b>Черновик на месте.</b> Вернули ответов: {restoredAnswersCount}. Продолжаем с первого незаполненного вопроса.
+        </div>
+      ) : null}
 
       {current ? (
         <div className="questions">
@@ -416,6 +434,8 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         .over { color: var(--tox); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
         h1 { margin-top: 14px; font-size: clamp(34px,6vw,64px); line-height: 1.02; letter-spacing: -.045em; }
         .intro > p:last-child { margin-top: 20px; color: var(--dim); font-size: 17px; line-height: 1.6; }
+        .restored { margin-top: 22px; padding: 13px 16px; border: 1px solid rgba(44,224,139,.24); border-radius: 14px; background: rgba(44,224,139,.06); color: var(--dim); font-size: 13px; line-height: 1.5; }
+        .restored b { color: var(--tox); }
         .questions { display: grid; gap: 16px; margin-top: 42px; }
         .progress-head { display: flex; justify-content: space-between; gap: 18px; color: var(--faint); font-size: 11.5px; }
         .progress-head .thr-mono { color: var(--tox); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
