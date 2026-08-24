@@ -24,3 +24,25 @@ test("мобильная главная не вылезает за экран и
   await expect(page.getByText(/Добавь ещё \d+ симв/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Отдать текст/ })).toBeDisabled();
 });
+
+test("мобильная вакансия объясняет минимум текста и сохраняет черновик", async ({ page }) => {
+  await page.goto("/vacancy");
+
+  const vacancy = page.getByLabel("Текст вакансии");
+  const submit = page.getByRole("button", { name: "Разобрать вакансию" });
+  await expect(submit).toBeDisabled();
+  await vacancy.fill("Ищем менеджера продукта");
+  await expect(page.getByText(/Добавь ещё \d+ симв/)).toBeVisible();
+
+  await vacancy.fill(
+    "Ищем менеджера продукта. Нужно проводить исследования, управлять командой, работать с метриками и запускать эксперименты.",
+  );
+  await expect(submit).toBeEnabled();
+  await expect(page.getByText("Черновик сохранён на этом устройстве")).toBeVisible();
+
+  const metrics = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(metrics.scrollWidth, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.innerWidth + 1);
+});

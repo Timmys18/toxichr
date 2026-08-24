@@ -17,6 +17,15 @@ const LABELS: Record<MatchCategory, string> = {
   missing: "Опыта не видно",
 };
 
+const EMPTY_LABELS: Record<MatchCategory, string> = {
+  proven: "Дословных подтверждений в резюме не найдено.",
+  hidden: "Подходящий опыт не спрятан в других формулировках.",
+  clarify: "Нет требований, для которых достаточно короткого уточнения.",
+  missing: "Явных пробелов по этой вакансии не найдено.",
+};
+
+const MIN_VACANCY_LENGTH = 80;
+
 function CopyBlock({ title, text }: { title: string; text: string }) {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
@@ -67,6 +76,8 @@ export function VacancyClient({
   const [loadingSaved, setLoadingSaved] = useState(Boolean(vacancyId));
   const [savedVacancyId, setSavedVacancyId] = useState(vacancyId ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [draftState, setDraftState] = useState<"idle" | "restored" | "saving" | "saved">("idle");
+  const [resultStale, setResultStale] = useState(false);
 
   useEffect(() => {
     track("vacancy_review_opened", {
@@ -90,21 +101,30 @@ export function VacancyClient({
     if (analysisId) {
       const timer = window.setTimeout(() => {
         const pending = readPendingVacancy();
-        if (pending) setText(pending);
+        if (pending) {
+          setText(pending);
+          setDraftState("restored");
+        }
       }, 0);
       return () => window.clearTimeout(timer);
     }
     const timer = window.setTimeout(() => {
       const pending = readPendingVacancy();
-      if (pending) setText(pending);
+      if (pending) {
+        setText(pending);
+        setDraftState("restored");
+      }
       setLoadingSaved(false);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [analysisId, vacancyId]);
 
   useEffect(() => {
-    if (analysisId || vacancyId || text.trim().length < 80) return;
-    const timer = window.setTimeout(() => savePendingVacancy(text), 350);
+    if (analysisId || vacancyId || text.trim().length < MIN_VACANCY_LENGTH) return;
+    const timer = window.setTimeout(() => {
+      savePendingVacancy(text);
+      setDraftState("saved");
+    }, 350);
     return () => window.clearTimeout(timer);
   }, [analysisId, text, vacancyId]);
 
@@ -124,6 +144,7 @@ export function VacancyClient({
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
       setResult(data.result as VacancyReview);
+      setResultStale(false);
       setSavedVacancyId(data.vacancyId ?? "");
       if (analysisId) clearPendingVacancy();
     } catch (reason) {
@@ -145,6 +166,23 @@ export function VacancyClient({
     (item) => item.category === "proven" || item.category === "hidden",
   ).length ?? 0;
   const matchTotal = result?.requirements.filter((item) => item.category).length ?? 0;
+  const textLength = text.trim().length;
+  const missingChars = Math.max(0, MIN_VACANCY_LENGTH - textLength);
+  const inputStatus = loadingSaved
+    ? "Загружаем сохранённую вакансию…"
+    : analysisId && text
+      ? "Вакансия связана с этим резюме"
+      : textLength === 0
+        ? "Минимум 80 символов — вставь описание целиком"
+        : missingChars > 0
+          ? `Добавь ещё ${missingChars} симв. для точного разбора`
+          : draftState === "saving"
+            ? "Сохраняем черновик на этом устройстве…"
+            : draftState === "saved"
+              ? "Черновик сохранён на этом устройстве"
+              : draftState === "restored"
+                ? "Вернули сохранённый черновик"
+                : "Текста достаточно для разбора";
 
   return (
     <section className="vacancy">
@@ -163,19 +201,33 @@ export function VacancyClient({
 
       <textarea
         value={text}
-        onChange={(event) => setText(event.target.value)}
-        rows={14}
+        onChange={(event) => {
+          const nextText = event.target.value;
+          setText(nextText);
+          if (!analysisId && !vacancyId) {
+            setDraftState(
+              nextText.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle",
+            );
+          }
+          if (result) setResultStale(true);
+        }}
+        rows={10}
         placeholder="Вставь сюда текст вакансии целиком…"
         aria-label="Текст вакансии"
         maxLength={30_000}
         disabled={loadingSaved}
       />
       <div className="input-meta">
-        <span>{analysisId && text ? "Сохранённая вакансия уже здесь" : "Можно вставить весь текст без очистки"}</span>
+        <span aria-live="polite">{inputStatus}</span>
         <b className="thr-mono">{text.trim().length} / 30 000</b>
       </div>
+      {resultStale ? (
+        <p className="stale-note" role="status">
+          Текст изменился. Результат ниже относится к прошлой версии — пересчитай его.
+        </p>
+      ) : null}
       {error ? <p className="error" role="alert">{error}</p> : null}
-      <button className="thr-btn thr-btn-tox submit" onClick={submit} disabled={loadingSaved || busy || text.trim().length < 80}>
+      <button className="thr-btn thr-btn-tox submit" onClick={submit} disabled={loadingSaved || busy || textLength < MIN_VACANCY_LENGTH}>
         {loadingSaved
           ? "Загружаем вакансию…"
           : busy
@@ -214,7 +266,7 @@ export function VacancyClient({
                       <p>{item.explanation}</p>
                       {item.evidence ? <blockquote>«{item.evidence}»</blockquote> : null}
                     </article>
-                  )) : <p className="empty">Пока пусто.</p>}
+                  )) : <p className="empty">{EMPTY_LABELS[group.category]}</p>}
                 </section>
               ))}
             </div>
@@ -263,12 +315,13 @@ export function VacancyClient({
         .over { color: var(--tox); font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; }
         h1 { margin-top: 14px; font-size: clamp(34px,6vw,64px); line-height: 1.02; letter-spacing: -.045em; }
         .intro > p:last-child { margin-top: 18px; color: var(--dim); font-size: 17px; line-height: 1.6; }
-        .vacancy > textarea { width: 100%; margin-top: 34px; padding: 20px; border: 1px solid var(--hair2); border-radius: 18px; background: var(--metal-0); color: var(--fg); font: inherit; line-height: 1.55; resize: vertical; }
+        .vacancy > textarea { width: 100%; min-height: 290px; margin-top: 34px; padding: 20px; border: 1px solid var(--hair2); border-radius: 18px; background: var(--metal-0); color: var(--fg); font: inherit; line-height: 1.55; resize: vertical; }
         textarea:focus { outline: 1px solid var(--tox); border-color: var(--tox); }
         .input-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 9px; color: var(--faint); font-size: 11.5px; }
         .input-meta b { font-weight: 400; font-size: 10px; }
         .submit { min-height: 54px; margin-top: 18px; padding: 0 26px; }
         .error { margin-top: 14px; color: var(--crit); }
+        .stale-note { width: fit-content; margin-top: 12px; padding: 10px 13px; border: 1px solid rgba(255,190,92,.28); border-radius: 12px; background: rgba(255,190,92,.07); color: #f0bd70; font-size: 12.5px; line-height: 1.45; }
         .result { margin-top: 52px; padding-top: 40px; border-top: 1px solid var(--hair); }
         .result > h2 { margin-top: 10px; font-size: clamp(28px,4vw,42px); }
         .summary { margin-top: 14px; color: var(--dim); line-height: 1.6; max-width: 72ch; }
@@ -297,7 +350,14 @@ export function VacancyClient({
         .result > .output { margin-top: 14px; padding: 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
         .output ol { margin-top: 12px; padding-left: 20px; color: var(--dim); line-height: 1.6; }
         .resume-cta { min-height: 50px; margin-top: 18px; padding: 0 22px; text-decoration: none; }
-        @media (max-width: 520px) { .intro-top { align-items: flex-start; flex-direction: column; gap: 10px; } }
+        @media (max-width: 520px) {
+          .vacancy { padding-top: 34px; }
+          .intro-top { align-items: flex-start; flex-direction: column; gap: 10px; }
+          .intro > p:last-child { font-size: 15px; }
+          .vacancy > textarea { min-height: 230px; margin-top: 24px; padding: 17px; }
+          .input-meta { align-items: flex-start; font-size: 10.5px; line-height: 1.35; }
+          .submit { width: 100%; margin-top: 14px; }
+        }
       `}</style>
     </section>
   );
