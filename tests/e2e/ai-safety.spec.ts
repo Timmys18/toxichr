@@ -121,6 +121,12 @@ test("бессодержательный ответ не считается фа
   expect(isUsefulImprovementAnswer("Не уверена в точных показателях.")).toBe(
     false,
   );
+  expect(
+    isUsefulImprovementAnswer("Неизвестно точное количество сотрудников."),
+  ).toBe(false);
+  expect(isUsefulImprovementAnswer("Трудно сказать точное количество.")).toBe(
+    false,
+  );
   expect(isUsefulImprovementAnswer("Команда из 5 человек.")).toBe(true);
   expect(isUsefulImprovementAnswer("5 человек")).toBe(true);
   expect(isUsefulImprovementAnswer("2 года")).toBe(true);
