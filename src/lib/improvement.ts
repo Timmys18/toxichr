@@ -106,49 +106,7 @@ function contentTokens(text: string): string[] {
         token.length > 0 &&
         !/^\d+(?:[.,]\d+)?$/.test(token) &&
         !FUNCTION_WORDS.has(token),
-    )
-    .map((token) => {
-      if (!/^[а-я]+$/i.test(token) || token.length < 5) return token;
-      const ending = [
-        "иями",
-        "ями",
-        "ами",
-        "ого",
-        "ему",
-        "ому",
-        "ыми",
-        "ими",
-        "ая",
-        "яя",
-        "ое",
-        "ее",
-        "ые",
-        "ие",
-        "ый",
-        "ий",
-        "ой",
-        "ую",
-        "юю",
-        "ах",
-        "ях",
-        "ам",
-        "ям",
-        "ом",
-        "ем",
-        "ов",
-        "ев",
-        "ей",
-        "а",
-        "я",
-        "ы",
-        "и",
-        "у",
-        "ю",
-        "е",
-        "о",
-      ].find((suffix) => token.endsWith(suffix) && token.length - suffix.length >= 4);
-      return ending ? token.slice(0, -ending.length) : token;
-    });
+    );
 }
 
 function isOrderedSubsequence(candidate: string[], source: string[]): boolean {
@@ -175,16 +133,10 @@ export function isGroundedImprovementText(
 ): boolean {
   const clean = candidate.replace(/\s+/g, " ").trim();
   if (clean.length < 3) return false;
-  const permittedEvidence = sources
-    .map((source) => source.replace(/\s+/g, " ").trim())
-    .filter(Boolean)
-    .join(" ");
-  return (
-    groundedNumbers(clean, permittedEvidence) &&
-    isOrderedSubsequence(
-      contentTokens(clean),
-      contentTokens(permittedEvidence),
-    )
+  return sources.some(
+    (source) =>
+      groundedNumbers(clean, source) &&
+      isOrderedSubsequence(contentTokens(clean), contentTokens(source)),
   );
 }
 
@@ -197,10 +149,13 @@ export function isUsefulImprovementAnswer(answer: string): boolean {
     .replace(/[.,!?;:—–-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+  const hasUsefulContinuation = /(?:^|\s)(?:но|зато|однако|при этом)(?:\s|$)/.test(
+    normalized,
+  );
   if (
-    /^(нет|никак|хз|нечего добавить|без понятия|не (?:знаю|помню|уверен)(?: точно| точную цифру)?)$/.test(
-      normalized,
-    )
+    /^(?:нет|никак|хз|нечего добавить|без понятия)$/.test(normalized) ||
+    (/^не (?:знаю|помню|уверен)(?:\s|$)/.test(normalized) &&
+      !hasUsefulContinuation)
   ) {
     return false;
   }

@@ -55,18 +55,20 @@ test("AI-редактура принимает только подтверждё
   );
 });
 
-test("AI-редактура безопасно объединяет исходное действие и новый масштаб", () => {
+test("исходное действие и новый масштаб объединяются детерминированно", () => {
   const problem = {
     ...PROBLEM,
     quote: "Руководил продуктом.",
   };
   const answer = "Команда из 5 человек.";
-  const grounded = "Руководил продуктом, командой из 5 человек.";
+  const combinedByModel = "Руководил продуктом, командой из 5 человек.";
 
-  expect(isGroundedImprovementText(grounded, [problem.quote, answer])).toBe(
-    true,
+  expect(
+    isGroundedImprovementText(combinedByModel, [problem.quote, answer]),
+  ).toBe(false);
+  expect(selectSafeReplacement(problem, answer, combinedByModel)).toBe(
+    "Руководил продуктом. Команда из 5 человек.",
   );
-  expect(selectSafeReplacement(problem, answer, grounded)).toBe(grounded);
   expect(
     selectSafeReplacement(
       problem,
@@ -76,9 +78,37 @@ test("AI-редактура безопасно объединяет исходн
   ).toBe("Руководил продуктом. Команда из 5 человек.");
 });
 
+test("похожие русские окончания не подменяют смысл факта", () => {
+  expect(
+    isGroundedImprovementText("Управлял аналитиками.", [
+      "Управлял аналитикой.",
+    ]),
+  ).toBe(false);
+});
+
+test("числа остаются привязаны к своему локальному факту", () => {
+  const problem = {
+    ...PROBLEM,
+    quote: "Руководил 5 проектами.",
+  };
+  const answer = "Команда из 10 человек.";
+  const swapped = "Руководил 10 проектами, команда из 5 человек.";
+
+  expect(isGroundedImprovementText(swapped, [problem.quote, answer])).toBe(
+    false,
+  );
+  expect(selectSafeReplacement(problem, answer, swapped)).toBe(
+    "Руководил 5 проектами. Команда из 10 человек.",
+  );
+});
+
 test("бессодержательный ответ не считается фактом для замены", () => {
   expect(isUsefulImprovementAnswer("не знаю")).toBe(false);
   expect(isUsefulImprovementAnswer("Не помню точную цифру.")).toBe(false);
+  expect(isUsefulImprovementAnswer("Не знаю точной цифры.")).toBe(false);
+  expect(isUsefulImprovementAnswer("Не уверен в точных показателях.")).toBe(
+    false,
+  );
   expect(isUsefulImprovementAnswer("Команда из 5 человек.")).toBe(true);
   expect(
     isUsefulImprovementAnswer(
