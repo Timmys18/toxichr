@@ -1,5 +1,6 @@
 import { aiLiveEnabled, runAi } from "@/lib/ai/gateway";
 import type { AnalysisReport } from "@/lib/ai/schemas";
+import { z } from "zod";
 
 export type MatchCategory = "proven" | "hidden" | "clarify" | "missing";
 
@@ -21,6 +22,74 @@ export type VacancyReview = {
   coverLetter?: string;
   interviewQuestions: string[];
 };
+
+const VacancyAiRequirementSchema = z.object({
+  id: z.string().trim().min(1).max(160).optional(),
+  text: z.string().trim().min(1).max(500),
+  category: z.enum(["proven", "hidden", "clarify", "missing"]).optional(),
+  evidence: z.string().trim().min(1).max(2_000).optional(),
+  explanation: z.string().trim().min(1).max(2_000),
+});
+
+const VacancyAiReviewSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  summary: z.string().trim().min(1).max(3_000),
+  requirements: z.array(VacancyAiRequirementSchema).min(1).max(16),
+  redFlags: z.array(z.string().trim().min(1).max(1_000)).max(16),
+  corporateWater: z.array(z.string().trim().min(1).max(1_000)).max(16),
+  tailoredIntro: z.string().trim().min(1).max(4_000).optional(),
+  coverLetter: z.string().trim().min(1).max(8_000).optional(),
+  interviewQuestions: z
+    .array(z.string().trim().min(1).max(1_000))
+    .max(16),
+});
+
+type VacancyAiRequirement = z.infer<typeof VacancyAiRequirementSchema>;
+type VacancyAiReview = z.infer<typeof VacancyAiReviewSchema>;
+
+export function parseVacancyAiResponse(content: string): VacancyAiReview | null {
+  const start = content.indexOf("{");
+  const end = content.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+
+  try {
+    const parsedJson: unknown = JSON.parse(content.slice(start, end + 1));
+    const parsed = VacancyAiReviewSchema.safeParse(parsedJson);
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+export function sanitizeVacancyRequirement(
+  item: VacancyAiRequirement,
+  index: number,
+  resumeText?: string,
+): VacancyRequirement {
+  const evidence =
+    item.evidence && resumeText?.includes(item.evidence)
+      ? item.evidence
+      : undefined;
+  const positiveWithoutEvidence =
+    Boolean(resumeText) &&
+    (item.category === "proven" || item.category === "hidden") &&
+    !evidence;
+  const category: MatchCategory | undefined = !resumeText
+    ? undefined
+    : positiveWithoutEvidence
+      ? "clarify"
+      : (item.category ?? "clarify");
+
+  return {
+    id: item.id || `req-${index}`,
+    text: item.text,
+    category,
+    evidence: category === "missing" ? undefined : evidence,
+    explanation: positiveWithoutEvidence
+      ? "Прямой подтверждающей цитаты в резюме нет — соответствие нужно уточнить."
+      : item.explanation,
+  };
+}
 
 const STOP_WORDS = new Set([
   "который",
@@ -173,7 +242,7 @@ async function aiReview(input: {
   vacancyText: string;
   resumeText?: string;
   report?: AnalysisReport;
-}): Promise<VacancyReview | null> {
+}): Promise<VacancyAiReview | null> {
   if (!aiLiveEnabled()) return null;
   const response = await runAi({
     stage: "vacancy",
@@ -187,9 +256,8 @@ Evidence может быть только дословной строкой из
     maxTokens: 2600,
   });
   const start = response.content.indexOf("{");
-  const end = response.content.lastIndexOf("}");
-  if (start < 0 || end <= start) return null;
-  return JSON.parse(response.content.slice(start, end + 1)) as VacancyReview;
+  if (start < 0) return null;
+  return parseVacancyAiResponse(response.content);
 }
 
 export async function reviewVacancy(input: {
@@ -201,28 +269,11 @@ export async function reviewVacancy(input: {
   const ai = await aiReview(input).catch(() => null);
   if (!ai?.requirements?.length) return fallback;
 
-  const allowedCategories = new Set<MatchCategory>([
-    "proven",
-    "hidden",
-    "clarify",
-    "missing",
-  ]);
   return {
     ...fallback,
     ...ai,
-    requirements: ai.requirements.slice(0, 16).map((item, index) => ({
-      ...item,
-      id: item.id || `req-${index}`,
-      category:
-        item.category && allowedCategories.has(item.category)
-          ? item.category
-          : input.resumeText
-            ? "clarify"
-            : undefined,
-      evidence:
-        item.evidence && input.resumeText?.includes(item.evidence)
-          ? item.evidence
-          : undefined,
-    })),
+    requirements: ai.requirements.map((item, index) =>
+      sanitizeVacancyRequirement(item, index, input.resumeText),
+    ),
   } satisfies VacancyReview;
 }
