@@ -44,11 +44,6 @@ function numbers(text: string): string[] {
   return text.match(/\d+(?:[.,]\d+)?/g) ?? [];
 }
 
-function groundedNumbers(text: string, source: string): boolean {
-  const allowed = new Set(numbers(source).map((value) => value.replace(",", ".")));
-  return numbers(text).every((value) => allowed.has(value.replace(",", ".")));
-}
-
 const FUNCTION_WORDS = new Set([
   "а",
   "был",
@@ -99,13 +94,25 @@ const FUNCTION_WORDS = new Set([
 ]);
 
 function contentTokens(text: string): string[] {
-  return (text.toLowerCase().replace(/ё/g, "е").match(/[\p{L}\p{N}+#.-]+/gu) ?? [])
+  return groundingTokens(text).filter(
+    (token) => !/^\d+(?:[.]\d+)?$/.test(token),
+  );
+}
+
+function groundingTokens(text: string): string[] {
+  return (
+    text
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .match(/\d+(?:[.,]\d+)?|[\p{L}+#.-]+/gu) ?? []
+  )
     .map((token) => token.replace(/^[.+-]+|[.+-]+$/g, ""))
+    .map((token) =>
+      /^\d+(?:[.,]\d+)?$/.test(token) ? token.replace(",", ".") : token,
+    )
     .filter(
       (token) =>
-        token.length > 0 &&
-        !/^\d+(?:[.,]\d+)?$/.test(token) &&
-        !FUNCTION_WORDS.has(token),
+        token.length > 0 && !FUNCTION_WORDS.has(token),
     );
 }
 
@@ -125,7 +132,8 @@ function isOrderedSubsequence(candidate: string[], source: string[]): boolean {
 /**
  * Консервативная граница доверия для AI-редактуры: модель может убрать повторы
  * и переставить служебные слова, но не может добавить ни одного нового
- * содержательного слова, числа или изменить порядок фактических опор.
+ * содержательного слова, числа или изменить порядок фактических опор. Числа
+ * входят в ту же последовательность, поэтому сохраняют связь с локальным фактом.
  */
 export function isGroundedImprovementText(
   candidate: string,
@@ -135,8 +143,7 @@ export function isGroundedImprovementText(
   if (clean.length < 3) return false;
   return sources.some(
     (source) =>
-      groundedNumbers(clean, source) &&
-      isOrderedSubsequence(contentTokens(clean), contentTokens(source)),
+      isOrderedSubsequence(groundingTokens(clean), groundingTokens(source)),
   );
 }
 

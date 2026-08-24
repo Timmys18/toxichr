@@ -100,6 +100,15 @@ test("числа остаются привязаны к своему локал�
   expect(selectSafeReplacement(problem, answer, swapped)).toBe(
     "Руководил 5 проектами. Команда из 10 человек.",
   );
+
+  const combinedAnswer = "Руководил 5 проектами, команда из 10 человек.";
+  expect(isGroundedImprovementText(swapped, [combinedAnswer])).toBe(false);
+  expect(
+    isGroundedImprovementText(
+      "Руководил 5 проектами, команда из 10 человек.",
+      [combinedAnswer],
+    ),
+  ).toBe(true);
 });
 
 test("бессодержательный ответ не считается фактом для замены", () => {
