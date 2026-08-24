@@ -104,6 +104,8 @@ export function HomeClient() {
   }, [pastedText, router, sel]);
 
   const selEntry = ROSTER.find((r) => r.id === sel);
+  const pastedLength = pastedText.trim().length;
+  const missingPasteChars = Math.max(0, 80 - pastedLength);
 
   return (
     <section className="home">
@@ -173,7 +175,13 @@ export function HomeClient() {
         ))}
       </div>
 
-      <div ref={dockRef} className={`dock ${sel ? "open" : ""}`}>
+      {!sel ? (
+        <p className="start-hint" role="status">
+          <span aria-hidden>↑</span> Нажми на HR — сразу откроется загрузка резюме
+        </p>
+      ) : null}
+
+      {sel ? <div ref={dockRef} className="dock open">
         <div className="dock-in thr-card">
           <button
             type="button"
@@ -252,12 +260,20 @@ export function HomeClient() {
               rows={8}
               aria-label="Текст резюме"
               maxLength={60_000}
+              aria-describedby="paste-requirement"
             />
+            <p id="paste-requirement" className="paste-requirement" aria-live="polite">
+              {pastedLength === 0
+                ? "Нужно минимум 80 символов — обычно это несколько строк об опыте."
+                : missingPasteChars > 0
+                  ? `Добавь ещё ${missingPasteChars} симв. — и можно запускать разбор.`
+                  : "Текста достаточно. Можно отдавать HR."}
+            </p>
             <button
               type="button"
               className="thr-btn thr-btn-tox paste-submit"
               onClick={() => void pasteResume()}
-              disabled={busy || pastedText.trim().length < 80}
+              disabled={busy || pastedLength < 80}
             >
               {busy ? "Читаем текст…" : `Отдать текст · ${selEntry?.name ?? "HR"}`}
             </button>
@@ -279,7 +295,7 @@ export function HomeClient() {
             e.target.value = "";
           }}
         />
-      </div>
+      </div> : null}
 
       <style jsx>{`
         .home {
@@ -500,6 +516,23 @@ export function HomeClient() {
           line-height: 1.5;
           color: var(--fg);
         }
+        .start-hint {
+          margin: 20px auto 0;
+          color: var(--dim);
+          font-size: 13px;
+          line-height: 1.45;
+          text-align: center;
+        }
+        .start-hint span {
+          display: inline-block;
+          margin-right: 7px;
+          color: var(--tox);
+          animation: hint-bob 1.6s ease-in-out infinite;
+        }
+        @keyframes hint-bob {
+          0%, 100% { transform: translateY(2px); }
+          50% { transform: translateY(-2px); }
+        }
         .dock {
           margin-top: 22px;
           overflow: hidden;
@@ -645,6 +678,12 @@ export function HomeClient() {
           line-height: 1.55;
         }
         .paste-panel textarea:focus { outline: 1px solid var(--tox); border-color: var(--tox); }
+        .paste-requirement {
+          margin-top: 8px;
+          color: var(--faint);
+          font-size: 12px;
+          line-height: 1.45;
+        }
         .paste-submit { min-height: 50px; margin-top: 14px; padding: 0 24px; }
         .err {
           margin-top: 12px;
