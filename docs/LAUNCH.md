@@ -54,12 +54,14 @@ Copy from `.env.example`. Never commit `.env`.
 
 ## Visual QA (mobile)
 
-- [ ] Landing first viewport: brand + CTA readable
-- [ ] Personas 2-col → 1-col stack
+- [x] Первый экран главной: бренд и основной маршрут читаются без горизонтального переполнения
+- [x] Персонажи собраны в удобную для большого пальца горизонтальную ленту с привязкой
 - [ ] Verdict score + CTAs thumb-friendly
 - [ ] Share Studio sticky preview usable
 - [ ] History row actions wrap cleanly
-- [ ] Vacancy draft survives resume upload and returns to matching
-- [ ] Second-opinion cards fit without horizontal page overflow
-- [ ] Editor draft → save → DOCX/PDF/vacancy all use the same final text
-- [ ] Saved vacancy reopens from `/vacancies` without losing its result
+- [x] Черновик вакансии переживает загрузку резюме и возвращается в сопоставление
+- [x] Карточки второго мнения не создают горизонтального переполнения страницы
+- [x] Черновик редактора → сохранение → DOCX/PDF/вакансия используют один финальный текст
+- [x] Сохранённая вакансия открывается из `/vacancies` без потери результата
+
+Отмеченные пункты покрыты браузерными регрессиями. Оставшиеся три требуют финального визуального прохода на реальных production-данных перед публичным трафиком.

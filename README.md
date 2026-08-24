@@ -21,12 +21,20 @@
 cp .env.example .env
 npm install
 npm run db:push
-npm run dev
+npm run dev -- --port 3100
 ```
 
 По умолчанию `DATABASE_URL=file:./.data/toxichr.db` (SQLite, без Docker).
 
 Открой [http://localhost:3100](http://localhost:3100).
+
+Для безопасной локальной проверки без внешнего AI-ключа укажи в `.env`:
+
+```dotenv
+AI_PROVIDER=mock
+```
+
+На Windows важно дождаться полного завершения `npm install`: в этот момент собирается нативный SQLite-модуль. Если установка была прервана и запуск сообщает об отсутствии `better_sqlite3.node`, выполни `npm rebuild better-sqlite3`, затем снова `npm run db:push`.
 
 Поток: **главная → HR → разбор → второе мнение → исправление → вакансия**.
 
