@@ -118,6 +118,9 @@ test("бессодержательный ответ не считается фа
   expect(isUsefulImprovementAnswer("Не уверен в точных показателях.")).toBe(
     false,
   );
+  expect(isUsefulImprovementAnswer("Не уверена в точных показателях.")).toBe(
+    false,
+  );
   expect(isUsefulImprovementAnswer("Команда из 5 человек.")).toBe(true);
   expect(isUsefulImprovementAnswer("5 человек")).toBe(true);
   expect(isUsefulImprovementAnswer("2 года")).toBe(true);
@@ -134,13 +137,19 @@ test("бессодержательный ответ не считается фа
     isUsefulImprovementAnswer(
       "Не помню точную цифру, но руководил командой разработки.",
     ),
-  ).toBe(true);
+  ).toBe(false);
+  expect(
+    isUsefulImprovementAnswer(
+      "Не знаю точной цифры, но обещал позже проверить результаты.",
+    ),
+  ).toBe(false);
+  expect(isUsefulImprovementAnswer("Руководил командой разработки.")).toBe(true);
   expect(
     selectSafeReplacement(
       PROBLEM,
       "Не помню точную цифру, но провёл интервью с пользователями.",
     ),
-  ).toBe("Проводил интервью с пользователями. Провёл интервью с пользователями.");
+  ).toBe("Проводил интервью с пользователями.");
 });
 
 test("сломанный JSON вакансии отклоняется до использования в интерфейсе", () => {
