@@ -116,6 +116,12 @@ test("бессодержательный ответ не считается фа
     isUsefulImprovementAnswer("Не знаю точной цифры, но и вспомнить не могу."),
   ).toBe(false);
   expect(
+    isUsefulImprovementAnswer("Не знаю точной цифры, но сейчас проверить не могу."),
+  ).toBe(false);
+  expect(
+    isUsefulImprovementAnswer("Не знаю точной цифры, но сейчас проверю."),
+  ).toBe(false);
+  expect(
     isUsefulImprovementAnswer(
       "Не помню точную цифру, но руководил командой разработки.",
     ),

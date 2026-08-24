@@ -159,9 +159,13 @@ const NON_FACTUAL_ANSWER_WORDS = new Set([
   "нет",
   "ничего",
   "пока",
+  "позже",
   "помню",
+  "потом",
   "получается",
   "сказать",
+  "сейчас",
+  "сегодня",
   "точная",
   "точно",
   "точного",
@@ -176,9 +180,13 @@ const NON_FACTUAL_ANSWER_WORDS = new Set([
   "цифра",
   "цифры",
   "цифру",
+  "завтра",
 ]);
 
-function usefulImprovementFact(answer: string): string | null {
+function usefulImprovementFact(
+  answer: string,
+  fromUncertainty = false,
+): string | null {
   const clean = answer.replace(/\s+/g, " ").trim();
   if (clean.length < 2) return null;
   const normalized = clean
@@ -191,19 +199,32 @@ function usefulImprovementFact(answer: string): string | null {
     return null;
   }
 
+  if (
+    fromUncertainty &&
+    /(?:^|\s)(?:не|нет|нельзя|невозможно|неизвестно|без)(?:\s|$)/.test(
+      normalized,
+    )
+  ) {
+    return null;
+  }
+
   if (/^не (?:знаю|помню|уверен)(?:\s|$)/.test(normalized)) {
     const continuation = clean.match(
       /(?:^|[\s,;:—–-])(?:но|зато|однако|при этом)(?:[\s,;:—–-]+)(.+)$/iu,
     )?.[1];
-    return continuation ? usefulImprovementFact(continuation) : null;
+    return continuation ? usefulImprovementFact(continuation, true) : null;
   }
 
   const factualTokens = contentTokens(clean).filter(
     (token) => !NON_FACTUAL_ANSWER_WORDS.has(token),
   );
-  const useful =
-    factualTokens.length >= 2 ||
-    (numbers(clean).length > 0 && factualTokens.length >= 1);
+  const hasNumberFact = numbers(clean).length > 0 && factualTokens.length >= 1;
+  const hasCompletedAction = factualTokens.some((token) =>
+    /(?:л|ла|ло|ли|лся|лась|лось|лись)$/u.test(token),
+  );
+  const useful = fromUncertainty
+    ? hasNumberFact || (hasCompletedAction && factualTokens.length >= 2)
+    : factualTokens.length >= 2 || hasNumberFact;
   return useful ? clean : null;
 }
 
