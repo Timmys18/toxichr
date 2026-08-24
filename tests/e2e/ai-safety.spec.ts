@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   isGroundedImprovementText,
+  isUsefulImprovementAnswer,
   selectSafeReplacement,
 } from "../../src/lib/improvement";
 import type { Problem } from "../../src/lib/ai/schemas";
@@ -26,10 +27,12 @@ test("AI-редактура не добавляет выдуманные фак�
   const fabricated =
     "Лично провёл 12 интервью, внедрил Kubernetes и довёл 2 продукта до запуска.";
 
-  expect(isGroundedImprovementText(fabricated, [answer, PROBLEM.quote])).toBe(
+  expect(isGroundedImprovementText(fabricated, [PROBLEM.quote, answer])).toBe(
     false,
   );
-  expect(selectSafeReplacement(PROBLEM, answer, fabricated)).toBe(answer);
+  expect(selectSafeReplacement(PROBLEM, answer, fabricated)).toBe(
+    "Проводил интервью с пользователями. Лично провёл 12 интервью, проверил 4 гипотезы и довёл 2 до запуска.",
+  );
 });
 
 test("AI-редактура принимает только подтверждённое сокращение ответа", () => {
@@ -47,7 +50,41 @@ test("AI-редактура принимает только подтверждё
       answer,
       "Провёл 20 интервью, проверил 4 гипотезы и довёл 2 до запуска.",
     ),
-  ).toBe(answer);
+  ).toBe(
+    "Проводил интервью с пользователями. Лично провёл 12 интервью, проверил 4 гипотезы и довёл 2 до запуска.",
+  );
+});
+
+test("AI-редактура безопасно объединяет исходное действие и новый масштаб", () => {
+  const problem = {
+    ...PROBLEM,
+    quote: "Руководил продуктом.",
+  };
+  const answer = "Команда из 5 человек.";
+  const grounded = "Руководил продуктом, командой из 5 человек.";
+
+  expect(isGroundedImprovementText(grounded, [problem.quote, answer])).toBe(
+    true,
+  );
+  expect(selectSafeReplacement(problem, answer, grounded)).toBe(grounded);
+  expect(
+    selectSafeReplacement(
+      problem,
+      answer,
+      "Увеличил выручку продукта, руководил командой из 5 человек.",
+    ),
+  ).toBe("Руководил продуктом. Команда из 5 человек.");
+});
+
+test("бессодержательный ответ не считается фактом для замены", () => {
+  expect(isUsefulImprovementAnswer("не знаю")).toBe(false);
+  expect(isUsefulImprovementAnswer("Не помню точную цифру.")).toBe(false);
+  expect(isUsefulImprovementAnswer("Команда из 5 человек.")).toBe(true);
+  expect(
+    isUsefulImprovementAnswer(
+      "Не помню точную цифру, но руководил командой разработки.",
+    ),
+  ).toBe(true);
 });
 
 test("сломанный JSON вакансии отклоняется до использования в интерфейсе", () => {

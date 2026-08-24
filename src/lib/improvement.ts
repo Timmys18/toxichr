@@ -106,7 +106,49 @@ function contentTokens(text: string): string[] {
         token.length > 0 &&
         !/^\d+(?:[.,]\d+)?$/.test(token) &&
         !FUNCTION_WORDS.has(token),
-    );
+    )
+    .map((token) => {
+      if (!/^[а-я]+$/i.test(token) || token.length < 5) return token;
+      const ending = [
+        "иями",
+        "ями",
+        "ами",
+        "ого",
+        "ему",
+        "ому",
+        "ыми",
+        "ими",
+        "ая",
+        "яя",
+        "ое",
+        "ее",
+        "ые",
+        "ие",
+        "ый",
+        "ий",
+        "ой",
+        "ую",
+        "юю",
+        "ах",
+        "ях",
+        "ам",
+        "ям",
+        "ом",
+        "ем",
+        "ов",
+        "ев",
+        "ей",
+        "а",
+        "я",
+        "ы",
+        "и",
+        "у",
+        "ю",
+        "е",
+        "о",
+      ].find((suffix) => token.endsWith(suffix) && token.length - suffix.length >= 4);
+      return ending ? token.slice(0, -ending.length) : token;
+    });
 }
 
 function isOrderedSubsequence(candidate: string[], source: string[]): boolean {
@@ -133,16 +175,47 @@ export function isGroundedImprovementText(
 ): boolean {
   const clean = candidate.replace(/\s+/g, " ").trim();
   if (clean.length < 3) return false;
-  return sources.some(
-    (source) =>
-      groundedNumbers(clean, source) &&
-      isOrderedSubsequence(contentTokens(clean), contentTokens(source)),
+  const permittedEvidence = sources
+    .map((source) => source.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join(" ");
+  return (
+    groundedNumbers(clean, permittedEvidence) &&
+    isOrderedSubsequence(
+      contentTokens(clean),
+      contentTokens(permittedEvidence),
+    )
   );
+}
+
+export function isUsefulImprovementAnswer(answer: string): boolean {
+  const clean = answer.replace(/\s+/g, " ").trim();
+  if (clean.length < 10) return false;
+  const normalized = clean
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[.,!?;:—–-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (
+    /^(нет|никак|хз|нечего добавить|без понятия|не (?:знаю|помню|уверен)(?: точно| точную цифру)?)$/.test(
+      normalized,
+    )
+  ) {
+    return false;
+  }
+  const tokens = contentTokens(clean);
+  return tokens.length >= 2 || (numbers(clean).length > 0 && tokens.length >= 1);
 }
 
 function fallbackReplacement(problem: Problem, answer: string): string {
   const clean = answer.replace(/\s+/g, " ").trim();
-  return clean || problem.quote;
+  if (!isUsefulImprovementAnswer(clean)) return problem.quote;
+  const quote = problem.quote.replace(/\s+/g, " ").trim();
+  if (isOrderedSubsequence(contentTokens(quote), contentTokens(clean))) {
+    return clean;
+  }
+  return `${quote.replace(/[.!?;:]+$/, "")}. ${clean}`;
 }
 
 export function selectSafeReplacement(
@@ -153,7 +226,7 @@ export function selectSafeReplacement(
   const fallback = fallbackReplacement(problem, answer);
   const candidate = aiCandidate?.replace(/\s+/g, " ").trim();
   if (!candidate) return fallback;
-  return isGroundedImprovementText(candidate, [answer, problem.quote])
+  return isGroundedImprovementText(candidate, [problem.quote, answer])
     ? candidate
     : fallback;
 }
@@ -215,7 +288,7 @@ export async function buildImprovedResume(input: {
     input.answers.map((answer) => [answer.problemId, answer.answer.trim()]),
   );
   const problems = input.report.topProblems.filter((problem) =>
-    answerMap.get(problem.id),
+    isUsefulImprovementAnswer(answerMap.get(problem.id) ?? ""),
   );
   const ai: Record<string, string> = await aiReplacements({
     problems,
@@ -229,7 +302,7 @@ export async function buildImprovedResume(input: {
       problemId: problem.id,
       original: problem.quote,
       replacement: safe,
-      grounded: isGroundedImprovementText(safe, [answer, problem.quote]),
+      grounded: isGroundedImprovementText(safe, [problem.quote, answer]),
     };
   });
 
