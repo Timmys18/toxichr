@@ -5,7 +5,7 @@ test("мобильная главная не вылезает за экран и
   await expect(page.getByRole("heading", { name: /Токсичный HR/i })).toBeVisible();
   await expect(page.getByRole("link", { name: "Разобрать вакансию" })).toBeVisible();
   await expect(page.getByText(/Получите честный разбор/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Выбрать файл" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Кидай резюме" })).toBeVisible();
 
   const metrics = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -16,7 +16,7 @@ test("мобильная главная не вылезает за экран и
   );
 
   await page.getByRole("button", { name: /^Лера —/ }).click();
-  await expect(page.getByText("Начать с Лера")).toBeVisible();
+  await expect(page.getByRole("img", { name: /^Лера,/ })).toBeVisible();
   await expect(page.getByRole("button", { name: "Вставить текст" })).toBeVisible();
 
   await page.getByRole("button", { name: "Вставить текст" }).click();

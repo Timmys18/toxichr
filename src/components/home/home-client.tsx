@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
@@ -93,20 +92,6 @@ export function HomeClient() {
         </div>
 
         <div className={styles.personaPanel}>
-          <div className={styles.personaSelector} aria-label="Кто разберёт резюме">
-            {ROSTER.map((person) => (
-              <button
-                key={person.id}
-                type="button"
-                className={sel === person.id ? styles.selectedPersona : ""}
-                onClick={() => select(person.id)}
-                aria-pressed={sel === person.id}
-                aria-label={`${person.name} — ${person.role}`}
-              >
-                {person.name}
-              </button>
-            ))}
-          </div>
           <div
             className={`${styles.portrait} thr-photo`}
             style={{ backgroundImage: `url('${selected.img}')` }}
@@ -121,6 +106,21 @@ export function HomeClient() {
                 <p>«{selected.quote}»</p>
               </div>
             </div>
+          </div>
+          <div className={styles.roster} aria-label="Выбрать HR">
+            {ROSTER.map((person) => (
+              <button
+                key={person.id}
+                type="button"
+                className={sel === person.id ? styles.selectedThumb : ""}
+                onClick={() => select(person.id)}
+                aria-pressed={sel === person.id}
+                aria-label={`${person.name} — ${person.role}`}
+              >
+                <span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
+                <b>{person.name}</b>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -137,19 +137,16 @@ export function HomeClient() {
             }}
           >
           <div className={styles.actionHeading}>
-            <b>{dragActive ? "Отпускайте файл" : `Начать с ${selected.name}`}</b>
-            <span>PDF или DOCX до 8 МБ · без регистрации</span>
+            <b>{dragActive ? "Отпускай — уже читаем" : "Готов узнать правду?"}</b>
           </div>
           <div className={styles.startWays}>
             <button type="button" className={styles.fileAction} onClick={() => fileRef.current?.click()} disabled={busy}>
-              <span>{busy ? "Загружаем…" : "Выбрать файл"}</span><b aria-hidden>→</b>
+              <span>{busy ? "Читаем резюме…" : "Кидай резюме"}</span><b aria-hidden>→</b>
             </button>
             <button type="button" className={styles.textAction} onClick={() => setShowPaste((value) => !value)} disabled={busy}>
               {showPaste ? "Скрыть текст" : "Вставить текст"}
             </button>
           </div>
-          <p className={styles.trust}>Не добавляем факты, которых вы не подтверждали.</p>
-          <Link className={styles.vacancyLink} href="/vacancy">Проверить требования вакансии →</Link>
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
         </div>
       </div>
