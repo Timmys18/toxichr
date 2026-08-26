@@ -51,9 +51,9 @@ export default async function FunnelPage({
     fixClick,
     fixStarted,
     paywall,
-    checkout,
     vacancyOpened,
     vacancyCompleted,
+    checkoutPayments,
     paidPayments,
     shares,
     shareViews,
@@ -66,9 +66,12 @@ export default async function FunnelPage({
     unique("result_fix_cta_clicked"),
     unique("fix_started"),
     unique("paywall_viewed"),
-    unique("checkout_started"),
     unique("vacancy_review_opened"),
     unique("vacancy_review_completed"),
+    prisma.payment.findMany({
+      where: timeWhere,
+      select: { analysisId: true },
+    }),
     prisma.payment.findMany({
       where: { status: "PAID", ...timeWhere },
       select: { analysisId: true, amount: true },
@@ -85,6 +88,7 @@ export default async function FunnelPage({
     }),
   ]);
 
+  const checkout = new Set(checkoutPayments.map((payment) => payment.analysisId).filter(Boolean)).size;
   const paid = new Set(paidPayments.map((payment) => payment.analysisId).filter(Boolean)).size;
   const revenueRub = Math.round(paidPayments.reduce((sum, payment) => sum + payment.amount, 0) / 100);
 
@@ -155,7 +159,7 @@ export default async function FunnelPage({
           </section>
         </div>
 
-        <p className="note">Ключевая воронка считается по уникальному visitorId, а не по числу событий. Поэтому повторные открытия одной страницы больше не раздувают конверсию.</p>
+        <p className="note">Основные продуктовые шаги считаются по уникальному visitorId, а checkout и оплаты — по уникальному analysisId. Повторные открытия и повторные клики больше не раздувают конверсию.</p>
       </main>
       <style>{`
         .ops{width:min(1180px,calc(100% - 36px));margin:0 auto;padding:48px 0 80px}.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}.ops .over{color:var(--tox);font-size:11px;letter-spacing:.18em;text-transform:uppercase}.ops h1{margin-top:12px;font-size:clamp(32px,5vw,56px);letter-spacing:-.04em}.periods{display:flex;gap:5px;padding:4px;border:1px solid var(--hair);border-radius:12px;background:var(--metal-0)}.periods a{padding:8px 11px;border-radius:9px;color:var(--faint);font-size:11.5px;text-decoration:none}.periods a.active{background:var(--metal-2);color:var(--fg)}
