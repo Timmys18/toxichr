@@ -7,7 +7,6 @@ import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
-import { readPendingVacancy } from "@/lib/pending-vacancy";
 import styles from "./home-client.module.css";
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -20,16 +19,10 @@ export function HomeClient() {
   const [dragActive, setDragActive] = useState(false);
   const [showPaste, setShowPaste] = useState(false);
   const [pastedText, setPastedText] = useState("");
-  const [hasPendingVacancy, setHasPendingVacancy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     track("landing_viewed", {});
-    const timer = window.setTimeout(
-      () => setHasPendingVacancy(Boolean(readPendingVacancy())),
-      0,
-    );
-    return () => window.clearTimeout(timer);
   }, []);
 
   const selected = ROSTER.find((person) => person.id === sel) ?? ROSTER[0];
@@ -95,58 +88,44 @@ export function HomeClient() {
     <section className={styles.home}>
       <div className={styles.grid}>
         <div className={styles.intro}>
-          <div className={`${styles.badge} thr-mono`}><i /> Хирургическая точность</div>
           <h1>Токсичный <em>HR</em></h1>
-          <p>Саркастичный разбор резюме без корпоративного тумана. Жёстко к тексту — бережно к человеку.</p>
-          <div className={styles.journey} aria-label="Как работает ToxicHR">
-            <span><b>01</b> честный разбор</span><i />
-            <span><b>02</b> новая версия</span><i />
-            <span><b>03</b> проверка вакансией</span>
-          </div>
-          {hasPendingVacancy ? (
-            <div className={styles.returnNote} role="status">
-              Вакансия сохранена. Сначала проверим резюме, затем вернёмся к сопоставлению.
-            </div>
-          ) : null}
+          <p>Загрузите резюме. Выберите, кто его прочитает. Получите честный разбор без выдуманных достижений.</p>
         </div>
 
         <div className={styles.personaPanel}>
+          <div className={styles.personaSelector} aria-label="Кто разберёт резюме">
+            {ROSTER.map((person) => (
+              <button
+                key={person.id}
+                type="button"
+                className={sel === person.id ? styles.selectedPersona : ""}
+                onClick={() => select(person.id)}
+                aria-pressed={sel === person.id}
+                aria-label={`${person.name} — ${person.role}`}
+              >
+                {person.name}
+              </button>
+            ))}
+          </div>
           <div
             className={`${styles.portrait} thr-photo`}
             style={{ backgroundImage: `url('${selected.img}')` }}
             role="img"
             aria-label={`${selected.name}, ${selected.role}`}
           >
-            <div className={`${styles.leadBadge} thr-mono`}>Ведущий разбора</div>
             <div className={styles.portraitCopy}>
               <b>{selected.name}</b>
               <span>{selected.role}</span>
-              <p>«{selected.quote}»</p>
-              <small>{selected.focus}</small>
+              <div className={styles.proof}>
+                <small>Что заметит первым</small>
+                <p>«{selected.quote}»</p>
+              </div>
             </div>
-          </div>
-          <div className={styles.roster} aria-label="Выбрать HR">
-            {ROSTER.map((person) => (
-              <button
-                key={person.id}
-                type="button"
-                className={sel === person.id ? styles.selectedThumb : ""}
-                onClick={() => select(person.id)}
-                aria-pressed={sel === person.id}
-                aria-label={`${person.name} — ${person.role}`}
-              >
-                <span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
-                <b>{person.name}</b>
-              </button>
-            ))}
           </div>
         </div>
 
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={`${styles.drop} ${dragActive ? styles.drag : ""}`}
-            onClick={() => fileRef.current?.click()}
+        <div
+          className={`${styles.actions} ${dragActive ? styles.drag : ""}`}
             onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
             onDragOver={(event) => event.preventDefault()}
             onDragLeave={() => setDragActive(false)}
@@ -156,28 +135,21 @@ export function HomeClient() {
               const file = event.dataTransfer.files?.[0];
               if (file) void upload(file);
             }}
-            disabled={busy}
           >
-            <span className={styles.uploadIcon} aria-hidden>↥</span>
-            <b>{busy ? "Читаем документ…" : dragActive ? "Отпускай — берём в работу" : "Загрузите резюме"}</b>
-            <span>Перетащите PDF или DOCX сюда<br />или выберите файл на устройстве</span>
-          </button>
-          <div className={`${styles.fileMeta} thr-mono`}>PDF / DOCX · до 8 МБ · приватно</div>
-          <button
-            type="button"
-            className={`${styles.cta} thr-btn thr-btn-tox`}
-            onClick={() => fileRef.current?.click()}
-            disabled={busy}
-          >
-            <span>{busy ? "Загружаем…" : `Получить разбор · ${selected.name}`}</span><b aria-hidden>→</b>
-          </button>
-          <div className={styles.alternatives}>
-            <button type="button" onClick={() => setShowPaste((value) => !value)} disabled={busy}>
-              {showPaste ? "Скрыть поле" : "Вставить текст резюме"}
-            </button>
-            <Link href="/vacancy">Уже есть вакансия? Разобрать требования</Link>
+          <div className={styles.actionHeading}>
+            <b>{dragActive ? "Отпускайте файл" : `Начать с ${selected.name}`}</b>
+            <span>PDF или DOCX до 8 МБ · без регистрации</span>
           </div>
-          <p className={styles.trust}>Без регистрации. Не добавляем в резюме факты, которых вы не подтверждали.</p>
+          <div className={styles.startWays}>
+            <button type="button" className={styles.fileAction} onClick={() => fileRef.current?.click()} disabled={busy}>
+              <span>{busy ? "Загружаем…" : "Выбрать файл"}</span><b aria-hidden>→</b>
+            </button>
+            <button type="button" className={styles.textAction} onClick={() => setShowPaste((value) => !value)} disabled={busy}>
+              {showPaste ? "Скрыть текст" : "Вставить текст"}
+            </button>
+          </div>
+          <p className={styles.trust}>Не добавляем факты, которых вы не подтверждали.</p>
+          <Link className={styles.vacancyLink} href="/vacancy">Проверить требования вакансии →</Link>
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
         </div>
       </div>
