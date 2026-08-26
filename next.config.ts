@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Локальная инструкция использует 127.0.0.1:3100, а Next dev по умолчанию
+  // считает своим origin только localhost и блокирует CSS/JS для второго адреса.
+  allowedDevOrigins: ["127.0.0.1"],
   // Нативные и Node-тяжёлые пакеты не бандлим — грузим require() в рантайме.
   // Без этого Turbopack/webpack роняет сборку route-handler'ов, использующих
   // better-sqlite3 (нативный), mammoth и pdf-parse — и роут не регистрируется
