@@ -1,0 +1,15 @@
+:root {
+  --faint: rgba(242, 244, 245, 0.42);
+}
+
+@media (max-width: 520px) {
+  .hr-qt-overlay {
+    opacity: 1 !important;
+    background: linear-gradient(180deg, rgba(8, 9, 10, 0.08) 30%, rgba(8, 9, 10, 0.92) 100%) !important;
+  }
+
+  .hr-tag {
+    font-size: 9px !important;
+    letter-spacing: 0.08em !important;
+  }
+}
