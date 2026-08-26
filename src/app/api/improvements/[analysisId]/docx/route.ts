@@ -10,6 +10,8 @@ import {
   ImprovementAccessError,
   loadImprovementContext,
 } from "@/lib/improvement-server";
+import { hasRevengeAccess, REVENGE_PRICE_RUB } from "@/lib/payments";
+import { trackServer } from "@/lib/analytics-server";
 
 export async function GET(
   _request: Request,
@@ -17,11 +19,15 @@ export async function GET(
 ) {
   try {
     const { analysisId } = await params;
+    if (!(await hasRevengeAccess(analysisId))) {
+      return Response.json(
+        { error: `Экспорт доступен после оплаты ${REVENGE_PRICE_RUB} ₽.`, paymentRequired: true },
+        { status: 402 },
+      );
+    }
+
     const session = await auth();
-    const analysis = await loadImprovementContext(
-      analysisId,
-      session?.user?.id,
-    );
+    const analysis = await loadImprovementContext(analysisId, session?.user?.id);
     const improvement = analysis.improvements[0];
     if (!improvement?.improvedText) {
       return Response.json({ error: "Новая версия ещё не готова." }, { status: 409 });
@@ -42,10 +48,14 @@ export async function GET(
     const document = new Document({ sections: [{ children: paragraphs }] });
     const buffer = await Packer.toBuffer(document);
 
+    await trackServer("docx_downloaded", {
+      analysisId,
+      userId: session?.user?.id,
+    }).catch(() => undefined);
+
     return new Response(new Uint8Array(buffer), {
       headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": `attachment; filename="toxichr-resume-${analysisId.slice(0, 8)}.docx"`,
         "Cache-Control": "private, no-store",
       },

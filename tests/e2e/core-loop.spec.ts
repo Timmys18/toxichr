@@ -32,12 +32,11 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByRole("button", { name: /Отдать текст/i }).click();
 
   await expect(page).toHaveURL(/\/session\?/);
-  await expect(page.getByText("Одно резюме. Четыре разных фильтра.")).toBeVisible({
-    timeout: 60_000,
-  });
+  await expect(page.getByText("Одно резюме. Четыре разных фильтра.")).toBeVisible({ timeout: 60_000 });
 
   const improvementHref = await page
     .getByRole("link", { name: /Ответить по слабым строкам/i })
+    .first()
     .getAttribute("href");
   expect(improvementHref).toMatch(/^\/revenge\?analysisId=/);
   const firstAnalysisId = new URL(improvementHref!, "http://local").searchParams.get("analysisId");
@@ -46,12 +45,11 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByRole("link", { name: /Тамара/i }).click();
   await expect(page).toHaveURL(/personaId=tamara/);
   await expect(page.locator(".presence .nm")).toHaveText("Тамара Петровна");
-  await expect(page.locator(".presence .st")).toContainText("заключение готово", {
-    timeout: 60_000,
-  });
+  await expect(page.locator(".presence .st")).toContainText("заключение готово", { timeout: 60_000 });
 
   await page.goto(`/revenge?analysisId=${firstAnalysisId}`);
   await expect(page.getByText(/Вопрос 1 из/)).toBeVisible();
+  await expect(page.getByText(/Готовая новая версия — 690 ₽/)).toBeVisible();
   await page.getByLabel(/Ответ:/).fill(
     "Лично провёл 12 интервью, сформировал 4 гипотезы и довёл 2 из них до запуска.",
   );
@@ -60,9 +58,7 @@ test("полный путь: два HR → редактор → вакансия
     await page.getByRole("button", { name: /^(Дальше|Пропустить)$/ }).click();
   }
   await page.getByRole("button", { name: /Собрать резюме/ }).click();
-  await expect(page.getByRole("heading", { name: "Новая версия готова" })).toBeVisible({
-    timeout: 60_000,
-  });
+  await expect(page.getByRole("heading", { name: "Новая версия готова" })).toBeVisible({ timeout: 60_000 });
 
   await page.getByRole("tab", { name: "Редактор" }).click();
   const editor = page.getByLabel("Редактор новой версии резюме");
@@ -106,14 +102,10 @@ test("защитные сценарии API не ломают продукт", a
   expect(health.status()).toBe(200);
   expect(await health.json()).toMatchObject({ ok: true, service: "toxichr" });
 
-  const shortResume = await request.post("/api/resumes/text", {
-    data: { text: "слишком коротко" },
-  });
+  const shortResume = await request.post("/api/resumes/text", { data: { text: "слишком коротко" } });
   expect(shortResume.status()).toBe(400);
 
-  const longResume = await request.post("/api/resumes/text", {
-    data: { text: "а".repeat(60_001) },
-  });
+  const longResume = await request.post("/api/resumes/text", { data: { text: "а".repeat(60_001) } });
   expect(longResume.status()).toBe(413);
 
   const wrongFile = await request.post("/api/resumes/upload", {
@@ -123,8 +115,8 @@ test("защитные сценарии API не ломают продукт", a
   });
   expect(wrongFile.status()).toBe(415);
 
-  const removedPayment = await request.post("/api/payments/checkout", { data: {} });
-  expect(removedPayment.status()).toBe(404);
+  const invalidCheckout = await request.post("/api/payments/checkout", { data: {} });
+  expect(invalidCheckout.status()).toBe(400);
 
   const home = await request.get("/");
   expect(home.headers()["x-content-type-options"]).toBe("nosniff");
@@ -132,23 +124,21 @@ test("защитные сценарии API не ломают продукт", a
 });
 
 test("серверный цикл сохраняет две оценки, редактуру и сопоставление", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", {
-    data: { text: RESUME },
-  });
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
 
-  const firstResponse = await request.post("/api/analyses", {
-    data: { resumeId, personaId: "lera" },
-  });
-  const secondResponse = await request.post("/api/analyses", {
-    data: { resumeId, personaId: "tamara" },
-  });
+  const firstResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const secondResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "tamara" } });
   expect(firstResponse.status()).toBe(200);
   expect(secondResponse.status()).toBe(200);
   const { analysisId } = await firstResponse.json();
   const second = await secondResponse.json();
   expect(second.analysisId).not.toBe(analysisId);
+
+  const accessResponse = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(accessResponse.status()).toBe(200);
+  expect(await accessResponse.json()).toMatchObject({ paywallEnabled: false, hasAccess: true, priceRub: 690 });
 
   const questionsResponse = await request.get(`/api/improvements/${analysisId}`);
   expect(questionsResponse.status()).toBe(200);
@@ -157,12 +147,10 @@ test("серверный цикл сохраняет две оценки, ред
 
   const improvementResponse = await request.post(`/api/improvements/${analysisId}`, {
     data: {
-      answers: [
-        {
-          problemId: questions.questions[0].problemId,
-          answer: "Лично провёл 12 интервью, проверил 4 гипотезы и довёл 2 до запуска.",
-        },
-      ],
+      answers: [{
+        problemId: questions.questions[0].problemId,
+        answer: "Лично провёл 12 интервью, проверил 4 гипотезы и довёл 2 до запуска.",
+      }],
     },
   });
   expect(improvementResponse.status()).toBe(200);
@@ -170,17 +158,13 @@ test("серверный цикл сохраняет две оценки, ред
   expect(improvement.improvedText.length).toBeGreaterThan(80);
 
   const editedText = `${improvement.improvedText}\nПровёл 12 интервью и проверил 4 продуктовые гипотезы.`;
-  const editorResponse = await request.patch(`/api/improvements/${analysisId}`, {
-    data: { improvedText: editedText },
-  });
+  const editorResponse = await request.patch(`/api/improvements/${analysisId}`, { data: { improvedText: editedText } });
   expect(editorResponse.status()).toBe(200);
   expect((await editorResponse.json()).improvedText).toContain("12 интервью");
 
   const docxResponse = await request.get(`/api/improvements/${analysisId}/docx`);
   expect(docxResponse.status()).toBe(200);
-  expect(docxResponse.headers()["content-type"]).toContain(
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  );
+  expect(docxResponse.headers()["content-type"]).toContain("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
   expect((await docxResponse.body()).byteLength).toBeGreaterThan(1_000);
 
   const analysisResponse = await request.get(`/api/analyses/${analysisId}`);
@@ -212,9 +196,7 @@ test("серверный цикл сохраняет две оценки, ред
   expect(cardResponse.status()).toBe(200);
   expect(cardResponse.headers()["content-type"]).toContain("image/png");
 
-  const vacancyResponse = await request.post("/api/vacancies/review", {
-    data: { text: VACANCY, analysisId },
-  });
+  const vacancyResponse = await request.post("/api/vacancies/review", { data: { text: VACANCY, analysisId } });
   expect(vacancyResponse.status()).toBe(200);
   const vacancy = await vacancyResponse.json();
   expect(vacancy.matched).toBe(true);

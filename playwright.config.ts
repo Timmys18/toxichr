@@ -34,6 +34,7 @@ export default defineConfig({
       AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-only-secret-not-for-production",
       AI_PROVIDER: "mock",
       NEXT_PUBLIC_APP_URL: baseURL,
+      BETA_PAYWALL_ENABLED: "false",
     },
   },
   projects: [

@@ -18,16 +18,13 @@ import { prisma } from "@/lib/prisma";
 import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
 import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { hasRevengeAccess, REVENGE_PRICE_RUB } from "@/lib/payments";
 
 const BodySchema = z.object({
-  answers: z
-    .array(
-      z.object({
-        problemId: z.string().min(1),
-        answer: z.string().trim().max(1500),
-      }),
-    )
-    .max(7),
+  answers: z.array(z.object({
+    problemId: z.string().min(1),
+    answer: z.string().trim().max(1500),
+  })).max(7),
 });
 
 const EditorSchema = z.object({
@@ -39,15 +36,23 @@ async function context(analysisId: string) {
   return loadImprovementContext(analysisId, session?.user?.id);
 }
 
+function paymentRequired() {
+  return NextResponse.json(
+    {
+      error: `Готовая новая версия стоит ${REVENGE_PRICE_RUB} ₽ в бете.`,
+      paymentRequired: true,
+      priceRub: REVENGE_PRICE_RUB,
+    },
+    { status: 402 },
+  );
+}
+
 function errorResponse(error: unknown) {
   if (error instanceof ImprovementAccessError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
   console.error(error);
-  return NextResponse.json(
-    { error: "Не удалось собрать новую версию." },
-    { status: 500 },
-  );
+  return NextResponse.json({ error: "Не удалось собрать новую версию." }, { status: 500 });
 }
 
 export async function GET(
@@ -59,9 +64,7 @@ export async function GET(
     const analysis = await context(analysisId);
     const report = analysis.reportPayload as AnalysisReport;
     const saved = analysis.improvements[0] ?? null;
-    const originalText = await loadOriginalResumeText(
-      analysis.resumeVersion.resume,
-    );
+    const originalText = await loadOriginalResumeText(analysis.resumeVersion.resume);
 
     return NextResponse.json({
       analysisId,
@@ -95,20 +98,19 @@ export async function POST(
         { status: 429 },
       );
     }
+
     const { analysisId } = await params;
     const parsed = BodySchema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Проверь ответы." }, { status: 400 });
-    }
+    if (!parsed.success) return NextResponse.json({ error: "Проверь ответы." }, { status: 400 });
+
     const answers = parsed.data.answers.filter((item) => item.answer.length > 0);
     if (answers.length === 0) {
-      return NextResponse.json(
-        { error: "Ответь хотя бы на один вопрос." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Ответь хотя бы на один вопрос." }, { status: 400 });
     }
 
     const analysis = await context(analysisId);
+    if (!(await hasRevengeAccess(analysisId))) return paymentRequired();
+
     const report = analysis.reportPayload as AnalysisReport;
     const sanitizedText = analysis.resumeVersion.resume.sanitizedText ?? "";
     if (!sanitizedText) {
@@ -123,23 +125,16 @@ export async function POST(
     });
     if (result.replacements.length === 0) {
       return NextResponse.json(
-        {
-          error:
-            "Пока фактов недостаточно, чтобы сделать текст сильнее. Добавь личное действие, масштаб или проверяемый результат хотя бы в один ответ.",
-        },
+        { error: "Пока фактов недостаточно, чтобы сделать текст сильнее. Добавь личное действие, масштаб или проверяемый результат хотя бы в один ответ." },
         { status: 422 },
       );
     }
-    const originalText = await loadOriginalResumeText(
-      analysis.resumeVersion.resume,
-    );
+
+    const originalText = await loadOriginalResumeText(analysis.resumeVersion.resume);
     let improvedText = originalText || result.improvedText;
     for (const replacement of result.replacements) {
       if (improvedText.includes(replacement.original)) {
-        improvedText = improvedText.replace(
-          replacement.original,
-          replacement.replacement,
-        );
+        improvedText = improvedText.replace(replacement.original, replacement.replacement);
       }
     }
 
@@ -195,6 +190,12 @@ export async function POST(
       },
     });
 
+    await trackServer("fix_generated", {
+      analysisId,
+      afterScore: saved.afterScore,
+      replacements: result.replacements.length,
+    });
+
     return NextResponse.json({
       ready: true,
       beforeScore: saved.beforeScore,
@@ -221,21 +222,17 @@ export async function PATCH(
     }
 
     const { analysisId } = await params;
+    if (!(await hasRevengeAccess(analysisId))) return paymentRequired();
+
     const parsed = EditorSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Версия должна содержать от 80 до 60 000 знаков." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Версия должна содержать от 80 до 60 000 знаков." }, { status: 400 });
     }
 
     const analysis = await context(analysisId);
     const improvement = analysis.improvements[0];
     if (!improvement?.resumeVersionId) {
-      return NextResponse.json(
-        { error: "Сначала собери новую версию по ответам." },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: "Сначала собери новую версию по ответам." }, { status: 409 });
     }
 
     const report = analysis.reportPayload as AnalysisReport;
@@ -243,10 +240,7 @@ export async function PATCH(
     const originalText = analysis.resumeVersion.resume.sanitizedText ?? "";
     const baseline = runHeuristicAnalysis(originalText, personaId).score.total;
     const edited = runHeuristicAnalysis(parsed.data.improvedText, personaId).score.total;
-    const afterScore = Math.max(
-      0,
-      Math.min(100, report.score.total + edited - baseline),
-    );
+    const afterScore = Math.max(0, Math.min(100, report.score.total + edited - baseline));
     const replacements = improvement.replacements ?? [];
 
     await prisma.$transaction([
