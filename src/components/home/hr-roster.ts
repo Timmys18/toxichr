@@ -15,7 +15,7 @@ export const ROSTER: RosterEntry[] = [
     id: "vadik",
     name: "Вадик",
     role: "Фаундер стартапа",
-    tag: "Startup",
+    tag: "Рекомендуем первым",
     img: "/hr/vadik.jpg",
     quote: "Убери всё, что ты не сделал руками. От резюме останется имя и фото.",
   },
