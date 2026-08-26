@@ -19,6 +19,43 @@ export class AnalysisInputError extends Error {
   }
 }
 
+const REUSABLE_ANALYSIS_WINDOW_MS = 15 * 60 * 1000;
+
+export async function findReusableAnalysis(
+  resumeId: string,
+  personaId: PersonaId,
+): Promise<{ id: string; status: "RUNNING" | "COMPLETED" } | null> {
+  return prisma.analysis.findFirst({
+    where: {
+      status: { in: ["RUNNING", "COMPLETED"] },
+      createdAt: {
+        gte: new Date(Date.now() - REUSABLE_ANALYSIS_WINDOW_MS),
+      },
+      resumeVersion: { resumeId },
+      persona: { code: personaId },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, status: true },
+  }) as Promise<{ id: string; status: "RUNNING" | "COMPLETED" } | null>;
+}
+
+export async function waitForAnalysis(
+  analysisId: string,
+  timeoutMs = 75_000,
+): Promise<"COMPLETED" | "FAILED" | "TIMEOUT"> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const analysis = await prisma.analysis.findUnique({
+      where: { id: analysisId },
+      select: { status: true },
+    });
+    if (analysis?.status === "COMPLETED") return "COMPLETED";
+    if (!analysis || analysis.status === "FAILED") return "FAILED";
+    await new Promise((resolve) => setTimeout(resolve, 750));
+  }
+  return "TIMEOUT";
+}
+
 export async function createAndRunAnalysis(
   resumeId: string,
   personaId: PersonaId,

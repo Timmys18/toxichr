@@ -12,6 +12,8 @@ import {
   AnalysisInputError,
   PERSONA_CODES,
   createAndRunAnalysis,
+  findReusableAnalysis,
+  waitForAnalysis,
 } from "@/lib/run-analysis";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +57,33 @@ export async function POST(request: Request) {
       };
 
       try {
+        const reusable = await findReusableAnalysis(resumeId, personaId);
+        if (reusable?.status === "COMPLETED") {
+          send({
+            type: "finding",
+            stage: "extract",
+            message: "Готовый разбор найден — открываем без повторного запроса к AI.",
+          });
+          send({ type: "completed", analysisId: reusable.id });
+          return;
+        }
+        if (reusable?.status === "RUNNING") {
+          send({
+            type: "finding",
+            stage: "extract",
+            message: "Разбор уже идёт — подключаемся к готовящемуся результату.",
+          });
+          const status = await waitForAnalysis(reusable.id);
+          if (status === "COMPLETED") {
+            send({ type: "completed", analysisId: reusable.id });
+            return;
+          }
+          throw new Error(
+            status === "TIMEOUT"
+              ? "Разбор занимает больше времени, чем обычно. Обнови страницу — результат не потеряется."
+              : "Разбор не завершился. Попробуй ещё раз.",
+          );
+        }
         const { analysisId } = await createAndRunAnalysis(
           resumeId,
           personaId,

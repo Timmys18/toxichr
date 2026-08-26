@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import type { PersonaId } from "@/lib/personas";
@@ -48,11 +48,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeId ?? null);
   const [error, setError] = useState<string | null>(null);
-  const started = useRef(false);
-
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
     let cancelled = false;
     let settled = false;
     // Сторож: если за 75с ничего не завершилось — не крутим спиннер вечно,
@@ -116,7 +112,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
       }
     }
 
-    async function runStream(): Promise<boolean> {
+    async function runStream(): Promise<{ saw: boolean; terminal: boolean }> {
       const res = await fetch("/api/analyses/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,30 +121,51 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => null);
         if (data?.error) throw new Error(data.error);
-        return false;
+        return { saw: false, terminal: false };
       }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
       let saw = false;
+      let terminal = false;
+
+      function consume(final = false) {
+        const normalized = buf.replace(/\r\n/g, "\n");
+        const chunks = normalized.split("\n\n");
+        buf = final ? "" : (chunks.pop() ?? "");
+        if (final) {
+          const tail = chunks.pop();
+          if (tail?.trim()) chunks.push(tail);
+        }
+        for (const chunk of chunks) {
+          const data = chunk
+            .split("\n")
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trimStart())
+            .join("\n");
+          if (!data) continue;
+          try {
+            const event = JSON.parse(data) as StreamEvent;
+            onEvent(event);
+            saw = true;
+            if (event.type === "completed" || event.type === "error") {
+              terminal = true;
+            }
+          } catch {
+            /* повреждённое промежуточное событие не ломает весь поток */
+          }
+        }
+      }
+
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += dec.decode(value, { stream: true });
-        const chunks = buf.split("\n\n");
-        buf = chunks.pop() ?? "";
-        for (const c of chunks) {
-          const line = c.split("\n").find((l) => l.startsWith("data: "));
-          if (!line) continue;
-          try {
-            onEvent(JSON.parse(line.slice(6)) as StreamEvent);
-            saw = true;
-          } catch {
-            /* ignore */
-          }
-        }
+        consume();
       }
-      return saw;
+      buf += dec.decode();
+      consume(true);
+      return { saw, terminal };
     }
 
     async function runFallback() {
@@ -168,8 +185,14 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           await loadReport(viewId);
           return;
         }
-        const ok = await runStream();
-        if (!ok && !cancelled) await runFallback();
+        const first = await runStream();
+        if (!first.terminal && !cancelled) {
+          const retry = await runStream();
+          if (!retry.terminal && !cancelled) {
+            if (!first.saw && !retry.saw) await runFallback();
+            else throw new Error("Связь прервалась на финише. Обнови страницу — готовый разбор уже сохранён.");
+          }
+        }
       } catch (e) {
         settled = true;
         clearTimeout(watch);
