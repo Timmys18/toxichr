@@ -27,7 +27,7 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page.getByRole("heading", { name: /Токсичный HR/i })).toBeVisible();
 
   await page.getByRole("button", { name: /^Лера —/ }).click();
-  await page.getByRole("button", { name: "Или вставить текст" }).click();
+  await page.getByRole("button", { name: "Вставить текст резюме" }).click();
   await page.getByLabel("Текст резюме").fill(RESUME);
   await page.getByRole("button", { name: /Отдать текст/i }).click();
 

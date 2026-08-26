@@ -1,18 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
 import { readPendingVacancy } from "@/lib/pending-vacancy";
+import styles from "./home-client.module.css";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export function HomeClient() {
   const router = useRouter();
-  const [sel, setSel] = useState<PersonaId | null>(null);
+  const [sel, setSel] = useState<PersonaId>("vadik");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -20,7 +22,6 @@ export function HomeClient() {
   const [pastedText, setPastedText] = useState("");
   const [hasPendingVacancy, setHasPendingVacancy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const dockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     track("landing_viewed", {});
@@ -31,71 +32,55 @@ export function HomeClient() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  const selected = ROSTER.find((person) => person.id === sel) ?? ROSTER[0];
+
   const select = useCallback((id: PersonaId) => {
     setSel(id);
     setError(null);
     track("persona_selected", { persona: id });
-    setTimeout(
-      () => dockRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
-      120,
-    );
   }, []);
 
-  const upload = useCallback(
-    async (file: File) => {
-      if (!sel) return;
-      const okType =
-        file.type === "application/pdf" ||
-        file.type ===
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-        /\.(pdf|docx)$/i.test(file.name);
-      if (!okType) {
-        setError("Нужен PDF или DOCX.");
-        return;
-      }
-      if (file.size > MAX_BYTES) {
-        setError("Файл больше 8 МБ.");
-        return;
-      }
-      setBusy(true);
-      setError(null);
-      track("resume_upload_started", { source: "home", persona: sel });
-      try {
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch("/api/resumes/upload", { method: "POST", body: form });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Не удалось загрузить файл");
-        track("resume_uploaded", { mime: file.type || "unknown" });
-        await updateReferral("started", { resumeId: data.resumeId }).catch(
-          () => undefined,
-        );
-        router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Ошибка загрузки");
-        setBusy(false);
-      }
-    },
-    [sel, router],
-  );
+  const upload = useCallback(async (file: File) => {
+    const okType =
+      file.type === "application/pdf" ||
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      /\.(pdf|docx)$/i.test(file.name);
+    if (!okType) return setError("Нужен PDF или DOCX.");
+    if (file.size > MAX_BYTES) return setError("Файл больше 8 МБ.");
+
+    setBusy(true);
+    setError(null);
+    track("resume_upload_started", { source: "home", persona: sel });
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch("/api/resumes/upload", { method: "POST", body: form });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Не удалось загрузить файл");
+      track("resume_uploaded", { mime: file.type || "unknown" });
+      await updateReferral("started", { resumeId: data.resumeId }).catch(() => undefined);
+      router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+      setBusy(false);
+    }
+  }, [router, sel]);
 
   const pasteResume = useCallback(async () => {
-    if (!sel || pastedText.trim().length < 80) return;
+    if (pastedText.trim().length < 80) return;
     setBusy(true);
     setError(null);
     track("resume_upload_started", { source: "paste", persona: sel });
     try {
-      const res = await fetch("/api/resumes/text", {
+      const response = await fetch("/api/resumes/text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: pastedText }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Не удалось прочитать текст");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Не удалось прочитать текст");
       track("resume_uploaded", { mime: "text/plain" });
-      await updateReferral("started", { resumeId: data.resumeId }).catch(
-        () => undefined,
-      );
+      await updateReferral("started", { resumeId: data.resumeId }).catch(() => undefined);
       router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
@@ -103,94 +88,66 @@ export function HomeClient() {
     }
   }, [pastedText, router, sel]);
 
-  const selEntry = ROSTER.find((r) => r.id === sel);
   const pastedLength = pastedText.trim().length;
   const missingPasteChars = Math.max(0, 80 - pastedLength);
 
   return (
-    <section className="home">
-      <div className="hh">
-        <h1>
-          Токсичный <i>HR</i>
-        </h1>
-        <p>
-          Хирургическая точность без корпоративной <b>политкорректности.</b>
-        </p>
-      </div>
-
-      <div className="journey" aria-label="Что произойдёт дальше">
-        <span><b>01</b> честный разбор</span>
-        <i aria-hidden>→</i>
-        <span><b>02</b> новая версия</span>
-        <i aria-hidden>→</i>
-        <span><b>03</b> проверка вакансией</span>
-      </div>
-
-      {hasPendingVacancy ? (
-        <div className="vacancy-return" role="status">
-          <span className="thr-mono">Вакансия сохранена</span>
-          Сначала проверим резюме, затем вернёмся к сопоставлению — текст не потеряется.
+    <section className={styles.home}>
+      <div className={styles.grid}>
+        <div className={styles.intro}>
+          <div className={`${styles.badge} thr-mono`}><i /> Хирургическая точность</div>
+          <h1>Токсичный <em>HR</em></h1>
+          <p>Саркастичный разбор резюме без корпоративного тумана. Жёстко к тексту — бережно к человеку.</p>
+          <div className={styles.journey} aria-label="Как работает ToxicHR">
+            <span><b>01</b> честный разбор</span><i />
+            <span><b>02</b> новая версия</span><i />
+            <span><b>03</b> проверка вакансией</span>
+          </div>
+          {hasPendingVacancy ? (
+            <div className={styles.returnNote} role="status">
+              Вакансия сохранена. Сначала проверим резюме, затем вернёмся к сопоставлению.
+            </div>
+          ) : null}
         </div>
-      ) : null}
 
-      <div className="pick">
-        Выбери своего <b>HR</b>
-      </div>
-
-      <div className="roster">
-        {ROSTER.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className={`hr ${sel === p.id ? "sel" : ""}`}
-            onClick={() => select(p.id)}
-            aria-pressed={sel === p.id}
-            aria-label={`${p.name} — ${p.role}`}
+        <div className={styles.personaPanel}>
+          <div
+            className={`${styles.portrait} thr-photo`}
+            style={{ backgroundImage: `url('${selected.img}')` }}
+            role="img"
+            aria-label={`${selected.name}, ${selected.role}`}
           >
-            <span
-              className="hr-photo thr-photo"
-              style={{ backgroundImage: `url('${p.img}')` }}
-            >
-              <span className="hr-tag thr-mono">{p.tag}</span>
-              <span className="hr-check" aria-hidden>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M3 7.5l2.5 2.5L11 4"
-                    stroke="#06130c"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className="hr-qt-overlay">
-                <span className="hr-qt">«{p.quote}»</span>
-              </span>
-            </span>
-            <span className="hr-body">
-              <span className="hr-nm">{p.name}</span>
-              <span className="hr-rl">{p.role}</span>
-            </span>
-          </button>
-        ))}
-      </div>
+            <div className={`${styles.leadBadge} thr-mono`}>Ведущий разбора</div>
+            <div className={styles.portraitCopy}>
+              <b>{selected.name}</b>
+              <span>{selected.role}</span>
+              <p>«{selected.quote}»</p>
+              <small>{selected.focus}</small>
+            </div>
+          </div>
+          <div className={styles.roster} aria-label="Выбрать HR">
+            {ROSTER.map((person) => (
+              <button
+                key={person.id}
+                type="button"
+                className={sel === person.id ? styles.selectedThumb : ""}
+                onClick={() => select(person.id)}
+                aria-pressed={sel === person.id}
+                aria-label={`${person.name} — ${person.role}`}
+              >
+                <span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
+                <b>{person.name}</b>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {!sel ? (
-        <p className="start-hint" role="status">
-          <span aria-hidden>↑</span> Нажми на HR — сразу откроется загрузка резюме
-        </p>
-      ) : null}
-
-      {sel ? <div ref={dockRef} className="dock open">
-        <div className="dock-in thr-card">
+        <div className={styles.actions}>
           <button
             type="button"
-            className={`drop ${dragActive ? "drag" : ""}`}
+            className={`${styles.drop} ${dragActive ? styles.drag : ""}`}
             onClick={() => fileRef.current?.click()}
-            onDragEnter={(event) => {
-              event.preventDefault();
-              setDragActive(true);
-            }}
+            onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
             onDragOver={(event) => event.preventDefault()}
             onDragLeave={() => setDragActive(false)}
             onDrop={(event) => {
@@ -201,496 +158,66 @@ export function HomeClient() {
             }}
             disabled={busy}
           >
-            <span className="drop-ic" aria-hidden>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M10 13V4M6.5 7.5L10 4l3.5 3.5M4 14v2h12v-2"
-                  stroke="#2ce08b"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span>
-              <span className="drop-t1">
-                {busy
-                  ? "Читаем документ…"
-                  : dragActive
-                    ? "Отпускай — берём в работу"
-                    : "Кидай резюме"}
-              </span>
-              <span className="drop-t2 thr-mono">PDF / DOCX · ДО 8 МБ · ПРИВАТНО</span>
-            </span>
+            <span className={styles.uploadIcon} aria-hidden>↥</span>
+            <b>{busy ? "Читаем документ…" : dragActive ? "Отпускай — берём в работу" : "Загрузите резюме"}</b>
+            <span>Перетащите PDF или DOCX сюда<br />или выберите файл на устройстве</span>
           </button>
-          <div className="who">
-            <div className="who-k thr-mono">Приём ведёт</div>
-            <div className="who-n">{selEntry?.name ?? "—"}</div>
-            <button
-              type="button"
-              className="thr-btn thr-btn-tox who-btn"
-              onClick={() => fileRef.current?.click()}
-              disabled={busy}
-            >
-              {busy ? "Загрузка…" : "Получить разбор"}
+          <div className={`${styles.fileMeta} thr-mono`}>PDF / DOCX · до 8 МБ · приватно</div>
+          <button
+            type="button"
+            className={`${styles.cta} thr-btn thr-btn-tox`}
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+          >
+            <span>{busy ? "Загружаем…" : `Получить разбор · ${selected.name}`}</span><b aria-hidden>→</b>
+          </button>
+          <div className={styles.alternatives}>
+            <button type="button" onClick={() => setShowPaste((value) => !value)} disabled={busy}>
+              {showPaste ? "Скрыть поле" : "Вставить текст резюме"}
             </button>
-            <button
-              type="button"
-              className="paste-toggle"
-              onClick={() => setShowPaste((current) => !current)}
-              disabled={busy}
-            >
-              {showPaste ? "Скрыть поле" : "Или вставить текст"}
-            </button>
+            <Link href="/vacancy">Уже есть вакансия? Разобрать требования</Link>
           </div>
+          <p className={styles.trust}>Без регистрации. Не добавляем в резюме факты, которых вы не подтверждали.</p>
+          {error ? <p className={styles.error} role="alert">{error}</p> : null}
         </div>
-        {showPaste ? (
-          <div className="paste-panel thr-card">
-            <div className="paste-head">
-              <div>
-                <b>Резюме без файла</b>
-                <span>Скопируй текст из документа или профиля — форматирование не важно.</span>
-              </div>
-              <span className="thr-mono">{pastedText.trim().length} / 60 000</span>
-            </div>
-            <textarea
-              value={pastedText}
-              onChange={(event) => setPastedText(event.target.value)}
-              placeholder="Опыт, проекты, результаты, образование…"
-              rows={8}
-              aria-label="Текст резюме"
-              maxLength={60_000}
-              aria-describedby="paste-requirement"
-            />
-            <p id="paste-requirement" className="paste-requirement" aria-live="polite">
-              {pastedLength === 0
-                ? "Нужно минимум 80 символов — обычно это несколько строк об опыте."
-                : missingPasteChars > 0
-                  ? `Добавь ещё ${missingPasteChars} симв. — и можно запускать разбор.`
-                  : "Текста достаточно. Можно отдавать HR."}
-            </p>
-            <button
-              type="button"
-              className="thr-btn thr-btn-tox paste-submit"
-              onClick={() => void pasteResume()}
-              disabled={busy || pastedLength < 80}
-            >
-              {busy ? "Читаем текст…" : `Отдать текст · ${selEntry?.name ?? "HR"}`}
-            </button>
-          </div>
-        ) : null}
-        {error ? (
-          <p className="err" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void upload(f);
-            e.target.value = "";
-          }}
-        />
-      </div> : null}
+      </div>
 
-      <style jsx>{`
-        .home {
-          width: 100%;
-          max-width: 1160px;
-          box-sizing: border-box;
-          margin: 0 auto;
-          padding: 24px 40px 64px;
-          animation: thr-fade 0.6s var(--ease);
-        }
-        @media (max-width: 720px) {
-          .home {
-            padding: 20px 18px 56px;
-          }
-        }
-        .hh {
-          text-align: center;
-          max-width: 720px;
-          margin: 0 auto;
-        }
-        .hh-over {
-          display: inline-flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .hh-over span {
-          width: 24px;
-          height: 1px;
-          background: var(--tox);
-        }
-        .hh h1 {
-          font-weight: 800;
-          font-size: clamp(40px, 4.6vw, 66px);
-          line-height: 0.94;
-          letter-spacing: -0.045em;
-          margin-top: 18px;
-        }
-        .hh h1 i {
-          font-style: normal;
-          color: var(--tox);
-        }
-        .hh p {
-          margin-top: 22px;
-          font-size: 19px;
-          line-height: 1.5;
-          color: var(--dim);
-          max-width: 34ch;
-          margin-left: auto;
-          margin-right: auto;
-        }
-        .hh p b {
-          color: var(--fg);
-          font-weight: 500;
-        }
-        .journey {
-          width: fit-content;
-          margin: 26px auto 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: var(--faint);
-          font-family: var(--font-mono), monospace;
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-        .journey b { color: var(--tox); font-weight: 500; }
-        .journey i { font-style: normal; color: var(--hair2); }
-        @media (max-width: 620px) {
-          .journey { width: 100%; justify-content: center; gap: 7px; font-size: 8.5px; letter-spacing: 0.03em; }
-        }
-        .vacancy-return {
-          max-width: 720px;
-          margin: 24px auto 0;
-          padding: 14px 18px;
-          border: 1px solid rgba(106, 155, 255, 0.28);
-          border-radius: 14px;
-          background: rgba(106, 155, 255, 0.07);
-          color: var(--dim);
-          font-size: 13px;
-          line-height: 1.5;
-          text-align: center;
-        }
-        .vacancy-return span { color: var(--data); margin-right: 10px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
-        .pick {
-          text-align: center;
-          margin: 36px 0 18px;
-          font-family: var(--font-mono), monospace;
-          font-size: 11px;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: var(--faint);
-        }
-        .pick b {
-          color: var(--tox);
-          font-weight: 500;
-        }
-        .roster {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 18px;
-        }
-        @media (max-width: 900px) {
-          .roster {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-        @media (max-width: 520px) {
-          .roster {
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            margin-left: -18px;
-            margin-right: -18px;
-            padding: 0 18px 14px;
-            scrollbar-width: none;
-          }
-          .roster::-webkit-scrollbar { display: none; }
-          .hr { min-width: min(76vw, 290px); scroll-snap-align: center; }
-        }
-        .hr {
-          display: flex;
-          flex-direction: column;
-          border-radius: 20px;
-          overflow: hidden;
-          cursor: pointer;
-          border: 1px solid var(--hair);
-          transition: 0.4s var(--ease);
-          background: var(--metal-1);
-          padding: 0;
-          text-align: left;
-          font-family: inherit;
-          color: inherit;
-        }
-        .hr:hover {
-          transform: translateY(-4px);
-          border-color: var(--hair2);
-        }
-        .hr.sel {
-          border-color: var(--tox);
-          box-shadow: 0 0 0 1px var(--tox), 0 30px 70px rgba(44, 224, 139, 0.14);
-        }
-        .hr-photo {
-          position: relative;
-          aspect-ratio: 4 / 5;
-          flex-shrink: 0;
-          background-position: center 22%;
-        }
-        .hr-qt-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: flex-end;
-          padding: 18px 16px;
-          background: linear-gradient(
-            180deg,
-            rgba(8, 9, 10, 0.35),
-            rgba(8, 9, 10, 0.92)
-          );
-          backdrop-filter: blur(1px);
-          opacity: 0;
-          transition: opacity 0.28s var(--ease);
-        }
-        .hr:hover .hr-qt-overlay,
-        .hr.sel .hr-qt-overlay {
-          opacity: 1;
-        }
-        .hr-tag {
-          position: absolute;
-          top: 12px;
-          left: 12px;
-          font-size: 9px;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--fg);
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(6px);
-          padding: 5px 9px;
-          border-radius: 6px;
-          border: 1px solid var(--hair2);
-        }
-        .hr-check {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          background: var(--tox);
-          display: none;
-          align-items: center;
-          justify-content: center;
-        }
-        .hr.sel .hr-check {
-          display: flex;
-        }
-        .hr-body {
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          padding: 16px 16px 18px;
-          background: var(--metal-1);
-        }
-        .hr-nm {
-          font-weight: 700;
-          font-size: 17px;
-          letter-spacing: -0.02em;
-          line-height: 1.15;
-        }
-        .hr-rl {
-          font-size: 12px;
-          color: var(--dim);
-          margin-top: 3px;
-        }
-        .hr-qt {
-          font-size: 12.5px;
-          line-height: 1.5;
-          color: var(--fg);
-        }
-        .start-hint {
-          margin: 20px auto 0;
-          color: var(--dim);
-          font-size: 13px;
-          line-height: 1.45;
-          text-align: center;
-        }
-        .start-hint span {
-          display: inline-block;
-          margin-right: 7px;
-          color: var(--tox);
-          animation: hint-bob 1.6s ease-in-out infinite;
-        }
-        @keyframes hint-bob {
-          0%, 100% { transform: translateY(2px); }
-          50% { transform: translateY(-2px); }
-        }
-        .dock {
-          margin-top: 22px;
-          overflow: hidden;
-          max-height: 0;
-          opacity: 0;
-          transition: 0.6s var(--ease);
-        }
-        .dock.open {
-          max-height: 980px;
-          opacity: 1;
-        }
-        .dock-in {
-          background: linear-gradient(180deg, var(--metal-1), var(--metal-0));
-          padding: 26px 28px;
-          display: flex;
-          align-items: center;
-          gap: 26px;
-        }
-        @media (max-width: 680px) {
-          .dock-in {
-            flex-direction: column;
-            text-align: center;
-            gap: 18px;
-          }
-        }
-        .drop {
-          flex: 1;
-          border: 1.5px dashed var(--hair2);
-          border-radius: 14px;
-          padding: 26px;
-          display: flex;
-          align-items: center;
-          gap: 18px;
-          cursor: pointer;
-          transition: 0.25s;
-          background: rgba(255, 255, 255, 0.015);
-          font-family: inherit;
-          color: inherit;
-          text-align: left;
-          width: 100%;
-        }
-        .drop:hover {
-          border-color: var(--tox);
-          background: var(--tox-dim);
-        }
-        .drop.drag {
-          border-color: var(--tox);
-          background: var(--tox-dim);
-          box-shadow: inset 0 0 0 1px var(--tox);
-        }
-        .drop-ic {
-          width: 46px;
-          height: 46px;
-          border-radius: 12px;
-          background: var(--metal-2);
-          border: 1px solid var(--hair);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .drop-t1 {
-          display: block;
-          font-size: 15px;
-          font-weight: 600;
-        }
-        .drop-t2 {
-          display: block;
-          font-size: 12.5px;
-          color: var(--faint);
-          margin-top: 3px;
-          letter-spacing: 0.06em;
-        }
-        .who {
-          flex-shrink: 0;
-          text-align: right;
-        }
-        @media (max-width: 680px) {
-          .who {
-            text-align: center;
-          }
-        }
-        .who-k {
-          font-size: 10px;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: var(--faint);
-        }
-        .who-n {
-          font-weight: 700;
-          font-size: 18px;
-          margin-top: 4px;
-        }
-        .who-q {
-          margin-top: 10px;
-          font-size: 13px;
-          line-height: 1.5;
-          color: var(--dim);
-          max-width: 30ch;
-          margin-left: auto;
-        }
-        .who-btn {
-          height: 48px;
-          padding: 0 26px;
-          margin-top: 14px;
-          font-size: 14px;
-        }
-        .paste-toggle {
-          margin-top: 10px;
-          border: 0;
-          background: transparent;
-          color: var(--dim);
-          font: inherit;
-          font-size: 12.5px;
-          text-decoration: underline;
-          text-underline-offset: 4px;
-          cursor: pointer;
-        }
-        .paste-panel {
-          margin-top: 12px;
-          padding: 22px;
-          background: var(--metal-0);
-        }
-        .paste-head {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 20px;
-        }
-        .paste-head b { display: block; font-size: 16px; }
-        .paste-head div span { display: block; margin-top: 4px; color: var(--dim); font-size: 13px; line-height: 1.45; }
-        .paste-head > span { flex-shrink: 0; color: var(--faint); font-size: 10px; }
-        .paste-panel textarea {
-          width: 100%;
-          margin-top: 16px;
-          padding: 16px;
-          border: 1px solid var(--hair2);
-          border-radius: 14px;
-          resize: vertical;
-          background: var(--metal-1);
-          color: var(--fg);
-          font: inherit;
-          line-height: 1.55;
-        }
-        .paste-panel textarea:focus { outline: 1px solid var(--tox); border-color: var(--tox); }
-        .paste-requirement {
-          margin-top: 8px;
-          color: var(--faint);
-          font-size: 12px;
-          line-height: 1.45;
-        }
-        .paste-submit { min-height: 50px; margin-top: 14px; padding: 0 24px; }
-        .err {
-          margin-top: 12px;
-          font-size: 13.5px;
-          color: var(--crit);
-        }
-      `}</style>
+      {showPaste ? (
+        <div className={`${styles.pastePanel} thr-card`}>
+          <div><b>Резюме без файла</b><span className="thr-mono">{pastedLength} / 60 000</span></div>
+          <textarea
+            value={pastedText}
+            onChange={(event) => setPastedText(event.target.value)}
+            placeholder="Опыт, проекты, результаты, образование…"
+            rows={8}
+            aria-label="Текст резюме"
+            maxLength={60_000}
+            aria-describedby="paste-requirement"
+          />
+          <p id="paste-requirement" aria-live="polite">
+            {pastedLength === 0
+              ? "Нужно минимум 80 символов — обычно это несколько строк об опыте."
+              : missingPasteChars > 0
+                ? `Добавьте ещё ${missingPasteChars} симв. — и можно запускать разбор.`
+                : "Текста достаточно. Можно отдавать HR."}
+          </p>
+          <button type="button" className="thr-btn thr-btn-tox" onClick={() => void pasteResume()} disabled={busy || pastedLength < 80}>
+            {busy ? "Читаем текст…" : `Отдать текст · ${selected.name}`}
+          </button>
+        </div>
+      ) : null}
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        hidden
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void upload(file);
+          event.target.value = "";
+        }}
+      />
     </section>
   );
 }

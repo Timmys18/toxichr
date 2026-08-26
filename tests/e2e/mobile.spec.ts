@@ -4,8 +4,8 @@ test("мобильная главная не вылезает за экран и
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Токсичный HR/i })).toBeVisible();
   await expect(page.getByRole("link", { name: "Разобрать вакансию" })).toBeVisible();
-  await expect(page.getByText(/Нажми на HR/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Получить разбор" })).toHaveCount(0);
+  await expect(page.getByText(/Жёстко к тексту/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Получить разбор · Вадик/ })).toBeVisible();
 
   const metrics = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -16,12 +16,12 @@ test("мобильная главная не вылезает за экран и
   );
 
   await page.getByRole("button", { name: /^Лера —/ }).click();
-  await expect(page.getByRole("button", { name: "Получить разбор" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Или вставить текст" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Получить разбор · Лера/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Вставить текст резюме" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Или вставить текст" }).click();
+  await page.getByRole("button", { name: "Вставить текст резюме" }).click();
   await page.getByLabel("Текст резюме").fill("Короткий опыт");
-  await expect(page.getByText(/Добавь ещё \d+ симв/)).toBeVisible();
+  await expect(page.getByText(/Добавьте ещё \d+ симв/)).toBeVisible();
   await expect(page.getByRole("button", { name: /Отдать текст/ })).toBeDisabled();
 });
 
