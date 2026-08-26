@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           send({
             type: "finding",
             stage: "extract",
-            message: "Разбор уже идёт — подключаемся к готовящемуся результату.",
+            message: "Разбор уже идёт. Результат появится здесь автоматически.",
           });
           const status = await waitForAnalysis(reusable.id);
           if (status === "COMPLETED") {

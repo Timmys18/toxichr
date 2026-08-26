@@ -38,7 +38,7 @@ type AccessState = {
 export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [beforeScore, setBeforeScore] = useState(0);
+  const [, setBeforeScore] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -394,7 +394,6 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
 
       {result ? (
         <div className="result" id="revenge-result">
-          <div className="scores"><span><b>{beforeScore}</b> было</span><i>→</i><span className="after"><b>{result.afterScore ?? "—"}</b> стало</span></div>
           <div className="result-head">
             <div><h2>Новая версия готова</h2><p>Проверь изменения, сравни тексты или отредактируй всё вручную.</p></div>
             <span className={`save-state ${hasUnsavedEditorChanges ? "dirty" : "clean"}`}>{hasUnsavedEditorChanges ? "Есть несохранённые правки" : "Версия сохранена"}</span>
@@ -407,7 +406,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
           </div>
 
           {resultView === "changes" ? <div className="replacements" role="tabpanel">{result.replacements.map((replacement) => <article key={replacement.problemId}><p className="old">Было: {replacement.original}</p><p className="new">Стало: {replacement.replacement}</p></article>)}</div> : null}
-          {resultView === "compare" ? <div className="compare" role="tabpanel"><article><div className="compare-label thr-mono">До · оценка {beforeScore}</div><pre>{originalText}</pre></article><article className="after-copy"><div className="compare-label thr-mono">После · оценка {result.afterScore ?? "—"}</div><pre>{editorText}</pre></article></div> : null}
+          {resultView === "compare" ? <div className="compare" role="tabpanel"><article><div className="compare-label thr-mono">Исходное резюме</div><pre>{originalText}</pre></article><article className="after-copy"><div className="compare-label thr-mono">Новая версия</div><pre>{editorText}</pre></article></div> : null}
           {resultView === "editor" ? (
             <div className="editor" role="tabpanel">
               <div className="editor-meta"><div><b>Полный текст новой версии</b><span>Можно менять любые строки. Сервис пересчитает оценку после сохранения.</span></div><span className="thr-mono">{editorText.trim().length} знаков</span></div>

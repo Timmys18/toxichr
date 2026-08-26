@@ -213,22 +213,6 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
             </span>
           </span>
         </div>
-        <div className="meta thr-card">
-          <div><span>Документ</span><b>резюме принято</b></div>
-          <div><span>Формат</span><b>жёстко и по делу</b></div>
-        </div>
-        {phase === "verdict" && analysisId ? (
-          <>
-            <Link
-              href={`/revenge?analysisId=${analysisId}`}
-              className="thr-btn thr-btn-tox sticky-fix"
-              onClick={() => track("result_fix_cta_clicked", { analysisId, source: "sticky" })}
-            >
-              Исправить резюме · 690 ₽
-            </Link>
-            <Link href="/" className="new-analysis">Новый разбор</Link>
-          </>
-        ) : null}
       </aside>
 
       <div className="feed">
@@ -268,15 +252,17 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         ) : null}
       </div>
 
-      <style jsx>{`
-        .session{width:100%;max-width:1160px;margin:0 auto;padding:36px 40px 90px;display:grid;grid-template-columns:330px 1fr;gap:40px;align-items:start;box-sizing:border-box;animation:thr-fade .6s var(--ease)}
+      <style jsx global>{`
+        .session{width:100%;max-width:1320px;margin:0 auto;padding:36px 40px 90px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:52px;align-items:start;box-sizing:border-box;animation:thr-fade .6s var(--ease)}
         .presence{position:sticky;top:96px}.hrcard{position:relative;aspect-ratio:3/3.4;border:1px solid var(--hair2);border-radius:22px;overflow:hidden;background:var(--metal-1)}
         .hrcard.speaking{box-shadow:0 0 0 1px rgba(44,224,139,.5),0 0 60px rgba(44,224,139,.18);animation:thr-breath 2.6s ease-in-out infinite}.ph{position:absolute;inset:0;background-position:center 12%}.shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(8,9,10,.92))}
         .info{position:absolute;left:0;right:0;bottom:0;padding:20px}.nm{display:block;font-weight:700;font-size:21px}.rl{display:block;margin-top:2px;color:var(--dim);font-size:12.5px}.st{display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:var(--tox);font-size:10px;letter-spacing:.14em;text-transform:uppercase}.st i{width:6px;height:6px;border-radius:50%;background:var(--tox);animation:thr-pulse 1.4s infinite}
         .meta{margin-top:16px;padding:14px 18px}.meta div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;color:var(--dim);font-size:12.5px}.meta b{color:var(--fg);font-weight:600}.sticky-fix{width:100%;height:50px;margin-top:14px;text-decoration:none;font-size:13.5px}.new-analysis{display:block;margin-top:12px;text-align:center;color:var(--faint);font-size:12.5px;text-decoration:none}.new-analysis:hover{color:var(--fg)}
         .feed{min-height:70vh}.feed-head{padding-bottom:16px;border-bottom:1px solid var(--hair);color:var(--faint);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase}.finding{padding:13px 0;border-bottom:1px solid var(--hair);font-size:15px;line-height:1.55}.roast-live{padding:14px 0}.roast-live p{margin:0 0 15px;font-size:16px;line-height:1.7}.typing{display:inline-flex;gap:5px;padding:18px 0}.typing i{width:6px;height:6px;border-radius:50%;background:var(--dim);animation:thr-tblink 1.1s infinite}.errbox{padding-top:28px}.errbox>p{color:var(--crit);margin-bottom:16px}.errbox>div{display:flex;gap:10px;flex-wrap:wrap}.errbox :global(.thr-btn){min-height:46px;padding:0 22px;text-decoration:none}
         @media(max-width:900px){.session{grid-template-columns:1fr;padding:24px 18px 76px}.presence{position:relative;top:0;display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:12px}.hrcard{min-height:210px;aspect-ratio:auto}.meta{margin-top:0;display:flex;flex-direction:column;justify-content:center}.sticky-fix,.new-analysis{grid-column:1/-1}}
-        @media(max-width:520px){.presence{grid-template-columns:116px 1fr}.hrcard{min-height:160px;border-radius:17px}.info{padding:12px}.nm{font-size:16px}.rl{display:none}.st{margin-top:8px;font-size:9px;letter-spacing:.06em}.meta{padding:12px 14px}.meta div{align-items:flex-start;flex-direction:column;gap:3px;font-size:11.5px}.sticky-fix{height:54px;font-size:14px}}
+        .feed{min-width:0}
+        @media(max-width:900px){.session{grid-template-columns:1fr;padding:24px 18px 76px;gap:28px}.presence{position:relative;top:0;display:block;max-width:260px}.hrcard{min-height:210px;aspect-ratio:auto}}
+        @media(max-width:520px){.session{width:auto;max-width:100%;overflow-x:clip}.presence{width:100%;max-width:none}.feed,.verdict,.conversion-band,.opinion,.secondary-actions{width:100%;max-width:100%;box-sizing:border-box}.hrcard{min-height:190px;aspect-ratio:16/8;border-radius:17px}.ph{background-position:center 22%}.info{padding:14px}.nm{font-size:17px}.rl{display:block;font-size:11.5px}.st{margin-top:8px;font-size:9px;letter-spacing:.06em}}
       `}</style>
     </div>
   );
@@ -315,7 +301,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
           mode: "loud",
           format: "og",
           quoteId,
-          metrics: ["total", "evidence", "corporateWater"],
+          metrics: [],
           anonymization: { showName: false, showPhoto: false, showCompanies: false, showRole: true, showLevel: true },
         }),
       });
@@ -348,13 +334,6 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
   }
 
   const r = report;
-  const vm = r.viralMetrics;
-  const facts = [
-    { v: `${vm.responsibilitiesCount}→${vm.achievementsCount}`, k: "обязанностей против результатов", crit: vm.achievementsCount < vm.responsibilitiesCount },
-    { v: `${r.candidateProfile.claimedLevel}`, k: `заявлен · доказан ${r.candidateProfile.inferredLevel}`, crit: r.candidateProfile.claimedLevel !== r.candidateProfile.inferredLevel },
-    { v: `${vm.unprovenClaimsCount}`, k: "заявлений без доказательств", crit: vm.unprovenClaimsCount > 2 },
-    { v: `${vm.corporateWater}%`, k: "корпоративной воды", crit: vm.corporateWater > 55 },
-  ];
   const problemCount = Math.max(1, r.topProblems.length);
 
   return (
@@ -365,65 +344,42 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
         <p>{r.verdict.comment}</p>
       </div>
 
-      <div className="sec-h"><span className="num thr-mono">01</span><h3>Что видно с первого взгляда</h3></div>
-      <div className="facts">
-        {facts.map((fact) => (
-          <div key={fact.k} className="fact"><div className={`v ${fact.crit ? "crit" : ""}`}>{fact.v}</div><div className="k">{fact.k}</div></div>
-        ))}
-      </div>
-
       {analysisId ? (
         <Link
           href={`/revenge?analysisId=${analysisId}`}
           className="conversion-band"
           onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}
         >
-          <span className="eyebrow thr-mono">Следующий шаг · 690 ₽ в бете</span>
-          <b>Исправить {problemCount} слабых {problemCount === 1 ? "место" : "мест"}</b>
-          <span>Ответить по слабым строкам и получить новую версию. Не придумываем достижения: если факта нет — спросим или оставим как есть.</span>
-          <strong>Собрать новое резюме →</strong>
+          <span className="eyebrow thr-mono">Главный следующий шаг</span>
+          <b>Исправить резюме · 690 ₽</b>
+          <span>{problemCount === 1 ? "Разберём одно слабое место" : `Разберём слабые места: ${problemCount}`}, зададим вопросы по фактам и соберём новую версию.</span>
+          <strong>Начать исправление →</strong>
         </Link>
       ) : null}
 
       {r.hrReview?.deepDive ? (
-        <><div className="sec-h"><span className="num thr-mono">02</span><h3>Разбор от {hrName}</h3></div><div className="review">{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></>
+        <><div className="sec-h"><h3>Разбор от {hrName}</h3></div><div className="review">{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></>
       ) : null}
 
       {r.topProblems.length ? (
-        <><div className="sec-h"><span className="num thr-mono">03</span><h3>По пунктам</h3></div><div className="probs">{r.topProblems.map((problem) => (
+        <><div className="sec-h"><h3>Где резюме проседает</h3></div><div className="probs">{r.topProblems.map((problem) => (
           <div key={problem.id} className="prob"><div className="pq">«{problem.quote}»</div><div className="pr">{problem.roast}</div>{problem.recommendation ? <div className="pf">{problem.recommendation}</div> : null}</div>
         ))}</div></>
       ) : null}
 
       {r.hrReview?.hiringTake ? <div className="hiring thr-card"><div className="lab thr-mono">Возьмут или нет</div>{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : null}
 
-      <div className="sec-h next-h"><span className="num thr-mono">04</span><h3>Что дальше</h3></div>
+      <div className="sec-h next-h"><h3>Ещё можно</h3></div>
       <div className="next-actions">
-        <Link
-          href={`/revenge?analysisId=${analysisId ?? ""}`}
-          className="next-card primary"
-          onClick={() => analysisId && track("result_fix_cta_clicked", { analysisId, source: "result" })}
-        >
-          <span className="nk thr-mono">Главное продолжение · 690 ₽</span>
-          <b>Исправить это резюме</b>
-          <span>Ответить по слабым строкам и получить новую версию.</span>
-        </Link>
         <Link
           href={`/vacancy?analysisId=${analysisId ?? ""}`}
           className={`next-card ${hasPendingVacancy ? "pending" : ""}`}
           onClick={() => analysisId && track("result_vacancy_cta_clicked", { analysisId, source: "result" })}
         >
-          <span className="nk thr-mono">{hasPendingVacancy ? "Вакансия уже сохранена" : "Под конкретный отклик"}</span>
-          <b>{hasPendingVacancy ? "Сопоставить сейчас" : "Разобрать вакансию"}</b>
+          <span className="nk thr-mono">Под конкретный отклик</span>
+          <b>{hasPendingVacancy ? "Сопоставить с вакансией" : "Разобрать вакансию"}</b>
           <span>{hasPendingVacancy ? "Текст на месте — повторно вставлять ничего не нужно." : "Понять, что уже доказано, а где опыта не видно."}</span>
         </Link>
-      </div>
-
-      <div className="share-hook">
-        <div><b>Хочется показать результат?</b><span>Публичная карточка без имени и компаний — только вердикт и метрики.</span></div>
-        <button type="button" className="thr-btn thr-btn-line" onClick={doShare} disabled={sharing || !analysisId}>{sharing ? "Создаём…" : shareUrl ? "Ссылка готова" : "Поделиться"}</button>
-        {shareErr ? <p role="alert">{shareErr}</p> : null}
-        {shareUrl ? <div className="sharelink"><span>{shareUrl}</span>{typeof navigator !== "undefined" && "share" in navigator ? <button type="button" onClick={() => void nativeShare()}>Поделиться…</button> : null}<button type="button" onClick={copyLink}>{copied ? "Скопировано" : "Копировать"}</button><a href={shareUrl} target="_blank" rel="noreferrer">Открыть</a></div> : null}
       </div>
 
       {resumeId ? (
@@ -446,11 +402,15 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
         </div>
       ) : null}
 
-      <div className="acts">
-        {status === "authenticated" ? <Link href="/me" className="thr-btn thr-btn-line">В кабинет</Link> : <Link href={`/auth?analysisId=${analysisId ?? ""}&next=/me`} className="thr-btn thr-btn-line">Сохранить разбор</Link>}
+      <div className="secondary-actions">
+        <button type="button" className="thr-btn thr-btn-line" onClick={doShare} disabled={sharing || !analysisId}>{sharing ? "Создаём ссылку…" : shareUrl ? "Ссылка готова" : "Поделиться"}</button>
+        {status === "authenticated" ? <Link href="/me" className="thr-btn thr-btn-line">В кабинет</Link> : <Link href={`/auth?analysisId=${analysisId ?? ""}&next=/me`} className="thr-btn thr-btn-line">Сохранить</Link>}
+        <Link href="/" className="new-analysis">Новый разбор</Link>
+        {shareErr ? <p role="alert">{shareErr}</p> : null}
+        {shareUrl ? <div className="sharelink"><span>{shareUrl}</span>{typeof navigator !== "undefined" && "share" in navigator ? <button type="button" onClick={() => void nativeShare()}>Поделиться…</button> : null}<button type="button" onClick={copyLink}>{copied ? "Скопировано" : "Копировать"}</button><a href={shareUrl} target="_blank" rel="noreferrer">Открыть</a></div> : null}
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
         .verdict{padding-top:8px;animation:thr-fade .7s var(--ease)}.diag{padding:24px 0 8px;max-width:62ch}.lab{color:var(--tox);font-size:11px;letter-spacing:.2em;text-transform:uppercase}.diag h2{margin-top:16px;font-weight:700;font-size:clamp(30px,4vw,52px);line-height:1.04;letter-spacing:-.035em}.diag>p{margin-top:22px;color:var(--dim);font-size:18px;line-height:1.62}
         .sec-h{display:flex;align-items:baseline;gap:16px;margin:56px 0 24px;padding-bottom:14px;border-bottom:1px solid var(--hair)}.num{color:var(--tox);font-size:12px}.sec-h h3{font-size:22px;letter-spacing:-.025em}.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:18px;overflow:hidden}.fact{padding:24px 26px;background:var(--metal-0)}.fact .v{font-weight:700;font-size:34px;letter-spacing:-.04em}.fact .v.crit{color:var(--crit)}.fact .k{margin-top:10px;color:var(--dim);font-size:13px;line-height:1.4}
         .conversion-band{display:flex;flex-direction:column;gap:8px;margin-top:26px;max-width:64ch;padding:24px 26px;border:1px solid rgba(44,224,139,.42);border-radius:20px;background:linear-gradient(145deg,rgba(44,224,139,.12),var(--metal-0));color:inherit;text-decoration:none;transition:.2s var(--ease)}.conversion-band:hover{transform:translateY(-2px);box-shadow:0 22px 60px rgba(44,224,139,.1)}.conversion-band .eyebrow{color:var(--tox);font-size:10px;letter-spacing:.13em;text-transform:uppercase}.conversion-band b{margin-top:4px;font-size:23px;letter-spacing:-.025em}.conversion-band>span:nth-child(3){color:var(--dim);font-size:14px;line-height:1.55}.conversion-band strong{margin-top:8px;color:var(--tox);font-size:14px}
@@ -458,7 +418,8 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
         .next-actions{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.next-card{min-height:176px;padding:22px;border:1px solid var(--hair2);border-radius:18px;background:var(--metal-0);color:inherit;text-decoration:none;display:flex;flex-direction:column;transition:.2s var(--ease)}.next-card:hover{transform:translateY(-2px);border-color:var(--tox)}.next-card.primary{border-color:rgba(44,224,139,.38);background:linear-gradient(145deg,rgba(44,224,139,.11),var(--metal-0))}.next-card.pending{border-color:rgba(106,155,255,.4);background:linear-gradient(145deg,rgba(106,155,255,.1),var(--metal-0))}.next-card .nk{color:var(--tox);font-size:10px;letter-spacing:.12em;text-transform:uppercase}.next-card.pending .nk{color:var(--data)}.next-card b{margin-top:20px;font-size:20px}.next-card>span:last-child{margin-top:8px;color:var(--dim);font-size:13.5px;line-height:1.5}
         .share-hook{max-width:64ch;margin-top:16px;padding:18px 20px;border:1px solid var(--hair);border-radius:16px;background:var(--metal-0);display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}.share-hook>div:first-child{flex:1;min-width:220px}.share-hook b{display:block;font-size:15px}.share-hook span{display:block;margin-top:4px;color:var(--faint);font-size:12.5px;line-height:1.45}.share-hook :global(.thr-btn){min-height:44px;padding:0 20px}.share-hook>p{width:100%;color:var(--crit);font-size:12.5px}.sharelink{width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--hair)}.sharelink>span{flex:1;min-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:11px var(--font-mono);color:var(--dim)}.sharelink button,.sharelink a{border:0;background:none;color:var(--tox);font:600 12px var(--font-sans);cursor:pointer;text-decoration:none}
         .opinion{max-width:64ch;margin-top:16px;padding:22px 24px;border:1px solid var(--hair);border-radius:18px;background:var(--metal-0)}.hook-t{font-weight:700;font-size:18px}.hook-s{margin-top:7px;color:var(--dim);font-size:13.5px;line-height:1.5}.others{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.other{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--hair);border-radius:14px;color:inherit;text-decoration:none}.other:hover{border-color:var(--tox)}.oph{width:44px;height:44px;flex-shrink:0;border-radius:11px;border:1px solid var(--hair2);background-position:center 18%}.other b{display:block;font-size:13.5px}.other small{display:block;margin-top:2px;color:var(--faint);font-size:10.5px}.acts{display:flex;gap:12px;margin-top:28px}.acts :global(.thr-btn){min-height:48px;padding:0 24px;text-decoration:none}
-        @media(max-width:720px){.facts{grid-template-columns:1fr}.next-actions{grid-template-columns:1fr}.others{grid-template-columns:1fr}.conversion-band{padding:22px 20px}.conversion-band b{font-size:21px}.share-hook{align-items:stretch}.share-hook :global(.thr-btn){width:100%}}
+        .conversion-band{width:100%;max-width:720px;padding:28px 30px;box-sizing:border-box;background:linear-gradient(135deg,rgba(44,224,139,.18),rgba(44,224,139,.06))}.conversion-band b{font-size:27px}.next-actions{display:block;max-width:720px}.next-card{min-height:128px;box-sizing:border-box}.opinion{max-width:720px;box-sizing:border-box}.others{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.other{min-width:0;border-color:var(--hair2);box-sizing:border-box}.other>span:last-child{min-width:0}.other b,.other small{overflow:hidden;text-overflow:ellipsis}.other b{white-space:nowrap}.secondary-actions{max-width:720px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px}.secondary-actions .thr-btn{min-height:46px;padding:0 20px;text-decoration:none}.secondary-actions .new-analysis{margin-left:auto;color:var(--dim);font-size:13px;text-decoration:none}.secondary-actions>p{width:100%;color:var(--crit);font-size:12.5px}
+        @media(max-width:720px){.next-actions{grid-template-columns:1fr}.others{grid-template-columns:1fr}.conversion-band{padding:22px 20px}.conversion-band b{font-size:22px}.secondary-actions .thr-btn{flex:1}.secondary-actions .new-analysis{width:100%;margin:4px 0 0;text-align:center}.diag h2{font-size:34px}.diag>p{font-size:16px}}
       `}</style>
     </div>
   );

@@ -35,7 +35,7 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page.getByText("Одно резюме. Четыре разных фильтра.")).toBeVisible({ timeout: 60_000 });
 
   const improvementHref = await page
-    .getByRole("link", { name: /Ответить по слабым строкам/i })
+    .getByRole("link", { name: /Исправить резюме · 690 ₽/i })
     .first()
     .getAttribute("href");
   expect(improvementHref).toMatch(/^\/revenge\?analysisId=/);
@@ -69,8 +69,8 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page.getByText(/DOCX, PDF и проверка вакансией используют эту версию/)).toBeVisible();
 
   await page.getByRole("tab", { name: "Сравнить до / после" }).click();
-  await expect(page.getByText(/До · оценка/)).toBeVisible();
-  await expect(page.getByText(/После · оценка/)).toBeVisible();
+  await expect(page.getByText("Исходное резюме", { exact: true })).toBeVisible();
+  await expect(page.getByText("Новая версия", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: /Проверить под вакансию/ }).click();
   await page.getByLabel("Текст вакансии").fill(VACANCY);
