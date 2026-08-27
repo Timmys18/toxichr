@@ -128,7 +128,7 @@ export function HomeClient() {
             <i aria-hidden>→</i>
           </button>
           <button type="button" className={styles.textAction} onClick={() => setShowPaste((value) => !value)} disabled={busy}>
-            {showPaste ? "Скрыть текст" : "Вставить текст"}
+            {showPaste ? "Скрыть текстовое поле" : "Нет файла? Вставить текст"}
           </button>
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
         </div>
