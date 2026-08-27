@@ -102,7 +102,6 @@ export function HomeClient() {
               <b>{selected.name}</b>
               <span>{selected.role}</span>
               <div className={styles.proof}>
-                <small>Что заметит первым</small>
                 <p>«{selected.quote}»</p>
               </div>
             </div>
@@ -119,6 +118,7 @@ export function HomeClient() {
               >
                 <span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
                 <b>{person.name}</b>
+                <small>{person.tag}</small>
               </button>
             ))}
           </div>
