@@ -6,11 +6,11 @@
 .intro>p{max-width:31ch;margin-top:28px;color:rgba(242,244,245,.78);font-size:21px;line-height:1.48}
 .personaPanel{grid-area:persona;min-height:520px;border-bottom:1px solid rgba(242,244,245,.18)}
 .portrait{position:relative;width:100%;height:100%;min-height:520px;background-position:center 20%;overflow:hidden}
-.portrait::after{content:"";position:absolute;right:0;bottom:0;left:0;height:42%;background:rgba(5,7,7,.74)}
-.portraitCopy{position:absolute;z-index:1;right:34px;bottom:34px;left:34px;max-width:560px}
+.portrait::after{content:"";position:absolute;right:0;bottom:0;left:0;height:30%;background:rgba(5,7,7,.66)}
+.portraitCopy{position:absolute;z-index:1;right:32px;bottom:28px;left:32px;max-width:680px}
 .portraitCopy>b{display:block;font-size:34px;letter-spacing:-.035em}
-.portraitCopy>span{display:block;margin-top:6px;color:rgba(242,244,245,.8);font-size:17px}
-.portraitCopy>p{max-width:34ch;margin-top:20px;color:rgba(242,244,245,.92);font-size:18px;line-height:1.48}
+.portraitCopy>p{max-width:56ch;margin-top:10px;color:rgba(242,244,245,.9);font-size:16px;line-height:1.38}
+.portraitCopy>p span{color:rgba(242,244,245,.7)}
 .uploadRail,.roster{min-height:118px;border-bottom:1px solid rgba(242,244,245,.18)}
 .uploadRail{grid-area:upload;position:relative;display:block;border-right:1px solid rgba(242,244,245,.16);transition:background .2s var(--ease)}
 .uploadRail.drag{background:rgba(43,229,139,.08)}
@@ -45,5 +45,5 @@
 .pastePanel p{margin-top:8px;color:var(--dim);font-size:13px}
 .pastePanel>button{min-height:48px;margin-top:14px;padding:0 22px}
 @media(max-width:1120px){.home{padding:34px 28px 70px}.grid{grid-template-columns:minmax(360px,.9fr) minmax(500px,1.1fr)}.intro{padding-right:42px}.roster button{grid-template-columns:44px minmax(0,1fr);gap:10px;padding-right:11px;padding-left:11px}.roster button>span:first-child{width:44px}}
-@media(max-width:820px){.home{padding:20px 18px 64px}.grid{display:flex;flex-direction:column;border-top:0}.intro{min-height:auto;padding:10px 0 0;border-right:0;border-bottom:0}.intro h1{font-size:clamp(48px,14vw,66px)}.intro>p{max-width:28ch;margin-top:18px;font-size:17px}.personaPanel{width:100%;min-height:0;margin-top:26px;border-bottom:0}.portrait{min-height:370px;border-radius:16px;background-position:center 18%}.portrait::after{height:46%;border-radius:0 0 16px 16px}.portraitCopy{right:20px;bottom:20px;left:20px}.portraitCopy>b{font-size:26px}.portraitCopy>span{font-size:14px}.portraitCopy>p{max-width:30ch;margin-top:14px;font-size:15px}.uploadRail{width:100%;min-height:104px;margin-top:18px;border-top:1px solid rgba(242,244,245,.18);border-right:0}.fileAction{grid-template-columns:32px minmax(0,1fr) 22px;min-height:104px;padding:20px 16px 34px 0;gap:13px}.fileAction b{font-size:16px}.textAction{bottom:17px;left:45px;font-size:13px}.roster{display:flex;gap:0;min-height:96px;overflow-x:auto;margin-right:-18px;margin-left:-18px;padding:0 18px;border-top:0;scrollbar-width:none;scroll-snap-type:x mandatory}.roster::-webkit-scrollbar{display:none}.roster button{min-width:178px;scroll-snap-align:start;border-left:1px solid rgba(242,244,245,.13)}.pastePanel{margin-top:22px}}
+@media(max-width:820px){.home{padding:20px 18px 64px}.grid{display:flex;flex-direction:column;border-top:0}.intro{min-height:auto;padding:10px 0 0;border-right:0;border-bottom:0}.intro h1{font-size:clamp(48px,14vw,66px)}.intro>p{max-width:28ch;margin-top:18px;font-size:17px}.personaPanel{width:100%;min-height:0;margin-top:26px;border-bottom:0}.portrait{min-height:370px;border-radius:16px;background-position:center 18%}.portrait::after{height:36%;border-radius:0 0 16px 16px}.portraitCopy{right:20px;bottom:18px;left:20px}.portraitCopy>b{font-size:26px}.portraitCopy>p{max-width:30ch;margin-top:8px;font-size:14px}.uploadRail{width:100%;min-height:104px;margin-top:18px;border-top:1px solid rgba(242,244,245,.18);border-right:0}.fileAction{grid-template-columns:32px minmax(0,1fr) 22px;min-height:104px;padding:20px 16px 34px 0;gap:13px}.fileAction b{font-size:16px}.textAction{bottom:17px;left:45px;font-size:13px}.roster{display:flex;gap:0;min-height:96px;overflow-x:auto;margin-right:-18px;margin-left:-18px;padding:0 18px;border-top:0;scrollbar-width:none;scroll-snap-type:x mandatory}.roster::-webkit-scrollbar{display:none}.roster button{min-width:178px;scroll-snap-align:start;border-left:1px solid rgba(242,244,245,.13)}.pastePanel{margin-top:22px}}
 @media(max-width:430px){.fileAction{min-height:98px}.portrait{min-height:330px}.portraitCopy>p{font-size:14px}.roster button{min-width:158px}}

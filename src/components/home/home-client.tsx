@@ -89,7 +89,7 @@ export function HomeClient() {
       <div className={styles.grid}>
         <div className={styles.intro}>
           <h1>Токсичный <em>HR</em></h1>
-          <p>Загрузи резюме. Выбери, кто его прочитает.</p>
+          <p>Загрузи резюме. Выбери своего HR.</p>
         </div>
 
         <div className={styles.personaPanel}>
@@ -101,8 +101,7 @@ export function HomeClient() {
           >
             <div className={styles.portraitCopy}>
               <b>{selected.name}</b>
-              <span>{selected.role}</span>
-              <p>«{selected.quote}»</p>
+              <p><span>{selected.role}</span> · «{selected.quote}»</p>
             </div>
           </div>
         </div>
