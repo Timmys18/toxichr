@@ -228,3 +228,8 @@
 - Разделы сопоставления стали редакционной лентой: что работает, что можно дотянуть, главный разрыв по смысловым группам.
 - Риски, вступление, сопроводительное письмо и вопросы спрятаны в раскрывающиеся блоки, чтобы не конкурировать с главным выводом.
 - Финальное действие заменено на спокойную нижнюю рейку: `Адаптировать резюме под вакансию` с подписью `Только на основании реального опыта`.
+# Session 27.08.2026 — vacancy comparison scale and grid
+
+- Expanded comparison workspace for desktop and increased key typography.
+- Reworked vacancy metadata row and three-column statistics for clear hierarchy.
+- Fixed requirement lanes so headings stay left and all items flow vertically on the right; evidence quotes remain visually distinct.

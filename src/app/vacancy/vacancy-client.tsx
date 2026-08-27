@@ -435,17 +435,17 @@ export function VacancyClient({
       ) : null}
 
       <style jsx>{`
-        .vacancy { width: min(1160px,calc(100% - 48px)); margin: 0 auto; padding: 58px 0 96px; }
-        .intro { max-width: 780px; }
+        .vacancy { width: min(1480px,calc(100% - 72px)); margin: 0 auto; padding: 64px 0 110px; }
+        .intro { max-width: 980px; }
         .intro-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
         .intro-top :global(a) { color: var(--faint); font-size: 13px; text-decoration: none; }
         .intro-top :global(a):hover { color: var(--fg); }
         .over { color: var(--tox); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; }
         h1 { margin-top: 16px; font-size: clamp(42px,5.2vw,72px); line-height: .98; letter-spacing: -.05em; }
         .intro > p:last-child { max-width: 56ch; margin-top: 18px; color: var(--dim); font-size: 18px; line-height: 1.55; }
-        .vacancy-strip { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 34px; padding: 15px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
-        .vacancy-strip b { font-size: 18px; letter-spacing: -.01em; }
-        .vacancy-strip span { color: var(--faint); font-size: 13px; }
+        .vacancy-strip { display: flex; align-items: center; gap: 22px; min-height: 70px; margin-top: 42px; padding: 0 4px; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+        .vacancy-strip b { font-size: 24px; letter-spacing: -.02em; }
+        .vacancy-strip span { color: var(--dim); font-size: 15px; }
         .vacancy-strip button,.bottom-rail button { border: 0; background: transparent; color: var(--tox); font: 650 13px var(--font-sans); cursor: pointer; }
         .editor { margin-top: 28px; }
         textarea { width: 100%; min-height: 260px; padding: 20px; border: 1px solid var(--hair2); border-radius: 8px; background: var(--metal-0); color: var(--fg); font: inherit; line-height: 1.55; resize: vertical; }
@@ -456,21 +456,23 @@ export function VacancyClient({
         .error { margin-top: 14px; color: var(--crit); }
         .stale-note { width: fit-content; margin-top: 12px; color: #f0bd70; font-size: 13px; line-height: 1.45; }
         .result { margin-top: 34px; }
-        .verdict { display: grid; grid-template-columns: minmax(0,1fr) 330px; gap: 56px; align-items: end; padding: 44px 0 42px; border-bottom: 1px solid var(--hair); }
-        .verdict h2 { margin-top: 12px; font-size: clamp(42px,5vw,70px); line-height: .98; letter-spacing: -.05em; }
-        .summary { max-width: 68ch; margin-top: 16px; color: var(--dim); font-size: 18px; line-height: 1.55; }
-        .stats { display: grid; gap: 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
-        .stats span { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--hair); color: var(--dim); font-size: 14px; }
-        .stats span:last-child { border-bottom: 0; }
-        .stats b { color: var(--fg); font-size: 30px; line-height: 1; }
+        .verdict { display: grid; grid-template-columns: minmax(0,1fr) minmax(500px, .9fr); gap: 80px; align-items: end; padding: 58px 0 52px; border-bottom: 1px solid var(--hair); }
+        .verdict h2 { margin-top: 14px; font-size: clamp(50px,5.5vw,86px); line-height: .96; letter-spacing: -.055em; }
+        .summary { max-width: 72ch; margin-top: 20px; color: var(--dim); font-size: 21px; line-height: 1.5; }
+        .stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+        .stats span { display: flex; flex-direction: column; gap: 10px; padding: 20px 18px 22px 0; color: var(--dim); font-size: 15px; line-height: 1.3; }
+        .stats span + span { padding-left: 18px; border-left: 1px solid var(--hair); }
+        .stats b { color: var(--fg); font-size: 52px; line-height: 1; }
         .flow,.response { padding: 42px 0 0; }
-        .lane { display: grid; grid-template-columns: 260px minmax(0,1fr); gap: 34px; padding: 26px 0; border-bottom: 1px solid var(--hair); }
-        .lane h3,.response summary { font-size: 22px; line-height: 1.2; letter-spacing: -.02em; }
+        .lane { display: block; min-height: 80px; padding: 34px 0; border-bottom: 1px solid var(--hair); }
+        .lane h3,.response summary { font-size: 26px; line-height: 1.2; letter-spacing: -.025em; }
+        .lane h3 { float: left; width: 300px; margin-right: 64px; }
+        .lane > article,.lane > .empty,.lane > .break-list { margin-left: 364px; }
         article { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid rgba(242,244,245,.1); }
         article:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
-        article b { font-size: 15px; line-height: 1.45; }
-        article p,.break details p,.response p,.response li { margin-top: 7px; color: var(--dim); font-size: 14px; line-height: 1.55; }
-        blockquote { margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--tox); color: var(--faint); font-size: 13px; line-height: 1.5; }
+        article b { font-size: 19px; line-height: 1.45; }
+        article p,.break details p,.response p,.response li { margin-top: 9px; color: var(--dim); font-size: 16px; line-height: 1.6; }
+        blockquote { margin-top: 12px; padding-left: 14px; border-left: 2px solid var(--tox); color: var(--faint); font-size: 15px; line-height: 1.55; }
         .empty { color: var(--faint); font-size: 15px; line-height: 1.5; }
         details { padding: 18px 0; border-bottom: 1px solid var(--hair); }
         details:first-of-type { padding-top: 0; }
@@ -488,7 +490,7 @@ export function VacancyClient({
         .bottom-rail button { grid-column: 2; grid-row: 1 / span 2; color: var(--faint); }
         .bottom-rail button:hover { color: var(--fg); }
         @media (max-width: 820px) {
-          .vacancy { width: min(100% - 36px,1160px); padding-top: 34px; }
+          .vacancy { width: min(100% - 36px,1480px); padding-top: 34px; }
           .intro-top { align-items: flex-start; flex-direction: column; gap: 10px; }
           h1 { font-size: clamp(34px,10.5vw,48px); line-height: 1.02; }
           .intro > p:last-child,.summary { font-size: 16px; }
@@ -498,7 +500,10 @@ export function VacancyClient({
           .submit { width: 100%; margin-top: 14px; }
           .verdict { grid-template-columns: 1fr; gap: 28px; padding-top: 32px; }
           .stats { border-top: 0; }
-          .lane { grid-template-columns: 1fr; gap: 16px; }
+          .stats b { font-size: 40px; }
+          .lane { min-height: 0; }
+          .lane h3 { float: none; width: auto; margin: 0 0 16px; }
+          .lane > article,.lane > .empty,.lane > .break-list { margin-left: 0; }
           .bottom-rail { grid-template-columns: 1fr; }
           .bottom-rail button { grid-column: 1; grid-row: auto; justify-self: start; padding: 0; }
         }
