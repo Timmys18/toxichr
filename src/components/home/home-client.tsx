@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FileText } from "lucide-react";
 import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
@@ -88,7 +89,7 @@ export function HomeClient() {
       <div className={styles.grid}>
         <div className={styles.intro}>
           <h1>Токсичный <em>HR</em></h1>
-          <p>Загрузите резюме. Выберите, кто его прочитает. Получите честный разбор без выдуманных достижений.</p>
+          <p>Загрузи резюме. Выбери, кто его прочитает.</p>
         </div>
 
         <div className={styles.personaPanel}>
@@ -101,9 +102,38 @@ export function HomeClient() {
             <div className={styles.portraitCopy}>
               <b>{selected.name}</b>
               <span>{selected.role}</span>
+              <p>«{selected.quote}»</p>
             </div>
           </div>
-          <div className={styles.roster} aria-label="Выбрать HR">
+        </div>
+
+        <div
+          className={`${styles.uploadRail} ${dragActive ? styles.drag : ""}`}
+          onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragActive(false);
+            const file = event.dataTransfer.files?.[0];
+            if (file) void upload(file);
+          }}
+        >
+          <button type="button" className={styles.fileAction} onClick={() => fileRef.current?.click()} disabled={busy}>
+            <FileText size={26} strokeWidth={1.7} aria-hidden />
+            <span>
+              <b>{busy ? "Читаем резюме" : dragActive ? "Отпускай резюме" : "Кидай резюме"}</b>
+              <small>PDF или DOCX</small>
+            </span>
+            <i aria-hidden>→</i>
+          </button>
+          <button type="button" className={styles.textAction} onClick={() => setShowPaste((value) => !value)} disabled={busy}>
+            {showPaste ? "Скрыть текст" : "Вставить текст"}
+          </button>
+          {error ? <p className={styles.error} role="alert">{error}</p> : null}
+        </div>
+
+        <div className={styles.roster} aria-label="Выбрать HR">
             {ROSTER.map((person) => (
               <button
                 key={person.id}
@@ -114,37 +144,12 @@ export function HomeClient() {
                 aria-label={`${person.name} — ${person.role}`}
               >
                 <span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
-                <b>{person.name}</b>
-                <small>{person.tag}</small>
+                <span>
+                  <b>{person.name}</b>
+                  <small>{person.tag}</small>
+                </span>
               </button>
             ))}
-          </div>
-        </div>
-
-        <div
-          className={`${styles.actions} ${dragActive ? styles.drag : ""}`}
-            onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
-            onDragOver={(event) => event.preventDefault()}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragActive(false);
-              const file = event.dataTransfer.files?.[0];
-              if (file) void upload(file);
-            }}
-          >
-          <div className={styles.actionHeading}>
-            <b>{dragActive ? "Отпускай — уже читаем" : "Готов узнать правду?"}</b>
-          </div>
-          <div className={styles.startWays}>
-            <button type="button" className={styles.fileAction} onClick={() => fileRef.current?.click()} disabled={busy}>
-              <span>{busy ? "Читаем резюме…" : "Кидай резюме"}</span><b aria-hidden>→</b>
-            </button>
-            <button type="button" className={styles.textAction} onClick={() => setShowPaste((value) => !value)} disabled={busy}>
-              {showPaste ? "Скрыть текст" : "Вставить текст"}
-            </button>
-          </div>
-          {error ? <p className={styles.error} role="alert">{error}</p> : null}
         </div>
       </div>
 
