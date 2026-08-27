@@ -101,7 +101,8 @@ export function HomeClient() {
           >
             <div className={styles.portraitCopy}>
               <b>{selected.name}</b>
-              <p><span>{selected.role}</span> {selected.quote}</p>
+              <span>{selected.role}</span>
+              <p>{selected.quote}</p>
             </div>
           </div>
         </div>
