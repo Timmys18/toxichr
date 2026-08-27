@@ -48,7 +48,6 @@ export default function HrPage() {
                 <div className="body">
                   <div className="nm">{p.name}</div>
                   <div className="rl">{p.role}</div>
-                  <p className="qt">«{p.quote}»</p>
                   <div className="lenses">
                     {(LENSES[p.id] ?? []).map((l) => (
                       <span key={l}>{l}</span>
@@ -84,7 +83,6 @@ export default function HrPage() {
         .cast .body { padding: 22px 22px 24px; }
         .cast .nm { font-weight: 700; font-size: 20px; letter-spacing: -.02em; }
         .cast .rl { font-size: 12.5px; color: var(--dim); margin-top: 3px; }
-        .cast .qt { margin-top: 14px; font-size: 14px; line-height: 1.5; color: rgba(242,244,245,.85); }
         .cast .lenses { margin-top: 14px; display: flex; gap: 6px; flex-wrap: wrap; }
         .cast .lenses span { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); border: 1px solid var(--hair); padding: 5px 9px; border-radius: 6px; }
         .cast .pick { margin-top: 14px; font-size: 12.5px; color: var(--faint); line-height: 1.5; }

@@ -6,7 +6,6 @@ export type RosterEntry = {
   role: string;
   tag: string;
   img: string;
-  quote: string;
   focus: string;
 };
 
@@ -18,7 +17,6 @@ export const ROSTER: RosterEntry[] = [
     role: "Фаундер стартапа",
     tag: "Стартап",
     img: "/hr/vadik.jpg",
-    quote: "Проверю, где резюме обещает больше, чем доказывает. Буллшит обычно сдаётся на третьей строке.",
     focus: "Скорость, самостоятельность и влияние на продукт",
   },
   {
@@ -27,7 +25,6 @@ export const ROSTER: RosterEntry[] = [
     role: "Lead recruiter · tech",
     tag: "Хайтек",
     img: "/hr/lera.jpg",
-    quote: "Data-driven и customer-centric — хорошо. Теперь найдём, где за этим прячется реальный опыт.",
     focus: "Ясность опыта и соответствие роли",
   },
   {
@@ -36,7 +33,6 @@ export const ROSTER: RosterEntry[] = [
     role: "Партнёр консалтинга",
     tag: "Консалтинг",
     img: "/hr/gleb.jpg",
-    quote: "Стратегия развития, которая просто развивалась, — не стратегия. Поищем масштаб и доказательства.",
     focus: "Структура мышления, масштаб и уровень",
   },
   {
@@ -45,7 +41,6 @@ export const ROSTER: RosterEntry[] = [
     role: "HR-директор корпорации",
     tag: "Корпорация",
     img: "/hr/tamara.jpg",
-    quote: "Руководили подразделением, но размер исчез. Вернём факты, пока кулер не записали в команду.",
     focus: "Доказательства, стабильность и корпоративный контекст",
   },
 ];

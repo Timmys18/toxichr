@@ -101,9 +101,6 @@ export function HomeClient() {
             <div className={styles.portraitCopy}>
               <b>{selected.name}</b>
               <span>{selected.role}</span>
-              <div className={styles.proof}>
-                <p>«{selected.quote}»</p>
-              </div>
             </div>
           </div>
           <div className={styles.roster} aria-label="Выбрать HR">
