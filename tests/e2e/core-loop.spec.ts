@@ -75,8 +75,8 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByRole("link", { name: /Проверить под вакансию/ }).click();
   await page.getByLabel("Текст вакансии").fill(VACANCY);
   await page.getByRole("button", { name: "Сопоставить с резюме" }).click();
-  await expect(page.getByText("Сохранено в истории вакансий")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText(/требований уже подтверждены/)).toBeVisible();
+  await expect(page.getByText(/Вакансия сохранена · \d+ знаков/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: /Мэтч|Есть за что цепляться|Вакансия разобрана/ })).toBeVisible();
 
   const email = `e2e-${Date.now()}@example.com`;
   await page.goto(`/auth?analysisId=${firstAnalysisId}&next=/me`);
