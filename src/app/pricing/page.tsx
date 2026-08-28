@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { REVENGE_PRICE_RUB } from "@/lib/payments";
+import { ServicePage } from "@/components/ui/page-templates";
 
 export const metadata: Metadata = { title: "Цены" };
 
@@ -22,7 +23,7 @@ const REVENGE = [
 
 export default function PricingPage() {
   return (
-    <>
+    <ServicePage>
       <main id="main" className="flex flex-1 flex-col">
         <section className="pricing">
           <div className="ph">
@@ -64,6 +65,6 @@ export default function PricingPage() {
         .pricing .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}.pricing .card{border:1px solid var(--hair);border-radius:22px;background:var(--metal-0);padding:30px;display:flex;flex-direction:column}.pricing .card.pro{border-color:rgba(44,224,139,.32);background:linear-gradient(145deg,rgba(44,224,139,.08),var(--metal-0))}.pricing .c-k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:8px}.pricing .beta{font-size:9px;color:var(--tox);border:1px solid rgba(44,224,139,.24);padding:3px 8px;border-radius:999px}.pricing .price{font-weight:800;font-size:30px;letter-spacing:-.03em;margin-top:12px}.pricing .price.toxic{color:var(--tox)}.pricing .price span{font-weight:400;font-size:13px;color:var(--faint);letter-spacing:0}.pricing .promise{margin-top:15px;color:var(--dim);font-size:13px;line-height:1.5}.pricing ul{list-style:none;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;flex:1}.pricing li{display:flex;gap:12px;font-size:14.5px;line-height:1.4}.pricing li i{color:var(--tox);font-style:normal;font-weight:700;flex-shrink:0}.pricing .cta{margin-top:28px;min-height:52px;padding:0 22px;justify-content:center;text-align:center;text-decoration:none}.pricing .why{max-width:720px;margin:34px auto 0;padding:20px 22px;border-top:1px solid var(--hair);text-align:center}.pricing .why b{font-size:14px}.pricing .why p{margin-top:7px;color:var(--faint);font-size:12.5px;line-height:1.6}
         @media(max-width:760px){.pricing{padding:32px 18px 70px}.pricing .grid{grid-template-columns:1fr}.pricing .card{padding:24px 20px}}
       `}</style>
-    </>
+    </ServicePage>
   );
 }

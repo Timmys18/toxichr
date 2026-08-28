@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { SessionClient } from "@/app/session/session-client";
+import { AnalysisResultPage } from "@/components/ui/page-templates";
 import type { PersonaId } from "@/lib/personas";
 
 const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
@@ -18,11 +19,11 @@ export default async function SessionPage({ searchParams }: Props) {
   // Режим просмотра готового разбора
   if (view) {
     return (
-      <>
+      <AnalysisResultPage>
         <main id="main" className="flex flex-1 flex-col">
           <SessionClient key={`view:${view}`} viewId={view} />
         </main>
-      </>
+      </AnalysisResultPage>
     );
   }
 
@@ -31,7 +32,7 @@ export default async function SessionPage({ searchParams }: Props) {
   }
 
   return (
-    <>
+    <AnalysisResultPage>
       <main id="main" className="flex flex-1 flex-col">
         <SessionClient
           key={`${resumeId}:${personaId}`}
@@ -39,6 +40,6 @@ export default async function SessionPage({ searchParams }: Props) {
           personaId={personaId as PersonaId}
         />
       </main>
-    </>
+    </AnalysisResultPage>
   );
 }

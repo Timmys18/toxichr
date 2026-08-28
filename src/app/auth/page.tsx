@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthClient } from "./auth-client";
+import { ServicePage } from "@/components/ui/page-templates";
 
 export const metadata: Metadata = {
   title: "Вход",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AuthPage() {
   return (
-    <>
+    <ServicePage>
       <main id="main" className="flex flex-1 flex-col">
         <Suspense
           fallback={
@@ -20,6 +21,6 @@ export default function AuthPage() {
           <AuthClient />
         </Suspense>
       </main>
-    </>
+    </ServicePage>
   );
 }

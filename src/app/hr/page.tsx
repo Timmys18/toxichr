@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROSTER } from "@/components/home/hr-roster";
+import { ServicePage } from "@/components/ui/page-templates";
 
 export const metadata: Metadata = { title: "HR-состав" };
 
@@ -20,7 +21,7 @@ const PICK: Record<string, string> = {
 
 export default function HrPage() {
   return (
-    <>
+    <ServicePage>
       <main id="main" className="flex flex-1 flex-col">
         <section className="cast">
           <div className="ph">
@@ -87,6 +88,6 @@ export default function HrPage() {
         .cast .cta-wrap { text-align: center; margin-top: 44px; }
         .cast .cta-wrap :global(.thr-btn){ height: 54px; padding: 0 30px; text-decoration: none; }
       `}</style>
-    </>
+    </ServicePage>
   );
 }

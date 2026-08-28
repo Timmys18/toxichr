@@ -248,3 +248,8 @@
 - Moved the vacancy summary, verdict, metric strip, evidence lists, secondary material, and next-step rail onto shared system components.
 - Kept the existing vacancy-review API and safety arithmetic intact; only presentation composition changed.
 - Removed the duplicate main landmark from the vacancy route.
+# Session 28.08.2026 — page templates
+
+- Added named templates for landing, analysis result, comparison result, and service screens.
+- Applied templates to the landing, analysis session, vacancy comparison, pricing, HR roster, sign-in, and vacancy history routes.
+- Simplified the result-screen CTA surfaces by removing decorative green gradients from the main conversion and vacancy actions.

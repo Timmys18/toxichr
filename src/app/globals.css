@@ -215,6 +215,7 @@ body {
 
 /* ============ ToxicHR design system ============ */
 .ds-page-shell{display:flex;flex:1;flex-direction:column;min-width:0}
+.ds-template{display:flex;flex:1;min-width:0;flex-direction:column}.ds-template-analysis,.ds-template-comparison{background:var(--bg)}
 .ds-page-container{width:min(var(--page-max),calc(100% - (var(--page-gutter) * 2)));margin:0 auto}
 .ds-section-label{color:var(--tox);font-size:var(--text-meta);font-weight:600;letter-spacing:.14em;line-height:1.35;text-transform:uppercase}
 .ds-page-title{font-size:clamp(40px,5vw,76px);font-weight:780;letter-spacing:-.055em;line-height:.98}

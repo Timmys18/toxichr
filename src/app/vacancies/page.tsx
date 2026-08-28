@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { VacancyReview } from "@/lib/vacancy";
+import { ServicePage } from "@/components/ui/page-templates";
 
 export const metadata: Metadata = { title: "Мои вакансии" };
 
@@ -34,7 +35,7 @@ export default async function VacanciesPage() {
   });
 
   return (
-    <>
+    <ServicePage>
       <main id="main" className="flex flex-1 flex-col">
         <section className="history">
           <header>
@@ -102,6 +103,6 @@ export default async function VacanciesPage() {
         .history .empty{margin-top:40px;padding:54px 24px;border:1px dashed var(--hair2);border-radius:20px;text-align:center}.history .empty p{color:var(--dim)}.history .empty a{min-height:50px;margin-top:20px;padding:0 24px;text-decoration:none}
         @media(max-width:600px){.history{padding-top:38px}.history .item{align-items:flex-start;flex-wrap:wrap;gap:12px}.history .status{order:0}.history .content{order:2;flex-basis:100%}.history .score,.history .go{margin-left:auto}}
       `}</style>
-    </>
+    </ServicePage>
   );
 }

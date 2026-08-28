@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { VacancyClient } from "./vacancy-client";
+import { ComparisonResultPage } from "@/components/ui/page-templates";
 
 export const metadata: Metadata = { title: "Разбор вакансии" };
 
@@ -10,6 +11,6 @@ export default async function VacancyPage({
 }) {
   const { analysisId, vacancyId } = await searchParams;
   return (
-    <VacancyClient analysisId={analysisId} vacancyId={vacancyId} />
+    <ComparisonResultPage><VacancyClient analysisId={analysisId} vacancyId={vacancyId} /></ComparisonResultPage>
   );
 }
