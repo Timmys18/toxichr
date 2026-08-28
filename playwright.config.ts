@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = "http://127.0.0.1:3100";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
+const serverUrl = new URL(baseURL);
+const serverHost = serverUrl.hostname;
+const serverPort = serverUrl.port || "3100";
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 const localBrowser = executablePath
   ? { launchOptions: { executablePath, args: ["--no-sandbox"] } }
@@ -25,7 +28,7 @@ export default defineConfig({
     video,
   },
   webServer: {
-    command: "npm run start -- --hostname 127.0.0.1 --port 3100",
+    command: `npm run start -- --hostname ${serverHost} --port ${serverPort}`,
     url: `${baseURL}/api/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

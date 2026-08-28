@@ -253,3 +253,8 @@
 - Added named templates for landing, analysis result, comparison result, and service screens.
 - Applied templates to the landing, analysis session, vacancy comparison, pricing, HR roster, sign-in, and vacancy history routes.
 - Simplified the result-screen CTA surfaces by removing decorative green gradients from the main conversion and vacancy actions.
+
+# Session 28.08.2026 — isolated visual regression checks
+
+- Playwright now accepts `PLAYWRIGHT_BASE_URL`, so a clean mock-AI run can use a separate port without stopping a developer's local session.
+- Full end-to-end suite passed in the isolated contour: 14 of 14 scenarios.
