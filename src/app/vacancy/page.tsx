@@ -10,10 +10,6 @@ export default async function VacancyPage({
 }) {
   const { analysisId, vacancyId } = await searchParams;
   return (
-    <>
-      <main id="main" className="flex flex-1 flex-col">
-        <VacancyClient analysisId={analysisId} vacancyId={vacancyId} />
-      </main>
-    </>
+    <VacancyClient analysisId={analysisId} vacancyId={vacancyId} />
   );
 }

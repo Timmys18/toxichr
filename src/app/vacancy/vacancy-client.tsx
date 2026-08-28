@@ -2,6 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  CollapsibleSection,
+  CommandRail,
+  EditorialSection,
+  EmptyState,
+  EvidenceItem,
+  PageContainer,
+  PageShell,
+  SectionLabel,
+  SummaryRail,
+  VerdictBlock,
+} from "@/components/ui/system";
 import { track } from "@/lib/analytics";
 import type { VacancyReview } from "@/lib/vacancy";
 import {
@@ -235,7 +247,8 @@ export function VacancyClient({
   const canSubmit = !loadingSaved && !busy && textLength >= MIN_VACANCY_LENGTH && (!result || resultStale);
 
   return (
-    <section className="vacancy">
+    <PageShell>
+      <PageContainer className="vacancy">
       <div className="intro">
         <div className="intro-top">
           <p className="over thr-mono">Вакансия без корпоративного тумана</p>
@@ -250,13 +263,11 @@ export function VacancyClient({
       </div>
 
       {result && review ? (
-        <div className="vacancy-strip">
-          <b>{review.title}</b>
-          <span>Вакансия сохранена · {textLength} знаков</span>
-          <button type="button" onClick={() => setEditorOpen((value) => !value)}>
-            {editorOpen ? "Скрыть" : "Изменить"}
-          </button>
-        </div>
+        <SummaryRail
+          title={review.title}
+          meta={<>Вакансия сохранена · {textLength} знаков</>}
+          action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>}
+        />
       ) : null}
 
       {showEditor ? (
@@ -307,117 +318,91 @@ export function VacancyClient({
 
       {result && review ? (
         <div className="result">
-          <section className="verdict">
-            <div>
-              <p className="over thr-mono">Вердикт</p>
-              <h2>{review.verdict}</h2>
-              <p className="summary">{result.summary}</p>
-            </div>
-            {analysisId ? (
-              <div className="stats">
-                <span><b>{review.proven.length}</b> подтверждено</span>
-                <span><b>{review.canProve.length}</b> можно доказать</span>
-                <span><b>{review.missing.length}</b> не найдено</span>
-              </div>
-            ) : null}
-          </section>
+          <VerdictBlock
+            title={review.verdict}
+            summary={result.summary}
+            metrics={analysisId ? [
+              { value: review.proven.length, label: "подтверждено" },
+              { value: review.canProve.length, label: "можно доказать" },
+              { value: review.missing.length, label: "не найдено" },
+            ] : undefined}
+          />
 
           {analysisId ? (
             <section className="flow">
-              <p className="over thr-mono">Совпадения и разрывы</p>
-              <div className="lane">
-                <h3>Что работает на тебя</h3>
+              <SectionLabel>Совпадения и разрывы</SectionLabel>
+              <EditorialSection title="Что работает на тебя">
                 {review.proven.length || review.hidden.length ? (
                   [...review.proven, ...review.hidden].slice(0, 4).map((item) => (
-                    <article key={item.id}>
-                      <b>{item.text}</b>
-                      <p>{item.explanation}</p>
-                      {item.evidence ? <blockquote>«{item.evidence}»</blockquote> : null}
-                    </article>
+                    <EvidenceItem key={item.id} title={item.text} description={item.explanation} quote={item.evidence ? `«${item.evidence}»` : undefined} />
                   ))
                 ) : (
-                  <p className="empty">Прямых совпадений пока нет.</p>
+                  <EmptyState>Прямых совпадений пока нет.</EmptyState>
                 )}
-              </div>
-              <div className="lane">
-                <h3>Что можно дотянуть</h3>
+              </EditorialSection>
+              <EditorialSection title="Что можно дотянуть">
                 {review.canProve.length ? (
                   review.canProve.slice(0, 3).map((item) => (
-                    <article key={item.id}>
-                      <b>{item.text}</b>
-                      <p>{item.explanation}</p>
-                    </article>
+                    <EvidenceItem key={item.id} title={item.text} description={item.explanation} />
                   ))
                 ) : (
-                  <p className="empty">Быстрых уточнений по этой вакансии не видно.</p>
+                  <EmptyState>Быстрых уточнений по этой вакансии не видно.</EmptyState>
                 )}
-              </div>
-              <div className="lane break">
-                <h3>Главный разрыв</h3>
+              </EditorialSection>
+              <EditorialSection title="Главный разрыв" className="break">
                 <div className="break-list">
                   {review.missingGroups.length ? (
                     review.missingGroups.map((group) => (
-                      <details key={group.title}>
-                        <summary>{group.title} <span>{group.items.length}</span></summary>
+                      <CollapsibleSection key={group.title} title={<>{group.title} <span>{group.items.length}</span></>}>
                         {group.items.map((item) => (
                           <p key={item.id}>{item.text}</p>
                         ))}
-                      </details>
+                      </CollapsibleSection>
                     ))
                   ) : (
-                    <p className="empty">Критичных неподтверждённых требований нет.</p>
+                    <EmptyState>Критичных неподтверждённых требований нет.</EmptyState>
                   )}
                 </div>
-              </div>
+              </EditorialSection>
             </section>
           ) : (
             <section className="flow">
-              <p className="over thr-mono">Разбор вакансии</p>
-              <div className="lane">
-                <h3>Что реально требуется</h3>
-                <div>
+              <SectionLabel>Разбор вакансии</SectionLabel>
+              <EditorialSection title="Что реально требуется">
                   {result.requirements.map((item) => (
-                    <article key={item.id}>
-                      <b>{item.text}</b>
-                      <p>{item.explanation}</p>
-                    </article>
+                    <EvidenceItem key={item.id} title={item.text} description={item.explanation} />
                   ))}
-                </div>
-              </div>
+              </EditorialSection>
             </section>
           )}
 
           <section className="response">
-            <p className="over thr-mono">Что делать с откликом</p>
+            <SectionLabel>Что делать с откликом</SectionLabel>
             {(result.redFlags.length || result.corporateWater.length) ? (
-              <details>
-                <summary>Риски и словесный шум</summary>
+              <CollapsibleSection title="Риски и словесный шум">
                 {result.redFlags.map((item) => <p key={item}>{item}</p>)}
                 {result.corporateWater.map((item) => <p key={item}>{item}</p>)}
-              </details>
+              </CollapsibleSection>
             ) : null}
             {result.tailoredIntro ? (
-              <details>
-                <summary>Вступление для версии под вакансию</summary>
+              <CollapsibleSection title="Вступление для версии под вакансию">
                 <CopyBlock title="Вступление" text={result.tailoredIntro} />
-              </details>
+              </CollapsibleSection>
             ) : null}
             {result.coverLetter ? (
-              <details>
-                <summary>Основа сопроводительного письма</summary>
+              <CollapsibleSection title="Основа сопроводительного письма">
                 <CopyBlock title="Письмо" text={result.coverLetter} />
-              </details>
+              </CollapsibleSection>
             ) : null}
             {result.interviewQuestions.length ? (
-              <details>
-                <summary>Что могут спросить</summary>
+              <CollapsibleSection title="Что могут спросить">
                 <ol>{result.interviewQuestions.map((item) => <li key={item}>{item}</li>)}</ol>
-              </details>
+              </CollapsibleSection>
             ) : null}
           </section>
 
-          <div className="bottom-rail">
-            {!analysisId ? (
+          <CommandRail
+            primary={!analysisId ? (
               <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>
                 Добавить резюме и сопоставить →
               </Link>
@@ -426,16 +411,16 @@ export function VacancyClient({
                 Адаптировать резюме под вакансию →
               </Link>
             )}
-            <span>Только на основании реального опыта</span>
-            <button type="button" onClick={() => { setResult(null); setEditorOpen(true); }}>
+            hint="Только на основании подтверждённого опыта"
+            secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>
               Сравнить с другой вакансией
-            </button>
-          </div>
+            </button>}
+          />
         </div>
       ) : null}
 
       <style jsx>{`
-        .vacancy { width: min(1480px,calc(100% - 72px)); margin: 0 auto; padding: 64px 0 110px; }
+        .vacancy { padding: 64px 0 110px; }
         .intro { max-width: 980px; }
         .intro-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
         .intro-top :global(a) { color: var(--faint); font-size: 13px; text-decoration: none; }
@@ -490,7 +475,7 @@ export function VacancyClient({
         .bottom-rail button { grid-column: 2; grid-row: 1 / span 2; color: var(--faint); }
         .bottom-rail button:hover { color: var(--fg); }
         @media (max-width: 820px) {
-          .vacancy { width: min(100% - 36px,1480px); padding-top: 34px; }
+          .vacancy { padding-top: 34px; }
           .intro-top { align-items: flex-start; flex-direction: column; gap: 10px; }
           h1 { font-size: clamp(34px,10.5vw,48px); line-height: 1.02; }
           .intro > p:last-child,.summary { font-size: 16px; }
@@ -508,6 +493,7 @@ export function VacancyClient({
           .bottom-rail button { grid-column: 1; grid-row: auto; justify-self: start; padding: 0; }
         }
       `}</style>
-    </section>
+      </PageContainer>
+    </PageShell>
   );
 }

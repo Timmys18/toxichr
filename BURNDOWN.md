@@ -243,3 +243,8 @@
 - Added shared visual tokens for spacing, type scale, page container, states, and restrained dark presentation.
 - Added reusable page, editorial, verdict, metric, evidence, action, rail, empty-state, and collapsible primitives.
 - Added the internal `/ui-kit` visual reference and documented the system rules for future screens.
+# Session 28.08.2026 — comparison page on the design system
+
+- Moved the vacancy summary, verdict, metric strip, evidence lists, secondary material, and next-step rail onto shared system components.
+- Kept the existing vacancy-review API and safety arithmetic intact; only presentation composition changed.
+- Removed the duplicate main landmark from the vacancy route.
