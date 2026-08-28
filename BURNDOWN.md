@@ -258,3 +258,10 @@
 
 - Playwright now accepts `PLAYWRIGHT_BASE_URL`, so a clean mock-AI run can use a separate port without stopping a developer's local session.
 - Full end-to-end suite passed in the isolated contour: 14 of 14 scenarios.
+
+# Session 28.08.2026 — design system enforcement
+
+- Moved vacancy comparison presentation out of the client component into shared design-system styles and primitives.
+- Page templates now own the main landmark for landing, analysis, and comparison routes; nested duplicate `main#main` nodes were removed.
+- Restricted `/ui-kit` to development and documented mandatory system rules for future screens.
+- Loading skeletons no longer introduce a second `main#main` while a route streams.

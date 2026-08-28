@@ -9,7 +9,7 @@ import {
   EmptyState,
   EvidenceItem,
   PageContainer,
-  PageShell,
+  PrimaryAction,
   SectionLabel,
   SummaryRail,
   VerdictBlock,
@@ -82,22 +82,14 @@ function CopyBlock({ title, text }: { title: string; text: string }) {
   }
 
   return (
-    <div className="output">
-      <div className="output-head">
+    <div className="ds-copy-output">
+      <div className="ds-copy-output-head">
         <h3>{title}</h3>
         <button type="button" onClick={() => void copy()}>
           {copyFailed ? "Выдели текст" : copied ? "Скопировано" : "Копировать"}
         </button>
       </div>
       <p>{text}</p>
-      <style jsx>{`
-        .output { margin-top: 14px; padding: 22px; border: 1px solid var(--hair); border-radius: 18px; background: var(--metal-0); }
-        .output-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        h3 { font-size: 17px; }
-        button { border: 1px solid var(--hair2); border-radius: 999px; background: transparent; color: var(--dim); padding: 7px 12px; font: inherit; font-size: 11.5px; cursor: pointer; }
-        button:hover { color: var(--fg); border-color: var(--dim); }
-        p { margin-top: 12px; color: var(--dim); line-height: 1.65; }
-      `}</style>
     </div>
   );
 }
@@ -247,10 +239,9 @@ export function VacancyClient({
   const canSubmit = !loadingSaved && !busy && textLength >= MIN_VACANCY_LENGTH && (!result || resultStale);
 
   return (
-    <PageShell>
-      <PageContainer className="vacancy">
-      <div className="intro">
-        <div className="intro-top">
+    <PageContainer className="ds-comparison">
+      <div className="ds-comparison-intro">
+        <div className="ds-comparison-intro-top">
           <p className="over thr-mono">Вакансия без корпоративного тумана</p>
           <Link href="/vacancies">История вакансий →</Link>
         </div>
@@ -271,7 +262,7 @@ export function VacancyClient({
       ) : null}
 
       {showEditor ? (
-        <div className="editor">
+        <div className="ds-comparison-editor">
           <textarea
             value={text}
             onChange={(event) => {
@@ -290,20 +281,20 @@ export function VacancyClient({
             maxLength={30_000}
             disabled={loadingSaved}
           />
-          <div className="input-meta">
+          <div className="ds-comparison-input-meta">
             <span aria-live="polite">{inputStatus}</span>
             <b className="thr-mono">{text.trim().length} / 30 000</b>
           </div>
         </div>
       ) : null}
       {resultStale ? (
-        <p className="stale-note" role="status">
+        <p className="ds-comparison-stale-note" role="status">
           Текст изменился. Результат ниже относится к прошлой версии.
         </p>
       ) : null}
-      {error ? <p className="error" role="alert">{error}</p> : null}
+      {error ? <p className="ds-comparison-error" role="alert">{error}</p> : null}
       {canSubmit || (!result && showEditor) ? (
-        <button className="thr-btn thr-btn-tox submit" onClick={submit} disabled={busy || !canSubmit}>
+        <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>
           {loadingSaved
             ? "Загружаем вакансию…"
             : busy
@@ -313,11 +304,11 @@ export function VacancyClient({
                 : analysisId
                   ? "Сопоставить с резюме"
                   : "Разобрать вакансию"}
-        </button>
+        </PrimaryAction>
       ) : null}
 
       {result && review ? (
-        <div className="result">
+        <div className="ds-comparison-result">
           <VerdictBlock
             title={review.verdict}
             summary={result.summary}
@@ -329,7 +320,7 @@ export function VacancyClient({
           />
 
           {analysisId ? (
-            <section className="flow">
+            <section className="ds-comparison-flow">
               <SectionLabel>Совпадения и разрывы</SectionLabel>
               <EditorialSection title="Что работает на тебя">
                 {review.proven.length || review.hidden.length ? (
@@ -366,7 +357,7 @@ export function VacancyClient({
               </EditorialSection>
             </section>
           ) : (
-            <section className="flow">
+            <section className="ds-comparison-flow">
               <SectionLabel>Разбор вакансии</SectionLabel>
               <EditorialSection title="Что реально требуется">
                   {result.requirements.map((item) => (
@@ -376,7 +367,7 @@ export function VacancyClient({
             </section>
           )}
 
-          <section className="response">
+          <section className="ds-comparison-response">
             <SectionLabel>Что делать с откликом</SectionLabel>
             {(result.redFlags.length || result.corporateWater.length) ? (
               <CollapsibleSection title="Риски и словесный шум">
@@ -419,81 +410,6 @@ export function VacancyClient({
         </div>
       ) : null}
 
-      <style jsx>{`
-        .vacancy { padding: 64px 0 110px; }
-        .intro { max-width: 980px; }
-        .intro-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-        .intro-top :global(a) { color: var(--faint); font-size: 13px; text-decoration: none; }
-        .intro-top :global(a):hover { color: var(--fg); }
-        .over { color: var(--tox); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; }
-        h1 { margin-top: 16px; font-size: clamp(42px,5.2vw,72px); line-height: .98; letter-spacing: -.05em; }
-        .intro > p:last-child { max-width: 56ch; margin-top: 18px; color: var(--dim); font-size: 18px; line-height: 1.55; }
-        .vacancy-strip { display: flex; align-items: center; gap: 22px; min-height: 70px; margin-top: 42px; padding: 0 4px; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
-        .vacancy-strip b { font-size: 24px; letter-spacing: -.02em; }
-        .vacancy-strip span { color: var(--dim); font-size: 15px; }
-        .vacancy-strip button,.bottom-rail button { border: 0; background: transparent; color: var(--tox); font: 650 13px var(--font-sans); cursor: pointer; }
-        .editor { margin-top: 28px; }
-        textarea { width: 100%; min-height: 260px; padding: 20px; border: 1px solid var(--hair2); border-radius: 8px; background: var(--metal-0); color: var(--fg); font: inherit; line-height: 1.55; resize: vertical; }
-        textarea:focus { outline: 1px solid var(--tox); border-color: var(--tox); }
-        .input-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 9px; color: var(--faint); font-size: 12px; }
-        .input-meta b { font-weight: 400; font-size: 10px; }
-        .submit { min-height: 54px; margin-top: 18px; padding: 0 26px; }
-        .error { margin-top: 14px; color: var(--crit); }
-        .stale-note { width: fit-content; margin-top: 12px; color: #f0bd70; font-size: 13px; line-height: 1.45; }
-        .result { margin-top: 34px; }
-        .verdict { display: grid; grid-template-columns: minmax(0,1fr) minmax(500px, .9fr); gap: 80px; align-items: end; padding: 58px 0 52px; border-bottom: 1px solid var(--hair); }
-        .verdict h2 { margin-top: 14px; font-size: clamp(50px,5.5vw,86px); line-height: .96; letter-spacing: -.055em; }
-        .summary { max-width: 72ch; margin-top: 20px; color: var(--dim); font-size: 21px; line-height: 1.5; }
-        .stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
-        .stats span { display: flex; flex-direction: column; gap: 10px; padding: 20px 18px 22px 0; color: var(--dim); font-size: 15px; line-height: 1.3; }
-        .stats span + span { padding-left: 18px; border-left: 1px solid var(--hair); }
-        .stats b { color: var(--fg); font-size: 52px; line-height: 1; }
-        .flow,.response { padding: 42px 0 0; }
-        .lane { display: block; min-height: 80px; padding: 34px 0; border-bottom: 1px solid var(--hair); }
-        .lane h3,.response summary { font-size: 26px; line-height: 1.2; letter-spacing: -.025em; }
-        .lane h3 { float: left; width: 300px; margin-right: 64px; }
-        .lane > article,.lane > .empty,.lane > .break-list { margin-left: 364px; }
-        article { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid rgba(242,244,245,.1); }
-        article:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
-        article b { font-size: 19px; line-height: 1.45; }
-        article p,.break details p,.response p,.response li { margin-top: 9px; color: var(--dim); font-size: 16px; line-height: 1.6; }
-        blockquote { margin-top: 12px; padding-left: 14px; border-left: 2px solid var(--tox); color: var(--faint); font-size: 15px; line-height: 1.55; }
-        .empty { color: var(--faint); font-size: 15px; line-height: 1.5; }
-        details { padding: 18px 0; border-bottom: 1px solid var(--hair); }
-        details:first-of-type { padding-top: 0; }
-        summary { cursor: pointer; list-style: none; }
-        summary::-webkit-details-marker { display: none; }
-        .break details { padding: 14px 0; }
-        .break summary { display: flex; justify-content: space-between; gap: 20px; color: var(--fg); font-size: 16px; }
-        .break summary span { color: var(--tox); }
-        .response > .over { display: block; margin-bottom: 18px; }
-        .response ol { margin-top: 12px; padding-left: 20px; }
-        .response :global(.output) { margin-top: 14px; border: 0; border-radius: 0; background: transparent; padding: 0; }
-        .bottom-rail { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 24px; align-items: center; margin-top: 46px; padding: 24px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
-        .bottom-rail :global(a) { color: var(--tox); font-size: 22px; font-weight: 750; letter-spacing: -.02em; text-decoration: none; }
-        .bottom-rail span { grid-column: 1; color: var(--faint); font-size: 13px; }
-        .bottom-rail button { grid-column: 2; grid-row: 1 / span 2; color: var(--faint); }
-        .bottom-rail button:hover { color: var(--fg); }
-        @media (max-width: 820px) {
-          .vacancy { padding-top: 34px; }
-          .intro-top { align-items: flex-start; flex-direction: column; gap: 10px; }
-          h1 { font-size: clamp(34px,10.5vw,48px); line-height: 1.02; }
-          .intro > p:last-child,.summary { font-size: 16px; }
-          .vacancy-strip { align-items: flex-start; flex-direction: column; }
-          textarea { min-height: 230px; padding: 17px; }
-          .input-meta { align-items: flex-start; font-size: 11px; line-height: 1.35; }
-          .submit { width: 100%; margin-top: 14px; }
-          .verdict { grid-template-columns: 1fr; gap: 28px; padding-top: 32px; }
-          .stats { border-top: 0; }
-          .stats b { font-size: 40px; }
-          .lane { min-height: 0; }
-          .lane h3 { float: none; width: auto; margin: 0 0 16px; }
-          .lane > article,.lane > .empty,.lane > .break-list { margin-left: 0; }
-          .bottom-rail { grid-template-columns: 1fr; }
-          .bottom-rail button { grid-column: 1; grid-row: auto; justify-self: start; padding: 0; }
-        }
-      `}</style>
-      </PageContainer>
-    </PageShell>
+    </PageContainer>
   );
 }

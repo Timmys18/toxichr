@@ -15,6 +15,7 @@ import {
   SummaryRail,
   VerdictBlock,
 } from "@/components/ui/system";
+import { notFound } from "next/navigation";
 
 const metrics = [
   { value: "2", label: "подтверждено" },
@@ -23,6 +24,8 @@ const metrics = [
 ];
 
 export default function UiKitPage() {
+  if (process.env.NODE_ENV !== "development") notFound();
+
   return (
     <PageShell>
       <PageContainer className="ui-kit">

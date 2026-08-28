@@ -17,4 +17,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Toxicity hits the resume, never the person.
 - New pages use the ToxicHR design system; do not introduce arbitrary colors, fonts, spacing, or duplicate button patterns.
 - Add each new visual primitive to `/ui-kit` before relying on it in a product screen.
+- Product pages must compose `src/components/ui/system.tsx` primitives and page templates; do not add page-local `<style>` blocks for shared layout, typography, actions, evidence, metrics, or states.
+- A document has one `main#main`: the appropriate page template owns it. Components inside a template use sections, articles, and divs instead.
+- `/ui-kit` is development-only. Do not link it from public navigation or expose it in production.
 - Important content text is at least 16px; test every visual change on desktop and mobile and include screenshots before handoff.

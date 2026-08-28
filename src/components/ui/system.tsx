@@ -26,6 +26,28 @@ export function LeadText({ children, className }: { children: ReactNode; classNa
   return <p className={cn("ds-lead", className)}>{children}</p>;
 }
 
+export function PageIntro({
+  label,
+  action,
+  title,
+  lead,
+  className,
+}: {
+  label?: ReactNode;
+  action?: ReactNode;
+  title: ReactNode;
+  lead?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <header className={cn("ds-page-intro", className)}>
+      {label || action ? <div className="ds-page-intro-top">{label ? <SectionLabel>{label}</SectionLabel> : <span />}{action}</div> : null}
+      <PageTitle>{title}</PageTitle>
+      {lead ? <LeadText>{lead}</LeadText> : null}
+    </header>
+  );
+}
+
 export function SummaryRail({ title, meta, action, className }: { title: ReactNode; meta?: ReactNode; action?: ReactNode; className?: string }) {
   return <div className={cn("ds-summary-rail", className)}><b>{title}</b>{meta ? <span>{meta}</span> : null}{action}</div>;
 }

@@ -20,9 +20,7 @@ export default async function SessionPage({ searchParams }: Props) {
   if (view) {
     return (
       <AnalysisResultPage>
-        <main id="main" className="flex flex-1 flex-col">
-          <SessionClient key={`view:${view}`} viewId={view} />
-        </main>
+        <SessionClient key={`view:${view}`} viewId={view} />
       </AnalysisResultPage>
     );
   }
@@ -33,13 +31,11 @@ export default async function SessionPage({ searchParams }: Props) {
 
   return (
     <AnalysisResultPage>
-      <main id="main" className="flex flex-1 flex-col">
-        <SessionClient
-          key={`${resumeId}:${personaId}`}
-          resumeId={resumeId!}
-          personaId={personaId as PersonaId}
-        />
-      </main>
+      <SessionClient
+        key={`${resumeId}:${personaId}`}
+        resumeId={resumeId!}
+        personaId={personaId as PersonaId}
+      />
     </AnalysisResultPage>
   );
 }
