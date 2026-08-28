@@ -238,3 +238,8 @@
 - Moved the shared header into the root layout so it remains mounted across routes.
 - Added a short Motion transition for route content, with reduced-motion support.
 - Replaced the generic loading indicator with layout-matched skeletons for session, vacancy, history, and editor routes.
+# Session 28.08.2026 — ToxicHR design system foundation
+
+- Added shared visual tokens for spacing, type scale, page container, states, and restrained dark presentation.
+- Added reusable page, editorial, verdict, metric, evidence, action, rail, empty-state, and collapsible primitives.
+- Added the internal `/ui-kit` visual reference and documented the system rules for future screens.

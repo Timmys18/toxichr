@@ -15,3 +15,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Language: RU only for v1
 - AI: facts → evidence → score → persona voice → grounding. Never invent facts.
 - Toxicity hits the resume, never the person.
+- New pages use the ToxicHR design system; do not introduce arbitrary colors, fonts, spacing, or duplicate button patterns.
+- Add each new visual primitive to `/ui-kit` before relying on it in a product screen.
+- Important content text is at least 16px; test every visual change on desktop and mobile and include screenshots before handoff.
