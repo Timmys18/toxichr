@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { TopNav } from "@/components/shared/top-nav";
 import { AuthClient } from "./auth-client";
 
 export const metadata: Metadata = {
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 export default function AuthPage() {
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <Suspense
           fallback={

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { TopNav } from "@/components/shared/top-nav";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
@@ -66,7 +65,6 @@ export default async function MePage() {
 
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <CabinetClient name={name} items={items} vacancyCount={vacancyCount} />
       </main>

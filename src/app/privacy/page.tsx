@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TopNav } from "@/components/shared/top-nav";
 
 export const metadata: Metadata = { title: "Приватность" };
 
 export default function PrivacyPage() {
   return (
     <>
-      <TopNav />
       <main id="main" className="privacy">
         <p className="over thr-mono">Приватность без мелкого шрифта</p>
         <h1>Что происходит с резюме</h1>

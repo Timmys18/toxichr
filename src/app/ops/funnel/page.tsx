@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TopNav } from "@/components/shared/top-nav";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { REVENGE_PRICE_RUB } from "@/lib/payments";
@@ -110,7 +109,6 @@ export default async function FunnelPage({
 
   return (
     <>
-      <TopNav />
       <main className="ops">
         <div className="head">
           <div>

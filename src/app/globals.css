@@ -135,6 +135,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.route-content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
 ::selection {
   background: var(--tox);
   color: #06130c;

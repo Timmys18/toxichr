@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { TopNav } from "@/components/shared/top-nav";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { VacancyReview } from "@/lib/vacancy";
@@ -36,7 +35,6 @@ export default async function VacanciesPage() {
 
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <section className="history">
           <header>

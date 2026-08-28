@@ -1,12 +1,16 @@
-import Link from "next/link";
-import { auth } from "@/lib/auth";
+"use client";
 
-export async function TopNav() {
-  const session = await auth();
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+
+export function TopNav() {
+  const pathname = usePathname();
+  const { data: session } = useSession();
   const authed = Boolean(session?.user?.id);
 
   return (
-    <nav className="topnav">
+    <nav className="topnav" data-path={pathname}>
       <Link href="/" className="brand">TOXIC<i>HR</i></Link>
 
       <div className="links desktop-links">
@@ -36,7 +40,7 @@ export async function TopNav() {
       <style>{`
         .topnav{height:78px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;background:rgba(8,9,10,.9);backdrop-filter:blur(20px);padding:0 44px;border-bottom:1px solid var(--hair)}
         .brand{font-weight:800;font-size:18px;letter-spacing:.01em;color:var(--fg);text-decoration:none}.brand i{font-style:normal;color:var(--tox)}
-        .links{display:flex;gap:38px}.links a{font-size:15.5px;font-weight:650;color:rgba(242,244,245,.78);text-decoration:none;transition:.2s}.links a:hover{color:var(--fg)}
+        .links{display:flex;gap:38px}.links a{font-size:15.5px;font-weight:650;color:rgba(242,244,245,.78);text-decoration:none;transition:color .18s var(--ease)}.links a:hover{color:var(--fg)}.topnav[data-path="/hr"] .desktop-links a[href="/hr"],.topnav[data-path^="/vacancy"] .desktop-links a[href="/vacancy"],.topnav[data-path^="/vacancies"] .desktop-links a[href="/vacancy"],.topnav[data-path="/pricing"] .desktop-links a[href="/pricing"]{color:var(--tox)}
         .right{display:flex;align-items:center;gap:10px}.login{font-size:15.5px;font-weight:700;color:var(--fg);text-decoration:none;border:1px solid rgba(242,244,245,.42);padding:12px 23px;border-radius:12px;background:rgba(255,255,255,.025);transition:.2s}.login:hover{border-color:rgba(242,244,245,.62);background:rgba(255,255,255,.07)}
         .mobile-vacancy,.mobile-menu{display:none}.mobile-menu{position:relative}.mobile-menu summary{width:42px;height:42px;display:grid;place-content:center;gap:4px;border:1px solid var(--hair2);border-radius:12px;cursor:pointer;list-style:none}.mobile-menu summary::-webkit-details-marker{display:none}.mobile-menu summary span{display:block;width:16px;height:1px;background:var(--fg)}
         .mobile-panel{position:absolute;right:0;top:50px;width:min(260px,calc(100vw - 36px));padding:10px;border:1px solid var(--hair2);border-radius:16px;background:rgba(14,16,18,.98);box-shadow:0 24px 70px rgba(0,0,0,.45)}.mobile-panel a{display:block;padding:12px 13px;border-radius:10px;color:var(--dim);font-size:13.5px;text-decoration:none}.mobile-panel a:hover{color:var(--fg);background:rgba(255,255,255,.05)}

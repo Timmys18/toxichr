@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TopNav } from "@/components/shared/top-nav";
 import { ROSTER } from "@/components/home/hr-roster";
 
 export const metadata: Metadata = { title: "HR-состав" };
@@ -22,7 +21,6 @@ const PICK: Record<string, string> = {
 export default function HrPage() {
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <section className="cast">
           <div className="ph">

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { TopNav } from "@/components/shared/top-nav";
 import { auth } from "@/lib/auth";
 import { SettingsClient } from "./settings-client";
 
@@ -16,7 +15,6 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <SettingsClient />
       </main>

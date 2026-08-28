@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { TopNav } from "@/components/shared/top-nav";
 import { SessionClient } from "@/app/session/session-client";
 import type { PersonaId } from "@/lib/personas";
 
@@ -20,7 +19,6 @@ export default async function SessionPage({ searchParams }: Props) {
   if (view) {
     return (
       <>
-        <TopNav />
         <main id="main" className="flex flex-1 flex-col">
           <SessionClient key={`view:${view}`} viewId={view} />
         </main>
@@ -34,7 +32,6 @@ export default async function SessionPage({ searchParams }: Props) {
 
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <SessionClient
           key={`${resumeId}:${personaId}`}

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { TopNav } from "@/components/shared/top-nav";
 import { prisma } from "@/lib/prisma";
 import type { PublicSharePayload } from "@/lib/public-share";
 import { appBaseUrl } from "@/lib/public-share";
@@ -65,7 +64,6 @@ export default async function ToastPage({ params }: Props) {
 
   return (
     <>
-      <TopNav />
       <ToastClient slug={slug} payload={payload} />
     </>
   );

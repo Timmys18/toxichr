@@ -233,3 +233,8 @@
 - Expanded comparison workspace for desktop and increased key typography.
 - Reworked vacancy metadata row and three-column statistics for clear hierarchy.
 - Fixed requirement lanes so headings stay left and all items flow vertically on the right; evidence quotes remain visually distinct.
+# Session 28.08.2026 — seamless navigation
+
+- Moved the shared header into the root layout so it remains mounted across routes.
+- Added a short Motion transition for route content, with reduced-motion support.
+- Replaced the generic loading indicator with layout-matched skeletons for session, vacancy, history, and editor routes.

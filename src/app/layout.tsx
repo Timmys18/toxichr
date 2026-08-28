@@ -1,4 +1,6 @@
 import { Providers } from "@/components/shared/providers";
+import { TopNav } from "@/components/shared/top-nav";
+import { RouteTransition } from "@/components/shared/route-transition";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./conversion.css";
@@ -35,10 +37,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="h-full antialiased">
+    <html lang="ru" className="h-full antialiased" data-scroll-behavior="smooth">
       <body className="flex min-h-full flex-col font-sans text-fg">
         <a href="#main" className="sr-only">К содержанию</a>
-        <Providers>{children}</Providers>
+        <Providers>
+          <TopNav />
+          <RouteTransition>{children}</RouteTransition>
+        </Providers>
       </body>
     </html>
   );

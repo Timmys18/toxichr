@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TopNav } from "@/components/shared/top-nav";
 import { REVENGE_PRICE_RUB } from "@/lib/payments";
 
 export const metadata: Metadata = { title: "Цены" };
@@ -24,7 +23,6 @@ const REVENGE = [
 export default function PricingPage() {
   return (
     <>
-      <TopNav />
       <main id="main" className="flex flex-1 flex-col">
         <section className="pricing">
           <div className="ph">
