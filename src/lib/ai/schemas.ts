@@ -81,6 +81,27 @@ export const ImprovementStepSchema = z.object({
   problemIds: z.array(z.string()).optional(),
 });
 
+/** Свободная драматургия персоны в стабильном машинном контейнере. */
+export const ContentBlockSchema = z.object({
+  type: z.enum(["finding", "strength", "observation", "question", "summary"]),
+  findingIds: z.array(z.string()),
+  content: z.string(),
+});
+
+export const GenerationMetaSchema = z.object({
+  promptVersion: z.string(),
+  personaVersion: z.string(),
+  stages: z.array(z.object({
+    name: z.string(),
+    model: z.string(),
+    latencyMs: z.number().int().nonnegative(),
+    tokensIn: z.number().int().nonnegative(),
+    tokensOut: z.number().int().nonnegative(),
+  })),
+  retryCount: z.number().int().nonnegative(),
+  editorUsed: z.boolean(),
+});
+
 export const AnalysisReportSchema = z.object({
   candidateProfile: CandidateProfileSchema,
   score: ScoreSchema,
@@ -92,6 +113,8 @@ export const AnalysisReportSchema = z.object({
   theatreFindings: z.array(TheatreFindingSchema).min(3),
   shareQuotes: z.array(ShareQuoteSchema).min(1).max(5),
   improvementPlan: z.array(ImprovementStepSchema).max(9).default([]),
+  contentBlocks: z.array(ContentBlockSchema).max(10).default([]),
+  generationMeta: GenerationMetaSchema.optional(),
   recommendedPersonaId: z.enum(["tamara", "lera", "gleb", "vadik"]),
   recommendationReason: z.string(),
 });

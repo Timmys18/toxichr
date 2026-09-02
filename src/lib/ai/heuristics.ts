@@ -833,6 +833,7 @@ export function runHeuristicAnalysis(
     theatreFindings: buildTheatreFindings(facts),
     shareQuotes,
     improvementPlan: buildImprovementPlan(facts, topProblems),
+    contentBlocks: [],
     recommendedPersonaId: recommendation.id,
     recommendationReason: recommendation.reason,
   };

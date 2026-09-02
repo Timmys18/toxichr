@@ -13,6 +13,7 @@
 import { runAi } from "@/lib/ai/gateway";
 import { quoteInResume } from "@/lib/ai/grounding";
 import type { AnalysisReport } from "@/lib/ai/schemas";
+import { PROFESSIONAL_CORE_PROMPT } from "@/lib/ai/prompts/professional-core";
 
 export type EvidenceClaim = {
   quote: string;
@@ -39,52 +40,26 @@ export type ScoreResult = {
 
 /* -------------------------------------------------- stage 1: extract */
 
-const EXTRACT_SYSTEM = `Ты аналитик резюме. Твоя задача — построить карту доказательств (Evidence Map) по тексту резюме. Никакого юмора, никаких оценок — только факты.
-
-Верни строго JSON:
-{
-  "profile": {
-    "primaryRole": "основная профессия по-русски",
-    "professionalFamily": "engineering|product|project_management|sales|marketing|finance|hr|legal|operations|manufacturing|consulting|management|executive|other",
-    "claimedLevel": "junior|middle|senior|lead|head|director|executive — какой уровень ЗАЯВЛЕН (заголовком, должностями)",
-    "inferredLevel": "какой уровень реально ДОКАЗАН содержанием",
-    "industry": "отрасль или null",
-    "confidence": 0.0–1.0
-  },
-  "claims": [
-    {
-      "quote": "ДОСЛОВНАЯ цитата из резюме (подстрока исходного текста, 10–200 символов)",
-      "type": "achievement|duty|skill|selfpraise|other",
-      "hasMetric": есть ли цифра/процент/сумма,
-      "hasScale": понятен ли масштаб (команда, бюджет, нагрузка, размер),
-      "hasPersonalAction": ясно ли личное действие (не «участвовал»),
-      "hasOutcome": есть ли результат, а не процесс,
-      "isGeneric": можно ли вставить в любое резюме без изменений,
-      "note": "короткое пояснение, чем фрагмент слаб или силён"
-    }
-  ],
-  "contradictions": [{ "a": "цитата или заявление", "b": "что этому противоречит", "why": "суть конфликта" }],
-  "missing": ["чего критически не хватает: размер команды, бюджеты, причины переходов…"]
-}
-
-Правила:
-- claims: 12–25 самых значимых заявлений. Бери и сильные, и слабые.
-- quote обязан быть точной подстрокой исходного текста. Не перефразируй.
-- Не выдумывай факты. Если чего-то нет — это пункт для "missing".`;
-
-function clip(text: string, max = 9000): string {
+function clip(text: string, max = 60_000): string {
   const t = text.trim();
   return t.length <= max ? t : `${t.slice(0, max)}\n[…обрезано…]`;
 }
 
 export async function runExtractStage(
   resumeText: string,
-): Promise<{ map: EvidenceMap | null; costUsd: number }> {
+): Promise<{
+  map: EvidenceMap | null;
+  costUsd: number;
+  provider: string;
+  model: string;
+  tokensIn: number;
+  tokensOut: number;
+}> {
   const ai = await runAi({
     stage: "extract",
-    system: EXTRACT_SYSTEM,
+    system: PROFESSIONAL_CORE_PROMPT,
     user: clip(resumeText),
-    jsonSchemaName: "evidence_map_v1",
+    jsonSchemaName: "professional_core_v1",
     temperature: 0.15,
     maxTokens: 4000,
     // Извлечение — структурная задача: быстрая mini-модель вместо тяжёлой.
@@ -117,7 +92,7 @@ export async function runExtractStage(
       }));
 
     if (claims.length < 4 || !raw.profile?.primaryRole) {
-      return { map: null, costUsd: ai.costUsd };
+      return { map: null, costUsd: ai.costUsd, provider: ai.provider, model: ai.model, tokensIn: ai.tokensIn, tokensOut: ai.tokensOut };
     }
 
     const map: EvidenceMap = {
@@ -145,9 +120,9 @@ export async function runExtractStage(
         })),
       missing: (raw.missing ?? []).map(String).slice(0, 8),
     };
-    return { map, costUsd: ai.costUsd };
+    return { map, costUsd: ai.costUsd, provider: ai.provider, model: ai.model, tokensIn: ai.tokensIn, tokensOut: ai.tokensOut };
   } catch {
-    return { map: null, costUsd: ai.costUsd };
+    return { map: null, costUsd: ai.costUsd, provider: ai.provider, model: ai.model, tokensIn: ai.tokensIn, tokensOut: ai.tokensOut };
   }
 }
 

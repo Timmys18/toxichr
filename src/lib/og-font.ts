@@ -1,4 +1,27 @@
 /** Load a Google font subset for next/og (Cyrillic-safe). */
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+/**
+ * next/og требует хотя бы один шрифт. Сетевая загрузка Google Fonts может быть
+ * недоступна на локальной машине или в закрытом окружении, поэтому карточка
+ * всегда получает встроенный fallback из установленного Next.js.
+ */
+export async function loadOgFallbackFont(): Promise<ArrayBuffer> {
+  const file = path.join(
+    process.cwd(),
+    "node_modules",
+    "next",
+    "dist",
+    "compiled",
+    "@vercel",
+    "og",
+    "Geist-Regular.ttf",
+  );
+  const font = await readFile(file);
+  return font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength) as ArrayBuffer;
+}
+
 export async function loadGoogleFont(
   family: string,
   text: string,

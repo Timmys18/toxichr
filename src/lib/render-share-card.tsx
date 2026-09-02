@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import type { PublicSharePayload } from "@/lib/public-share";
-import { loadGoogleFont } from "@/lib/og-font";
+import { loadGoogleFont, loadOgFallbackFont } from "@/lib/og-font";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const SQUARE_SIZE = { width: 1080, height: 1080 } as const;
@@ -47,8 +47,8 @@ export async function renderShareCard(
       { name: "IBM Plex Mono", data: mono, weight: 500 },
     ];
   } catch {
-    // ImageResponse will fall back to default font
-    fonts = [];
+    // Без шрифта ImageResponse не рисует карточку вовсе.
+    fonts = [{ name: "Geist", data: await loadOgFallbackFont(), weight: 400 }];
   }
 
   const isStory = size.height / size.width > 1.4;
@@ -66,7 +66,7 @@ export async function renderShareCard(
           background: "#121212",
           color: "#f3efe6",
           padding: isStory ? 64 : 48,
-          fontFamily: fonts.length ? "Literata" : "serif",
+          fontFamily: fonts[0]?.name ?? "Geist",
         }}
       >
         <div
@@ -81,7 +81,7 @@ export async function renderShareCard(
             <div
               style={{
                 display: "flex",
-                fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
+                fontFamily: fonts.length > 1 ? "IBM Plex Mono" : fonts[0]?.name ?? "Geist",
                 fontSize: 18,
                 letterSpacing: 4,
                 color: "#c8f135",
@@ -104,7 +104,7 @@ export async function renderShareCard(
               style={{
                 display: "flex",
                 marginTop: 6,
-                fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
+                fontFamily: fonts.length > 1 ? "IBM Plex Mono" : fonts[0]?.name ?? "Geist",
                 fontSize: 18,
                 color: "rgba(243,239,230,0.55)",
               }}
@@ -125,7 +125,7 @@ export async function renderShareCard(
             <div
               style={{
                 display: "flex",
-                fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
+                fontFamily: fonts.length > 1 ? "IBM Plex Mono" : fonts[0]?.name ?? "Geist",
                 fontSize: 14,
                 letterSpacing: 2,
                 color: "#c8f135",
@@ -220,7 +220,7 @@ export async function renderShareCard(
                   <div
                     style={{
                       display: "flex",
-                      fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
+                      fontFamily: fonts.length > 1 ? "IBM Plex Mono" : fonts[0]?.name ?? "Geist",
                       fontSize: 14,
                       letterSpacing: 2,
                       color: "rgba(243,239,230,0.4)",
@@ -232,7 +232,7 @@ export async function renderShareCard(
                   <div
                     style={{
                       display: "flex",
-                      fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
+                      fontFamily: fonts.length > 1 ? "IBM Plex Mono" : fonts[0]?.name ?? "Geist",
                       fontSize: 32,
                       marginTop: 4,
                     }}
@@ -247,7 +247,7 @@ export async function renderShareCard(
             style={{
               display: "flex",
               marginTop: 24,
-              fontFamily: fonts.length ? "IBM Plex Mono" : "monospace",
+              fontFamily: fonts.length > 1 ? "IBM Plex Mono" : fonts[0]?.name ?? "Geist",
               fontSize: 16,
               letterSpacing: 3,
               color: "rgba(243,239,230,0.35)",
@@ -265,7 +265,7 @@ export async function renderShareCard(
         name: f.name,
         data: f.data,
         style: "normal" as const,
-        weight: f.weight as 500 | 600,
+        weight: f.weight as 400 | 500 | 600,
       })),
     },
   );
