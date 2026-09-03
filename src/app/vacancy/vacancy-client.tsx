@@ -97,7 +97,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     {canSubmit || (!result && showEditor) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
 
     {review ? <div className="ds-comparison-result">
-      {review.match ? <VerdictBlock title={review.match.decision.headline} summary={<>{review.match.decision.reasoning} {review.persona.comment}</>} metrics={decisionMetrics(review.match)} /> : <VerdictBlock title="Вакансия разобрана" summary={review.assessment.roleReality} />}
+      {review.match ? <VerdictBlock title={review.match.decision.headline} summary={<>{review.match.decision.reasoning} {review.persona.comment}</>} metrics={decisionMetrics(review.match)} /> : <VerdictBlock title="Вакансия разобрана" summary={<>{review.assessment.roleReality} {review.persona.comment}</>} />}
       {review.match ? <>
         <section className="ds-comparison-flow"><SectionLabel>Совпадения и разрывы</SectionLabel>
           <EditorialSection title="Почему могут позвать"><RequirementList assessment={review.assessment} ids={review.match.whyInviteRequirementIds} empty="Прямых причин звать на интервью пока не видно." /></EditorialSection>

@@ -82,6 +82,18 @@ export type PersonaQualityMetrics = {
   grounding: "pass" | "fail";
 };
 
+/** Единый lexical gate для любого динамического текста, который увидит пользователь. */
+export function validateUserFacingLanguage(textValue: string): string[] {
+  const errors: string[] = [];
+  if (BANNED_USER_FACING.test(textValue)) errors.push("запрещённая пользовательская лексика");
+  if (ABILITY_CLAIMS.test(textValue) || ABILITY_NOUNS.test(textValue)) errors.push("оценка способности человека вместо текста резюме");
+  if (PERSON_JUDGMENT.test(textValue)) errors.push("оценка человека вместо того, что показывает текст");
+  if ((textValue.match(GENERIC_HR) ?? []).length >= 2) errors.push("слишком общий корпоративный HR-язык");
+  if (PLACEHOLDER_COPY.test(textValue)) errors.push("служебная подсказка вместо авторского текста");
+  if (UNNECESSARY_ANGLICISMS.test(textValue)) errors.push("необязательный английский жаргон в русском тексте");
+  return errors;
+}
+
 function normalizedWords(value: string): Set<string> {
   return new Set(value.toLowerCase().match(/[a-zа-яё-]{6,}/giu) ?? []);
 }
@@ -133,13 +145,7 @@ export function validatePersonaDraft(
   const draft = parsed.data;
   const errors: string[] = [];
   const allText = [draft.verdict.title, draft.verdict.comment, ...draft.contentBlocks.map((b) => b.content), ...draft.priorities.map((p) => p.action), ...draft.shareLines].join("\n");
-  if (BANNED_USER_FACING.test(allText)) errors.push("запрещённая пользовательская лексика");
-  if (ABILITY_CLAIMS.test(allText)) errors.push("оценка способности человека вместо текста резюме");
-  if (ABILITY_NOUNS.test(allText)) errors.push("оценка способности человека вместо текста резюме");
-  if (PERSON_JUDGMENT.test(allText)) errors.push("оценка человека вместо того, что показывает резюме");
-  if ((allText.match(GENERIC_HR) ?? []).length >= 2) errors.push("слишком общий корпоративный HR-язык");
-  if (PLACEHOLDER_COPY.test(allText)) errors.push("скопирована служебная подсказка вместо авторского текста");
-  if (UNNECESSARY_ANGLICISMS.test(allText)) errors.push("необязательный английский жаргон в русском тексте");
+  errors.push(...validateUserFacingLanguage(allText));
   if ([draft.verdict.title, draft.verdict.comment].some((value) => /^\s*\.{3,}\s*$/.test(value))) errors.push("оставлена служебная заглушка вместо текста");
   for (const block of draft.contentBlocks) {
     if (block.type !== "summary" && block.findingIds.length === 0) errors.push("содержательный блок без findingId");

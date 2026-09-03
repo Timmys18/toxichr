@@ -2,10 +2,14 @@ import { expect, test } from "@playwright/test";
 import {
   MATCH_ASSESSMENT_VERSION,
   MatchAssessmentSchema,
+  reviewVacancy,
   StructuredVacancyAssessmentSchema,
+  validateMatchAssessment,
   VACANCY_ASSESSMENT_VERSION,
   writeVacancyPersona,
+  writeVacancyWriter,
 } from "../../src/lib/vacancy";
+import type { ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
 
 const vacancy = {
   schemaVersion: VACANCY_ASSESSMENT_VERSION,
@@ -34,6 +38,13 @@ const baseMatch = {
 };
 const vacancyAssessment = StructuredVacancyAssessmentSchema.parse(vacancy);
 const matchAssessment = MatchAssessmentSchema.parse(baseMatch);
+const resumeAssessment: ProfessionalAssessment = {
+  candidateContext: { primaryProfession: "продуктовый менеджер", secondaryContext: "B2B", claimedLevel: "руководитель", inferredLevel: "руководитель", industry: "технологии", careerPattern: "продуктовый рост", confidence: 0.8 },
+  professionalAssessment: { overallImpression: "Опыт запуска и развития продукта отражён в тексте.", strongestProfessionalSignal: "Запуск сервиса и координация команды.", mainResumeProblem: "Нужно точнее показать полномочия.", seniorityConsistency: "Уровень нужно связать с масштабом роли.", resumeVsExperienceGap: "Часть фактов не вынесена в позиционирование." },
+  findings: [{ id: "F01", sourceQuote: "Координировал работу команды из пяти человек.", interpretation: "Есть опыт координации команды.", whyItMatters: "Это связано с управленческим требованием.", severity: "medium", confidence: "high", issueType: "управление" }],
+  strengths: [{ id: "S01", sourceQuote: "Запустил новый сервис для клиентов.", interpretation: "Есть прямой факт запуска продукта." }],
+  questionsCreatedByResume: [], uncertainties: [], claimsNotAllowed: [],
+};
 
 test("структурированная оценка вакансии и match используют только связные идентификаторы", () => {
   expect(StructuredVacancyAssessmentSchema.safeParse(vacancyAssessment).success).toBe(true);
@@ -46,6 +57,42 @@ test("решения об отклике представлены всеми ч�
   for (const code of codes) {
     const value = { ...matchAssessment, decision: { ...matchAssessment.decision, code } };
     expect(MatchAssessmentSchema.safeParse(value).success).toBe(true);
+  }
+});
+
+test("skip возможен только при критичном разрыве, а unknown сам по себе его не создаёт", () => {
+  const onlyUnknown = {
+    ...matchAssessment,
+    decision: { ...matchAssessment.decision, code: "skip" as const },
+    matches: matchAssessment.matches.map((item) => ({ ...item, status: "unknown" as const })),
+  };
+  expect(validateMatchAssessment(onlyUnknown, vacancyAssessment, resumeAssessment)).toBeNull();
+
+  const withCriticalGap = {
+    ...onlyUnknown,
+    matches: onlyUnknown.matches.map((item) => item.requirementId === "VR01" ? { ...item, status: "gap" as const } : item),
+  };
+  expect(validateMatchAssessment(withCriticalGap, vacancyAssessment, resumeAssessment)?.decision.code).toBe("skip");
+});
+
+test("динамический match целиком проходит общий lexical gate", () => {
+  const bannedCopy = {
+    ...matchAssessment,
+    decision: { ...matchAssessment.decision, reasoning: `Это ${"док" + "азательство"} не нужно.` },
+  };
+  expect(validateMatchAssessment(bannedCopy, vacancyAssessment, resumeAssessment)).toBeNull();
+});
+
+test("общий автор вакансии не подменяется персоной и проходит общий lexical gate", async () => {
+  const before = process.env.AI_PROVIDER;
+  process.env.AI_PROVIDER = "mock";
+  try {
+    const writer = await writeVacancyWriter(vacancyAssessment);
+    const review = await reviewVacancy({ vacancyText: "Руководитель продукта\nЗапускать продукты и управлять командой. Важно объяснить результат работы." });
+    expect(writer.comment).not.toContain("Лера");
+    expect(review.persona.id).toBe("vacancy");
+  } finally {
+    process.env.AI_PROVIDER = before;
   }
 });
 
