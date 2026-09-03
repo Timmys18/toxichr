@@ -87,3 +87,12 @@ test("валидатор не пропускает отвлечённую оце
   const validation = validatePersonaDraft(unsafe, ids, { personaId: "gleb", enforceVoice: true });
   expect(validation.errors).toContain("оценка способности человека вместо текста резюме");
 });
+
+test("валидатор не пропускает необязательный английский управленческий жаргон", () => {
+  const result = json<Record<PersonaId, PersonaDraft>>("management-personas.json").tamara;
+  const unsafe = structuredClone(result);
+  unsafe.verdict.comment = "Масштаб указан, но governance роли и senior-level ответственность в резюме не раскрыты.";
+  const ids = new Set(unsafe.contentBlocks.flatMap((block) => block.findingIds));
+  const validation = validatePersonaDraft(unsafe, ids, { personaId: "tamara", enforceVoice: true });
+  expect(validation.errors).toContain("необязательный английский жаргон в русском тексте");
+});

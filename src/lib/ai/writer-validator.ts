@@ -61,6 +61,7 @@ const PERSON_JUDGMENT = /(?:настоящий|сильный|слабый|пл�
 const DIRECT_IDENTIFIERS = /(?:\+?\d[\d\s()\-]{8,}\d|[\w.+-]+@[\w-]+\.[\w.-]+|https?:\/\/|\b(?:ооо|зао|пао|ип)\s+[«"]?[^\n]{2,}|\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b|\b\d[\d\s.,]{2,}\s*(?:₽|руб\.?|usd|eur|доллар\w*|евро)\b)/iu;
 const GENERIC_HR = /(следует отметить|важно понимать|рекомендуется (?:улучшить|добавить|обратить)|кандидат демонстрирует|сильные стороны кандидата|имеются зоны роста|необходимо усилить)/giu;
 const PLACEHOLDER_COPY = /(короткий вывод|свободный законченный текст|конкретное действие с текстом|авторск\w+\s+(?:заголов|ремарк)|два.?четыре законченных предложения)/iu;
+const UNNECESSARY_ANGLICISMS = /\b(?:governance|adoption|senior|head|director-level|initial\s+screening|capex|opex|pmo|trade-offs?|measurable|escalation|owner|raci|steering\s+committee)\b/iu;
 const BRIGHT_MOMENT = /(?:[?!]|—|уже|пока|даже|видимо|неловко|осталось|прекрасн|раздражает|состоялось)/iu;
 
 const PERSONA_MARKERS: Record<PersonaId, RegExp> = {
@@ -138,6 +139,7 @@ export function validatePersonaDraft(
   if (PERSON_JUDGMENT.test(allText)) errors.push("оценка человека вместо того, что показывает резюме");
   if ((allText.match(GENERIC_HR) ?? []).length >= 2) errors.push("слишком общий корпоративный HR-язык");
   if (PLACEHOLDER_COPY.test(allText)) errors.push("скопирована служебная подсказка вместо авторского текста");
+  if (UNNECESSARY_ANGLICISMS.test(allText)) errors.push("необязательный английский жаргон в русском тексте");
   if ([draft.verdict.title, draft.verdict.comment].some((value) => /^\s*\.{3,}\s*$/.test(value))) errors.push("оставлена служебная заглушка вместо текста");
   for (const block of draft.contentBlocks) {
     if (block.type !== "summary" && block.findingIds.length === 0) errors.push("содержательный блок без findingId");
