@@ -56,7 +56,7 @@ export const PERSONAS: Persona[] = [
     quote:
       "Вы повысили эффективность. Не уточнять, чью и насколько, было стратегическим решением?",
     tone: "Холодно. Через логику. Без эмоций.",
-    lenses: ["логика", "доказательства", "narrative"],
+    lenses: ["логика", "факты", "narrative"],
     accent: {
       chip: "bg-graphite text-toxic",
       bar: "bg-toxic",
@@ -87,7 +87,7 @@ export const SCORE_LABEL = {
     hint: "Насколько текст продаёт опыт. Не оценка тебя как человека.",
   },
   evidence: {
-    short: "Доказательства",
+    short: "Факты",
     hint: "Есть ли результаты и факты, а не только обязанности.",
   },
   positioning: {

@@ -4,6 +4,7 @@
  */
 
 import { runAnalysisPipeline, type PipelineEvent } from "@/lib/ai/pipeline";
+import { ProfessionalAssessmentSchema, type ProfessionalAssessment } from "@/lib/ai/professional-assessment";
 import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
@@ -94,9 +95,17 @@ export async function createAndRunAnalysis(
   try {
     const versionContent = version.structuredContent as { text?: string } | null;
     const resumeText = versionContent?.text?.trim() || resume.sanitizedText;
+    const previous = await prisma.analysis.findFirst({
+      where: { resumeVersionId: version.id, status: "COMPLETED", reportPayload: { not: undefined } },
+      orderBy: { createdAt: "desc" },
+      select: { reportPayload: true },
+    });
+    const previousReport = previous?.reportPayload as { professionalAssessment?: unknown } | null;
+    const reused = ProfessionalAssessmentSchema.safeParse(previousReport?.professionalAssessment);
     const result = await runAnalysisPipeline({
       resumeText,
       personaId,
+      professionalAssessment: reused.success ? reused.data as ProfessionalAssessment : undefined,
       onEvent,
     });
 

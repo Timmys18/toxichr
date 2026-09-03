@@ -46,6 +46,6 @@ export const ROSTER: RosterEntry[] = [
     tag: "Нефтегаз",
     img: "/hr/tamara.jpg",
     quote: "The kadrovik",
-    focus: "Доказательства, стабильность и корпоративный контекст",
+    focus: "Факты, стабильность и корпоративный контекст",
   },
 ];

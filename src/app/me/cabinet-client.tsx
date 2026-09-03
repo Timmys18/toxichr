@@ -93,7 +93,7 @@ export function CabinetClient({
               </div>
               <div className="c">
                 <div className="v crit">{last.unproven}</div>
-                <div className="k">заявлений без доказательств</div>
+                <div className="k">заявлений без фактов</div>
               </div>
               <div className="c">
                 <div className="v tox">{last.score}</div>

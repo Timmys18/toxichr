@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProfessionalAssessmentSchema } from "@/lib/ai/professional-assessment";
 
 export const CandidateProfileSchema = z.object({
   primaryRole: z.string(),
@@ -108,13 +109,14 @@ export const AnalysisReportSchema = z.object({
   viralMetrics: ViralMetricsSchema,
   verdict: VerdictSchema,
   hrReview: HrReviewSchema,
-  topProblems: z.array(ProblemSchema).min(1).max(12),
+  topProblems: z.array(ProblemSchema).max(12),
   strengths: z.array(StrengthSchema).max(6),
   theatreFindings: z.array(TheatreFindingSchema).min(3),
   shareQuotes: z.array(ShareQuoteSchema).min(1).max(5),
   improvementPlan: z.array(ImprovementStepSchema).max(9).default([]),
   contentBlocks: z.array(ContentBlockSchema).max(10).default([]),
   generationMeta: GenerationMetaSchema.optional(),
+  professionalAssessment: ProfessionalAssessmentSchema.optional(),
   recommendedPersonaId: z.enum(["tamara", "lera", "gleb", "vadik"]),
   recommendationReason: z.string(),
 });

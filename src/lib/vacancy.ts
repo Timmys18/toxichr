@@ -225,7 +225,7 @@ function heuristicReview(
     tailoredIntro: resumeText
       ? usefulEvidence.length
         ? `Кандидат на позицию «${title.slice(0, 80)}». Релевантный опыт: ${usefulEvidence.join("; ")}.`
-        : `Кандидат на позицию «${title.slice(0, 80)}». Релевантные доказательства требуют уточнения.`
+        : `Кандидат на позицию «${title.slice(0, 80)}». Релевантные факты требуют уточнения.`
       : undefined,
     coverLetter: resumeText
       ? `Здравствуйте! Рассматриваю позицию «${title.slice(0, 80)}». ${

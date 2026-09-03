@@ -20,9 +20,13 @@ export type AiRequest = {
   system: string;
   user: string;
   jsonSchemaName?: string;
+  /** JSON Schema для strict Structured Outputs у OpenAI. */
+  jsonSchema?: Record<string, unknown>;
   /** 0–1: аналитические этапы низкая, персона — высокая */
   temperature?: number;
   maxTokens?: number;
+  timeoutMs?: number;
+  reasoningEffort?: "minimal" | "low" | "medium" | "high";
   /** Модель на этот вызов (аналитике — быстрая mini, персоне — сильная) */
   model?: string;
 };
@@ -40,6 +44,13 @@ export class AiConfigError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "AiConfigError";
+  }
+}
+
+export class AiTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AiTimeoutError";
   }
 }
 
@@ -98,7 +109,7 @@ async function fetchWithTimeout(
     return await fetch(url, { ...init, signal: controller.signal });
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
-      throw new Error(
+      throw new AiTimeoutError(
         `AI не ответил за ${Math.round(ms / 1000)}с. Проверь доступ к сети или VPN и попробуй ещё раз.`,
       );
     }
@@ -113,7 +124,7 @@ async function fetchWithTimeout(
 async function callOpenAi(
   system: string,
   user: string,
-  options?: { temperature?: number; maxTokens?: number; model?: string },
+  options?: { temperature?: number; maxTokens?: number; model?: string; jsonSchemaName?: string; jsonSchema?: Record<string, unknown>; timeoutMs?: number; reasoningEffort?: "minimal" | "low" | "medium" | "high" },
 ): Promise<AiResponse> {
   const model = options?.model ?? process.env.OPENAI_MODEL ?? "gpt-4o";
   // Можно указать обходной адрес, если прямой доступ к OpenAI закрыт в стране.
@@ -127,15 +138,25 @@ async function callOpenAi(
     },
     body: JSON.stringify({
       model,
-      temperature: options?.temperature ?? 0.9,
-      max_tokens: options?.maxTokens ?? 4500,
-      response_format: { type: "json_object" },
+      ...(model.startsWith("gpt-5")
+        ? { max_completion_tokens: options?.maxTokens ?? 4500, reasoning_effort: options?.reasoningEffort ?? "low" }
+        : { temperature: options?.temperature ?? 0.9, max_tokens: options?.maxTokens ?? 4500 }),
+      response_format: options?.jsonSchema
+        ? {
+            type: "json_schema",
+            json_schema: {
+              name: options.jsonSchemaName ?? "toxichr_output",
+              strict: true,
+              schema: options.jsonSchema,
+            },
+          }
+        : { type: "json_object" },
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
     }),
-  });
+  }, options?.timeoutMs);
 
   if (!res.ok) {
     const err = await res.text();
@@ -245,6 +266,10 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
     temperature: request.temperature,
     maxTokens: request.maxTokens,
     model: request.model,
+    jsonSchemaName: request.jsonSchemaName,
+    jsonSchema: request.jsonSchema,
+    timeoutMs: request.timeoutMs,
+    reasoningEffort: request.reasoningEffort,
   };
 
   if (provider === "openai") {

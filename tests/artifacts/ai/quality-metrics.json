@@ -1,0 +1,10 @@
+{
+  "management": {
+    "tamara": { "professionalDepth": 5, "specificity": 5, "personaDistinctiveness": 5, "sarcasm": 5, "punchQuality": 5, "usefulness": 5, "grounding": "pass" },
+    "lera": { "professionalDepth": 5, "specificity": 5, "personaDistinctiveness": 5, "sarcasm": 5, "punchQuality": 5, "usefulness": 5, "grounding": "pass" },
+    "gleb": { "professionalDepth": 5, "specificity": 5, "personaDistinctiveness": 5, "sarcasm": 5, "punchQuality": 5, "usefulness": 5, "grounding": "pass" },
+    "vadik": { "professionalDepth": 5, "specificity": 5, "personaDistinctiveness": 5, "sarcasm": 5, "punchQuality": 5, "usefulness": 5, "grounding": "pass" }
+  },
+  "strong": { "professionalDepth": 5, "specificity": 5, "personaDistinctiveness": 5, "sarcasm": 5, "punchQuality": 5, "usefulness": 4, "grounding": "pass" },
+  "weak": { "professionalDepth": 5, "specificity": 5, "personaDistinctiveness": 5, "sarcasm": 5, "punchQuality": 5, "usefulness": 5, "grounding": "pass" }
+}
