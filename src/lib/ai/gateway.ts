@@ -11,7 +11,8 @@ export type AiStage =
   | "persona"
   | "grounding"
   | "anti_generic"
-  | "vacancy";
+  | "vacancy"
+  | "vacancy_match";
 
 export type AiProvider = "openai" | "anthropic";
 

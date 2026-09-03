@@ -42,8 +42,8 @@ export default async function VacanciesPage() {
             <p className="over thr-mono">Центр карьеры · вакансии</p>
             <h1>Сохранённые вакансии</h1>
             <p>
-              Возвращайся к требованиям, сопроводительному письму и вопросам
-              для интервью — повторно вставлять текст не нужно.
+              Возвращайся к требованиям, решению по отклику и вопросам для
+              интервью — повторно вставлять текст не нужно.
             </p>
           </header>
 
@@ -53,10 +53,7 @@ export default async function VacanciesPage() {
                 const match = vacancy.matches[0] ?? null;
                 const review = (match?.result ?? vacancy.review) as VacancyReview | null;
                 const matched = Boolean(match);
-                const proven = review?.requirements.filter(
-                  (item) => item.category === "proven" || item.category === "hidden",
-                ).length ?? 0;
-                const total = review?.requirements.filter((item) => item.category).length ?? 0;
+                const decision = review?.matchAssessment?.decision;
                 const href = `/vacancy?vacancyId=${vacancy.id}${match ? `&analysisId=${match.analysisId}` : ""}`;
 
                 return (
@@ -65,11 +62,11 @@ export default async function VacanciesPage() {
                       {matched ? "Сопоставлено" : "Разобрано"}
                     </span>
                     <span className="content">
-                      <b>{review?.title ?? vacancy.title ?? "Вакансия"}</b>
+                      <b>{review?.vacancyAssessment?.title ?? vacancy.title ?? "Вакансия"}</b>
                       <small>{date(vacancy.updatedAt)}</small>
                     </span>
-                    {matched && total ? (
-                      <span className="score"><b>{proven}</b> / {total}</span>
+                    {matched && decision ? (
+                      <span className="score"><b>{decision.headline}</b></span>
                     ) : (
                       <span className="go">Открыть →</span>
                     )}

@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:safety": "playwright test --config=playwright.safety.config.ts",
     "test:persona": "playwright test --config=playwright.persona.config.ts",
+    "test:vacancy": "playwright test --config=playwright.vacancy.config.ts",
+    "test:vacancy:live": "RUN_LIVE_AI_ACCEPTANCE=1 playwright test --config=playwright.vacancy.config.ts tests/vacancy/live-acceptance.spec.ts",
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "db:generate": "prisma generate",

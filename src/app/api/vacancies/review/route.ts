@@ -1,17 +1,21 @@
 import type { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import type { AnalysisReport } from "@/lib/ai/schemas";
+import { ProfessionalAssessmentSchema } from "@/lib/ai/professional-assessment";
 import { trackServer } from "@/lib/analytics-server";
 import { auth } from "@/lib/auth";
 import {
   ImprovementAccessError,
   loadImprovementContext,
 } from "@/lib/improvement-server";
-import { redactPii } from "@/lib/documents/redact-pii";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { reviewVacancy } from "@/lib/vacancy";
+import {
+  reviewVacancy,
+  VACANCY_ASSESSMENT_VERSION,
+  type VacancyReview,
+} from "@/lib/vacancy";
+import type { PersonaId } from "@/lib/personas";
 
 const BodySchema = z.object({
   text: z.string().trim().min(80).max(30_000),
@@ -41,19 +45,18 @@ export async function POST(request: Request) {
           session?.user?.id,
         )
       : null;
-    const report = analysis?.reportPayload as AnalysisReport | undefined;
-    const sourceResumeText =
-      analysis?.improvements[0]?.improvedText ??
-      analysis?.resumeVersion.resume.sanitizedText ??
-      undefined;
-    const resumeText = sourceResumeText
-      ? redactPii(sourceResumeText).sanitizedText
-      : undefined;
-    const result = await reviewVacancy({
-      vacancyText: parsed.data.text,
-      resumeText,
-      report,
-    });
+    const professionalAssessment = analysis
+      ? ProfessionalAssessmentSchema.safeParse(
+          (analysis.reportPayload as { professionalAssessment?: unknown })
+            ?.professionalAssessment,
+        )
+      : null;
+    if (analysis && !professionalAssessment?.success) {
+      return NextResponse.json(
+        { error: "В этом разборе нет структурированной профессиональной оценки. Откройте новый разбор резюме и попробуйте снова." },
+        { status: 409 },
+      );
+    }
 
     const ownerId = session?.user?.id ?? analysis?.userId ?? null;
     const existingVacancy = parsed.data.vacancyId
@@ -68,13 +71,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Вакансия не найдена." }, { status: 404 });
     }
 
+    const cached = analysis && existingVacancy
+      ? await prisma.vacancyMatch.findUnique({
+          where: { vacancyId_analysisId: { vacancyId: existingVacancy.id, analysisId: analysis.id } },
+          select: { result: true },
+        })
+      : null;
+    const cachedReview = cached?.result as VacancyReview | undefined;
+    if (
+      existingVacancy?.sourceText === parsed.data.text &&
+      cachedReview?.schemaVersion === VACANCY_ASSESSMENT_VERSION
+    ) {
+      return NextResponse.json({ vacancyId: existingVacancy.id, matched: true, cached: true, result: cachedReview });
+    }
+
+    // Match Analyst получает только сохранённую профессиональную оценку и её
+    // дословные цитаты. Полный текст резюме и полный AnalysisReport сюда не идут.
+    const result = await reviewVacancy({
+      vacancyText: parsed.data.text,
+      professionalAssessment: professionalAssessment?.data,
+      personaId: (analysis?.persona?.code as PersonaId | undefined) ?? "lera",
+    });
+
     const vacancy = existingVacancy
       ? await prisma.vacancy.update({
           where: { id: existingVacancy.id },
           data: {
             userId: ownerId,
             sourceText: parsed.data.text,
-            title: result.title,
+            title: result.vacancyAssessment.title,
             review: result as Prisma.InputJsonValue,
           },
         })
@@ -82,7 +107,7 @@ export async function POST(request: Request) {
           data: {
             userId: ownerId,
             sourceText: parsed.data.text,
-            title: result.title,
+            title: result.vacancyAssessment.title,
             review: result as Prisma.InputJsonValue,
           },
         });
@@ -100,16 +125,16 @@ export async function POST(request: Request) {
           analysisId: analysis.id,
           userId: ownerId,
           result: result as Prisma.InputJsonValue,
-          tailoredIntro: result.tailoredIntro,
-          coverLetter: result.coverLetter,
-          interviewQuestions: result.interviewQuestions as Prisma.InputJsonValue,
+          tailoredIntro: null,
+          coverLetter: null,
+          interviewQuestions: (result.matchAssessment?.candidateQuestions ?? []) as Prisma.InputJsonValue,
         },
         update: {
           userId: ownerId,
           result: result as Prisma.InputJsonValue,
-          tailoredIntro: result.tailoredIntro,
-          coverLetter: result.coverLetter,
-          interviewQuestions: result.interviewQuestions as Prisma.InputJsonValue,
+          tailoredIntro: null,
+          coverLetter: null,
+          interviewQuestions: (result.matchAssessment?.candidateQuestions ?? []) as Prisma.InputJsonValue,
         },
       });
     }

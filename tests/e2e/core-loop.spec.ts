@@ -76,7 +76,7 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByLabel("Текст вакансии").fill(VACANCY);
   await page.getByRole("button", { name: "Сопоставить с резюме" }).click();
   await expect(page.getByText(/Вакансия сохранена · \d+ знаков/)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByRole("heading", { name: /Мэтч|Есть за что цепляться|Вакансия разобрана/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Откликайся|Сначала поправь резюме|Не трать время/ })).toBeVisible();
 
   const email = `e2e-${Date.now()}@example.com`;
   await page.goto(`/auth?analysisId=${firstAnalysisId}&next=/me`);
@@ -94,7 +94,7 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page.getByRole("link", { name: /Мои вакансии/ }).first()).toBeVisible();
   await page.getByRole("link", { name: /Мои вакансии/ }).first().click();
   await expect(page.getByRole("heading", { name: "Сохранённые вакансии" })).toBeVisible();
-  await expect(page.getByText("Senior Product Manager")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Senior Product Manager/ })).toBeVisible();
 });
 
 test("защитные сценарии API не ломают продукт", async ({ request }) => {
@@ -200,5 +200,6 @@ test("серверный цикл сохраняет две оценки, ред
   expect(vacancyResponse.status()).toBe(200);
   const vacancy = await vacancyResponse.json();
   expect(vacancy.matched).toBe(true);
-  expect(vacancy.result.requirements.length).toBeGreaterThan(0);
+  expect(vacancy.result.vacancyAssessment.requirements.length).toBeGreaterThan(0);
+  expect(vacancy.result.matchAssessment.decision.code).toBeTruthy();
 });
