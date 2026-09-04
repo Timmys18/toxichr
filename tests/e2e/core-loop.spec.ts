@@ -95,6 +95,11 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByRole("link", { name: /Мои вакансии/ }).first().click();
   await expect(page.getByRole("heading", { name: "Сохранённые вакансии" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Senior Product Manager/ })).toBeVisible();
+
+  await page.goto("/pricing");
+  await expect(page.getByText(/199 ₽/).first()).toBeVisible();
+  await expect(page.getByText(/Первый HR-разбор и ещё один взгляд/)).toBeVisible();
+  await expect(page.locator(".topnav").getByText("Мои вакансии")).toHaveCount(0);
 });
 
 test("защитные сценарии API не ломают продукт", async ({ request }) => {

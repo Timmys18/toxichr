@@ -101,7 +101,7 @@ export function CabinetClient({
               </div>
             </div>
             <Link href={`/revenge?analysisId=${last.id}`} className="thr-btn thr-btn-line rebtn">
-              {last.hasImprovement ? "Открыть новую версию и сравнение" : "Исправить и сравнить до / после"}
+              {last.hasImprovement ? "Открыть новую версию и сравнение" : "Исправить резюме · 199 ₽"}
             </Link>
           </div>
 
@@ -150,7 +150,7 @@ export function CabinetClient({
                 <div className="empty">
                   После первого улучшения здесь появится честное сравнение двух версий.
                   <br />
-                  <Link href={`/revenge?analysisId=${last.id}`}>Собрать новую версию →</Link>
+                  <Link href={`/revenge?analysisId=${last.id}`}>Собрать новую версию · 199 ₽ →</Link>
                 </div>
               )}
             </div>
