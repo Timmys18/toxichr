@@ -28,6 +28,18 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PackageUsageKind {
+  MATCH
+  RECHECK
+  IMPROVEMENT
+  ADAPTATION
+}
+
+enum PackageUsageStatus {
+  PENDING
+  COMPLETED
+}
+
 model User {
   id                  String              @id @default(cuid())
   email               String?             @unique
@@ -47,6 +59,7 @@ model User {
   improvements        ResumeImprovement[]
   vacancies           Vacancy[]
   vacancyMatches      VacancyMatch[]
+  packages            ToxicHrPackage[]
 }
 
 model ProductEvent {
@@ -79,6 +92,7 @@ model Resume {
   createdAt              DateTime        @default(now())
   deletedAt              DateTime?
   versions               ResumeVersion[]
+  toxicHrPackage         ToxicHrPackage?
 }
 
 model ResumeVersion {
@@ -273,6 +287,41 @@ model Payment {
   createdAt   DateTime      @default(now())
   paidAt      DateTime?
   grants      AccessGrant[]
+  package     ToxicHrPackage?
+}
+
+model ToxicHrPackage {
+  id          String         @id @default(cuid())
+  resumeId    String         @unique
+  resume      Resume         @relation(fields: [resumeId], references: [id])
+  userId      String?
+  user        User?          @relation(fields: [userId], references: [id])
+  paymentId   String?        @unique
+  payment     Payment?       @relation(fields: [paymentId], references: [id])
+  source      String         @default("payment")
+  createdAt   DateTime       @default(now())
+  usages      PackageUsage[]
+
+  @@index([userId, createdAt])
+}
+
+model PackageUsage {
+  id              String             @id @default(cuid())
+  packageId       String
+  package         ToxicHrPackage     @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  kind            PackageUsageKind
+  status          PackageUsageStatus @default(PENDING)
+  dedupeKey       String
+  analysisId      String?
+  vacancyId       String?
+  resumeVersionId String?
+  createdAt       DateTime           @default(now())
+  completedAt     DateTime?
+
+  @@unique([packageId, dedupeKey])
+  @@index([packageId, kind, status])
+  @@index([analysisId])
+  @@index([vacancyId])
 }
 
 model AccessGrant {

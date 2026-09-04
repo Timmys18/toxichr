@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { PERSONAS } from "@/lib/personas";
-import { CabinetClient, type CabItem } from "./cabinet-client";
+import { CabinetClient, type CabItem, type CabinetPackage } from "./cabinet-client";
 
 export const metadata: Metadata = { title: "Центр карьеры" };
 
@@ -21,7 +21,7 @@ export default async function MePage() {
     redirect("/auth?next=/me");
   }
 
-  const [analyses, vacancyCount] = await Promise.all([
+  const [analyses, vacancyCount, packages] = await Promise.all([
     prisma.analysis.findMany({
       where: { userId: session.user.id, status: "COMPLETED" },
       include: {
@@ -33,6 +33,11 @@ export default async function MePage() {
       take: 30,
     }),
     prisma.vacancy.count({ where: { userId: session.user.id } }),
+    prisma.toxicHrPackage.findMany({
+      where: { userId: session.user.id },
+      include: { usages: { where: { status: "COMPLETED" } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   const items: CabItem[] = analyses
@@ -52,6 +57,7 @@ export default async function MePage() {
         achievements: report.viralMetrics.achievementsCount,
         unproven: report.viralMetrics.unprovenClaimsCount,
         filename: a.resumeVersion?.resume?.originalFilename ?? "резюме",
+        resumeId: a.resumeVersion.resumeId,
         afterScore: a.improvements[0]?.afterScore ?? null,
         hasImprovement: a.improvements[0]?.status === "ready",
       };
@@ -63,10 +69,22 @@ export default async function MePage() {
     session.user.email?.split("@")[0] ||
     "Кандидат";
 
+  const currentResumeId = items[0]?.resumeId;
+  const currentPackage = currentResumeId ? packages.find((item) => item.resumeId === currentResumeId) : null;
+  const packageStatus: CabinetPackage = currentPackage
+    ? {
+        active: true,
+        matchesRemaining: Math.max(0, 5 - currentPackage.usages.filter((item) => item.kind === "MATCH").length),
+        rechecksRemaining: Math.max(0, 5 - currentPackage.usages.filter((item) => item.kind === "RECHECK").length),
+        improvementUsed: currentPackage.usages.some((item) => item.kind === "IMPROVEMENT"),
+        adaptationUsed: currentPackage.usages.some((item) => item.kind === "ADAPTATION"),
+      }
+    : { active: false, matchesRemaining: 5, rechecksRemaining: 5, improvementUsed: false, adaptationUsed: false };
+
   return (
     <>
       <main id="main" className="flex flex-1 flex-col">
-        <CabinetClient name={name} items={items} vacancyCount={vacancyCount} />
+        <CabinetClient name={name} items={items} vacancyCount={vacancyCount} packageStatus={packageStatus} />
       </main>
     </>
   );

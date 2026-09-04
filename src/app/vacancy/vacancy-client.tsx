@@ -8,6 +8,7 @@ import {
   EditorialSection,
   EmptyState,
   EvidenceItem,
+  MetricStrip,
   PageContainer,
   PaymentPrompt,
   PrimaryAction,
@@ -20,6 +21,14 @@ import type { MatchAssessment, StructuredVacancyAssessment, VacancyReview } from
 import { clearPendingVacancy, readPendingVacancy, savePendingVacancy } from "@/lib/pending-vacancy";
 
 const MIN_VACANCY_LENGTH = 80;
+
+type PackageState = {
+  hasPackage: boolean;
+  matchesRemaining: number;
+  rechecksRemaining: number;
+  improvementAvailable: boolean;
+  adaptationAvailable: boolean;
+};
 
 function normalizeTitle(title: string) { return title.replace(/\s*\/\s*/g, " · ").trim(); }
 function decisionMetrics(match: MatchAssessment) {
@@ -48,6 +57,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const [editorOpen, setEditorOpen] = useState(!vacancyId);
   const [matchPaywall, setMatchPaywall] = useState<{ vacancyId: string; priceRub: number } | null>(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [packageState, setPackageState] = useState<PackageState | null>(null);
 
   useEffect(() => {
     track("vacancy_review_opened", { analysisId: analysisId ?? null, source: analysisId ? "resume_result" : "direct" });
@@ -66,6 +76,13 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   }, [analysisId, vacancyId]);
 
   useEffect(() => {
+    if (!analysisId) return;
+    void fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => data && setPackageState(data as PackageState));
+  }, [analysisId]);
+
+  useEffect(() => {
     if (analysisId || vacancyId || text.trim().length < MIN_VACANCY_LENGTH) return;
     const timer = window.setTimeout(() => { savePendingVacancy(text); setDraftState("saved"); }, 350);
     return () => window.clearTimeout(timer);
@@ -79,11 +96,11 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       if (response.status === 402 && data.paymentRequired && data.vacancyId) {
         setSavedVacancyId(data.vacancyId);
         setMatchPaywall({ vacancyId: data.vacancyId, priceRub: Number(data.priceRub) || 199 });
-        track("paywall_viewed", { analysisId, vacancyId: data.vacancyId, product: "vacancy_match" });
+        track("paywall_viewed", { analysisId, vacancyId: data.vacancyId, offer: "package" });
         return;
       }
       if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
-      setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (analysisId) clearPendingVacancy();
+      setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (data.package) setPackageState(data.package as PackageState); if (analysisId) clearPendingVacancy();
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Ошибка разбора"); } finally { setBusy(false); }
   }
 
@@ -95,7 +112,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ analysisId, product: "vacancy_match", vacancyId: matchPaywall.vacancyId }),
+        body: JSON.stringify({ analysisId, vacancyId: matchPaywall.vacancyId }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Не удалось начать оплату");
@@ -127,16 +144,22 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     </div>
 
     {review ? <SummaryRail title={normalizeTitle(review.assessment.title)} meta={<>Вакансия сохранена · {textLength} знаков</>} action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>} /> : null}
+    {analysisId && packageState?.hasPackage ? <MetricStrip items={[
+      { value: `${packageState.matchesRemaining}/5`, label: "сопоставлений осталось" },
+      { value: `${packageState.rechecksRemaining}/5`, label: "повторных проверок осталось" },
+      { value: packageState.improvementAvailable ? "да" : "использовано", label: "улучшение" },
+      { value: packageState.adaptationAvailable ? "доступна" : "использована", label: "адаптация" },
+    ]} /> : null}
     {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!analysisId && !vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={10} placeholder="Вставь сюда текст вакансии целиком…" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} /><div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span><b className="thr-mono">{textLength} / 30 000</b></div></div> : null}
     {resultStale ? <p className="ds-comparison-stale-note" role="status">Текст изменился. Результат ниже относится к прошлой версии.</p> : null}
     {error ? <p className="ds-comparison-error" role="alert">{error}</p> : null}
     {canSubmit || (!result && showEditor) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
     {matchPaywall ? <PaymentPrompt
-      title="Узнать, подходишь ли ты на эту роль"
-      description="Вакансия сохранена. После оплаты Match Analyst сверит требования только с подтверждённым опытом и покажет, что реально работает на отклик."
+      title="Открыть пакет ToxicHR"
+      description="Вакансия сохранена. В пакет входят 5 сопоставлений, все HR-взгляды, одно улучшение и будущая адаптация под вакансию."
       price={`${matchPaywall.priceRub} ₽`}
-      action={<button type="button" className="thr-btn thr-btn-tox" onClick={() => void checkoutMatch()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Оплатить ${matchPaywall.priceRub} ₽`}</button>}
-      secondary="Одна вакансия и одно резюме. Новую версию резюме это не открывает."
+      action={<button type="button" className="thr-btn thr-btn-tox" onClick={() => void checkoutMatch()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Открыть пакет за ${matchPaywall.priceRub} ₽`}</button>}
+      secondary="Один платёж без подписки и дополнительных оплат внутри пакета."
     /> : null}
 
     {review ? <div className="ds-comparison-result">
@@ -165,7 +188,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
           {review.assessment.employerQuestions.length ? <CollapsibleSection title="Что спросить работодателя"><ol>{review.assessment.employerQuestions.map((item) => <li key={item}>{item}</li>)}</ol></CollapsibleSection> : null}
         </section>
       </>}
-      <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? "Готовая новая версия — отдельное действие за 199 ₽" : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} />
+      <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? "Адаптация под эту вакансию уже входит в пакет и появится в Sprint 2." : "Адаптация под эту вакансию уже использована." : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} />
     </div> : null}
   </PageContainer>;
 }

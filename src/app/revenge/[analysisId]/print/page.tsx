@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { loadImprovementContext } from "@/lib/improvement-server";
-import { hasProductAccess, RESUME_REWRITE_PRODUCT_CODE } from "@/lib/payments";
 import { PrintButton } from "./print-button";
 
 export default async function ImprovementPrintPage({
@@ -10,8 +9,6 @@ export default async function ImprovementPrintPage({
   params: Promise<{ analysisId: string }>;
 }) {
   const { analysisId } = await params;
-  if (!(await hasProductAccess(analysisId, RESUME_REWRITE_PRODUCT_CODE))) notFound();
-
   const session = await auth();
   const analysis = await loadImprovementContext(
     analysisId,

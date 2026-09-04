@@ -71,6 +71,10 @@ export async function POST(_request: Request, { params }: Params) {
       },
       data: { userId: session.user.id },
     }),
+    prisma.toxicHrPackage.updateMany({
+      where: { resumeId, userId: null },
+      data: { userId: session.user.id },
+    }),
   ]);
 
   await trackServer("analysis_claimed", {

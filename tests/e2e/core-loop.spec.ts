@@ -35,7 +35,7 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page.getByText("Одно резюме. Четыре разных фильтра.")).toBeVisible({ timeout: 60_000 });
 
   const improvementHref = await page
-    .getByRole("link", { name: /Исправить резюме · 199 ₽/i })
+    .getByRole("link", { name: /Исправить резюме/i })
     .first()
     .getAttribute("href");
   expect(improvementHref).toMatch(/^\/revenge\?analysisId=/);
@@ -49,7 +49,7 @@ test("полный путь: два HR → редактор → вакансия
 
   await page.goto(`/revenge?analysisId=${firstAnalysisId}`);
   await expect(page.getByText(/Вопрос 1 из/)).toBeVisible();
-  await expect(page.getByText(/Готовая новая версия — 199 ₽/)).toBeVisible();
+  await expect(page.getByText(/Новая версия входит в пакет ToxicHR/)).toBeVisible();
   await page.getByLabel(/Ответ:/).fill(
     "Лично провёл 12 интервью, сформировал 4 гипотезы и довёл 2 из них до запуска.",
   );
@@ -145,9 +145,9 @@ test("серверный цикл сохраняет две оценки, ред
   expect(thirdResponse.status()).toBe(403);
   expect((await thirdResponse.json()).error).toMatch(/Бесплатный лимит исчерпан/);
 
-  const accessResponse = await request.get(`/api/payments/access?analysisId=${analysisId}&product=resume_rewrite`);
+  const accessResponse = await request.get(`/api/payments/access?analysisId=${analysisId}`);
   expect(accessResponse.status()).toBe(200);
-  expect(await accessResponse.json()).toMatchObject({ paywallEnabled: false, hasAccess: true, priceRub: 199 });
+  expect(await accessResponse.json()).toMatchObject({ paywallEnabled: false, hasPackage: true, priceRub: 199 });
 
   const questionsResponse = await request.get(`/api/improvements/${analysisId}`);
   expect(questionsResponse.status()).toBe(200);

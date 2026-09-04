@@ -19,10 +19,13 @@ import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
 import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import {
-  hasProductAccess,
-  PAID_ACTION_PRICE_RUB,
-  RESUME_REWRITE_PRODUCT_CODE,
-} from "@/lib/payments";
+  completePackageAction,
+  getPackageSnapshot,
+  PackageAccessError,
+  releasePackageAction,
+  reservePackageAction,
+  TOXICHR_PACKAGE_PRICE_RUB,
+} from "@/lib/package";
 
 const BodySchema = z.object({
   answers: z.array(z.object({
@@ -40,14 +43,15 @@ async function context(analysisId: string) {
   return loadImprovementContext(analysisId, session?.user?.id);
 }
 
-function paymentRequired() {
+function packageRequired(error?: PackageAccessError) {
   return NextResponse.json(
     {
-      error: `Готовая новая версия стоит ${PAID_ACTION_PRICE_RUB} ₽ в бете.`,
-      paymentRequired: true,
-      priceRub: PAID_ACTION_PRICE_RUB,
+      error: error?.message ?? `Нужен пакет ToxicHR за ${TOXICHR_PACKAGE_PRICE_RUB} ₽.`,
+      paymentRequired: error?.reason === "package_required" || !error,
+      limitReached: error?.reason === "limit_reached",
+      priceRub: TOXICHR_PACKAGE_PRICE_RUB,
     },
-    { status: 402 },
+    { status: error?.status ?? 402 },
   );
 }
 
@@ -68,6 +72,8 @@ export async function GET(
     const analysis = await context(analysisId);
     const report = analysis.reportPayload as AnalysisReport;
     const saved = analysis.improvements[0] ?? null;
+    const session = await auth();
+    const packageState = await getPackageSnapshot(analysisId, session?.user?.id);
     const originalText = await loadOriginalResumeText(analysis.resumeVersion.resume);
 
     return NextResponse.json({
@@ -84,6 +90,7 @@ export async function GET(
             ready: saved.status === "ready",
           }
         : null,
+      package: packageState,
     });
   } catch (error) {
     return errorResponse(error);
@@ -94,6 +101,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ analysisId: string }> },
 ) {
+  let reservationId: string | null = null;
   try {
     const limited = rateLimit(`improvement:${clientIp(request)}`, 20, 60_000);
     if (!limited.ok) {
@@ -113,12 +121,50 @@ export async function POST(
     }
 
     const analysis = await context(analysisId);
-    if (!(await hasProductAccess(analysisId, RESUME_REWRITE_PRODUCT_CODE))) return paymentRequired();
+    const existingReady = analysis.improvements[0]?.status === "ready" ? analysis.improvements[0] : null;
+    if (existingReady?.improvedText) {
+      return NextResponse.json({
+        ready: true,
+        beforeScore: existingReady.beforeScore,
+        afterScore: existingReady.afterScore,
+        replacements: existingReady.replacements,
+        improvedText: existingReady.improvedText,
+        reused: true,
+      });
+    }
 
     const report = analysis.reportPayload as AnalysisReport;
     const sanitizedText = analysis.resumeVersion.resume.sanitizedText ?? "";
     if (!sanitizedText) {
       return NextResponse.json({ error: "Текст резюме недоступен." }, { status: 409 });
+    }
+
+    const session = await auth();
+    const reservation = await reservePackageAction({
+      analysisId,
+      currentUserId: session?.user?.id,
+      kind: "IMPROVEMENT",
+    });
+    reservationId = reservation.reservationId;
+    if (reservation.reused) {
+      const savedForResume = await prisma.resumeImprovement.findFirst({
+        where: {
+          status: "ready",
+          analysis: { resumeVersion: { resumeId: analysis.resumeVersion.resumeId } },
+        },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (savedForResume?.improvedText) {
+        return NextResponse.json({
+          ready: true,
+          beforeScore: savedForResume.beforeScore,
+          afterScore: savedForResume.afterScore,
+          replacements: savedForResume.replacements,
+          improvedText: savedForResume.improvedText,
+          reused: true,
+        });
+      }
+      return NextResponse.json({ error: "Готовая версия не найдена. Ничего не списали — попробуй открыть исходный разбор." }, { status: 409 });
     }
 
     const result = await buildImprovedResume({
@@ -194,7 +240,10 @@ export async function POST(
       },
     });
 
-    await trackServer("fix_generated", {
+    await completePackageAction(reservationId);
+    reservationId = null;
+
+    await trackServer("improvement_used", {
       analysisId,
       afterScore: saved.afterScore,
       replacements: result.replacements.length,
@@ -208,6 +257,13 @@ export async function POST(
       improvedText: saved.improvedText,
     });
   } catch (error) {
+    await releasePackageAction(reservationId).catch(() => undefined);
+    if (error instanceof PackageAccessError) {
+      if (error.reason === "limit_reached") {
+        await trackServer("package_limit_reached", { analysisId: (await params).analysisId, action: "improvement" }).catch(() => undefined);
+      }
+      return packageRequired(error);
+    }
     return errorResponse(error);
   }
 }
@@ -226,7 +282,6 @@ export async function PATCH(
     }
 
     const { analysisId } = await params;
-    if (!(await hasProductAccess(analysisId, RESUME_REWRITE_PRODUCT_CODE))) return paymentRequired();
 
     const parsed = EditorSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {

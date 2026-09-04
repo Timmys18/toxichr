@@ -31,8 +31,10 @@ type ResultView = "changes" | "compare" | "editor";
 type AccessState = {
   loading: boolean;
   paywallEnabled: boolean;
-  hasAccess: boolean;
+  hasPackage: boolean;
   priceRub: number;
+  improvementAvailable: boolean;
+  improvementUsed: boolean;
 };
 
 export function RevengeClient({ analysisId }: { analysisId: string }) {
@@ -56,12 +58,14 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [access, setAccess] = useState<AccessState>({
     loading: true,
     paywallEnabled: false,
-    hasAccess: true,
+    hasPackage: true,
     priceRub: 199,
+    improvementAvailable: true,
+    improvementUsed: false,
   });
 
   const refreshAccess = useCallback(async () => {
-    const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}&product=resume_rewrite`, {
+    const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`, {
       cache: "no-store",
     });
     const data = await response.json();
@@ -69,8 +73,10 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     const next = {
       loading: false,
       paywallEnabled: Boolean(data.paywallEnabled),
-      hasAccess: Boolean(data.hasAccess),
+      hasPackage: Boolean(data.hasPackage),
       priceRub: Number(data.priceRub) || 199,
+      improvementAvailable: Boolean(data.improvementAvailable),
+      improvementUsed: Boolean(data.improvementUsed),
     };
     setAccess(next);
     return next;
@@ -191,7 +197,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       while (!cancelled && attempt < 6) {
         attempt += 1;
         const current = await refreshAccess().catch(() => null);
-        if (current?.hasAccess) {
+        if (current?.hasPackage) {
           setPaywallOpen(false);
           return;
         }
@@ -231,7 +237,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
 
   async function submit() {
     if (access.loading) return;
-    if (access.paywallEnabled && !access.hasAccess) {
+    if (access.paywallEnabled && !access.hasPackage) {
       openPaywall();
       return;
     }
@@ -260,6 +266,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       setEditorText(data.improvedText ?? "");
       setSavedEditorText(data.improvedText ?? "");
       setResultView("changes");
+      await refreshAccess().catch(() => undefined);
       window.setTimeout(
         () => document.getElementById("revenge-result")?.scrollIntoView({ behavior: "smooth" }),
         80,
@@ -279,7 +286,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ analysisId, product: "resume_rewrite" }),
+        body: JSON.stringify({ analysisId }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Не удалось начать оплату");
@@ -335,8 +342,8 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         <p>Ответь только фактами. Если точной цифры не помнишь — не придумывай: сервис соберёт честную формулировку без неё.</p>
         <div className="deal">
           <span className="thr-mono">Бета</span>
-          <b>Разбор бесплатный. Готовая новая версия — {access.priceRub} ₽.</b>
-          <small>Цена известна заранее: никаких внезапных тарифов после заполнения.</small>
+          <b>Новая версия входит в пакет ToxicHR за {access.priceRub} ₽.</b>
+          <small>{access.improvementUsed ? "Улучшение уже использовано для этого резюме." : "Одно улучшение, без подписки и доплат."}</small>
         </div>
       </div>
 
@@ -371,21 +378,21 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
             {currentStep < questions.length - 1 ? (
               <button type="button" className="thr-btn thr-btn-tox" onClick={() => setCurrentStep((step) => Math.min(questions.length - 1, step + 1))}>{answers[current.problemId]?.trim() ? "Дальше" : "Пропустить"}</button>
             ) : (
-              <button type="button" className="thr-btn thr-btn-tox" onClick={() => void submit()} disabled={saving || answeredCount === 0 || access.loading}>
-                {saving ? "Собираем новую версию…" : access.paywallEnabled && !access.hasAccess ? `Собрать резюме · ${access.priceRub} ₽` : "Собрать резюме"}
+              <button type="button" className="thr-btn thr-btn-tox" onClick={() => void submit()} disabled={saving || answeredCount === 0 || access.loading || (access.hasPackage && !access.improvementAvailable)}>
+                {saving ? "Собираем новую версию…" : access.paywallEnabled && !access.hasPackage ? `Открыть пакет · ${access.priceRub} ₽` : access.improvementAvailable ? "Собрать резюме" : "Улучшение уже использовано"}
               </button>
             )}
           </div>
         </div>
       ) : null}
 
-      {paywallOpen && !access.hasAccess ? (
+      {paywallOpen && !access.hasPackage ? (
         <div className="paywall" role="dialog" aria-label="Оплата новой версии">
-          <div className="pw-top"><span className="thr-mono">Новая версия</span><strong>{access.priceRub} ₽</strong></div>
-          <h2>Факты собраны. Теперь можно переписать резюме.</h2>
-          <p>Ты ответил на {answeredCount} из {questions.length} вопросов. После оплаты сервис соберёт новую версию, покажет изменения до/после и откроет DOCX, PDF, редактор и проверку под вакансию.</p>
-          <div className="pw-proof"><b>Что покупаешь</b><span>Готовый документ, а не ещё один отчёт</span><span>Только на твоих фактах — без выдуманных достижений</span><span>Один платёж, без подписки</span></div>
-          <button type="button" className="thr-btn thr-btn-tox pay" onClick={() => void checkout()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Оплатить ${access.priceRub} ₽ и собрать версию`}</button>
+          <div className="pw-top"><span className="thr-mono">Пакет ToxicHR</span><strong>{access.priceRub} ₽</strong></div>
+          <h2>Факты собраны. Открой пакет и переходи к новой версии.</h2>
+          <p>В пакет входят все HR-взгляды, 5 сопоставлений, одно улучшение, будущая адаптация под вакансию и 5 повторных проверок.</p>
+          <div className="pw-proof"><b>Что покупаешь</b><span>Один пакет для этого резюме</span><span>Только на твоих фактах — без выдуманных достижений</span><span>Один платёж, без подписки и доплат внутри</span></div>
+          <button type="button" className="thr-btn thr-btn-tox pay" onClick={() => void checkout()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Оплатить пакет ${access.priceRub} ₽`}</button>
           <button type="button" className="later" onClick={() => setPaywallOpen(false)}>Вернуться к ответам</button>
         </div>
       ) : null}

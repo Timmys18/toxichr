@@ -27,7 +27,7 @@ Before switching `BETA_PAYWALL_ENABLED=true`:
 1. Add production YooKassa credentials.
 2. Configure YooKassa notification URL: `https://<production-host>/api/payments/yookassa/webhook` for successful/canceled payment events.
 3. Make one real low-risk production payment through `/revenge`.
-4. Убедитесь, что `Payment.status=PAID`, а у `AccessGrant` появился `productCode=resume_rewrite` либо точный `vacancy_match:<vacancyId>`.
+4. Убедитесь, что `Payment.status=PAID`, а для текущего резюме появилась запись `ToxicHrPackage`; отдельные старые доступы больше не выдают новые права.
 5. Confirm return from YooKassa opens the same analysis and the user can build the corrected version.
 6. Confirm DOCX and print are inaccessible without the grant and available after payment.
 7. Only then set `BETA_PAYWALL_ENABLED=true` for public traffic.

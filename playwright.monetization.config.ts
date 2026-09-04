@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = "http://127.0.0.1:3102";
+// Тест создаёт подтверждённый пакет напрямую в изолированной test-БД, чтобы
+// проверить серверные лимиты без настоящего платёжного провайдера.
+process.env.DATABASE_URL = "file:/tmp/toxichr-e2e.db";
 
 export default defineConfig({
   testDir: "./tests/e2e",

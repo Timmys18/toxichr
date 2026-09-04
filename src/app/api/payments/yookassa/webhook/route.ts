@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { syncYooKassaPayment } from "@/lib/payments";
+import { syncYooKassaPayment, TOXICHR_PACKAGE_PRODUCT_CODE } from "@/lib/package";
 import { trackServer } from "@/lib/analytics-server";
 
 export async function POST(request: Request) {
@@ -18,6 +18,12 @@ export async function POST(request: Request) {
         externalId,
         provider: "yookassa",
       }).catch(() => undefined);
+      if (result.productCode === TOXICHR_PACKAGE_PRODUCT_CODE) {
+        await trackServer("package_purchased", {
+          externalId,
+          provider: "yookassa",
+        }).catch(() => undefined);
+      }
     } else if (result.status === "FAILED") {
       await trackServer("payment_failed", {
         externalId,

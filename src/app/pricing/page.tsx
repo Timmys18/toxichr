@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PAID_ACTION_PRICE_RUB } from "@/lib/payments";
+import { TOXICHR_PACKAGE_PRICE_RUB } from "@/lib/package";
 import { ServicePage } from "@/components/ui/page-templates";
 
 export const metadata: Metadata = { title: "Цены" };
@@ -13,18 +13,12 @@ const FREE = [
   "Самостоятельный разбор вакансии",
 ];
 
-const MATCH = [
-  "Сопоставление одного резюме с одной вакансией",
-  "Точные цитаты только из сохранённого опыта",
-  "Решение по отклику и конкретные разрывы",
-];
-
-const REVENGE = [
-  "Переписывание слабых формулировок на твоих фактах",
-  "Честное сравнение до / после",
-  "Ручной редактор финальной версии",
-  "Готовый DOCX и версия для PDF / печати",
-  "Новая версия сразу используется при проверке вакансии",
+const PACKAGE = [
+  "Все 4 HR-взгляда для текущего резюме",
+  "До 5 сопоставлений с вакансиями",
+  "Одно полноценное улучшение резюме",
+  "Одна адаптация под вакансию — станет доступна в Sprint 2",
+  "До 5 повторных проверок после новой версии",
 ];
 
 export default function PricingPage() {
@@ -34,8 +28,8 @@ export default function PricingPage() {
         <section className="pricing">
           <div className="ph">
             <div className="over thr-mono">Цены без сюрпризов</div>
-            <h1>Понять проблему — <span>бесплатно.</span><br />Платить только за конкретную работу.</h1>
-            <p>Никакой подписки и общего премиум-доступа. У каждого платного действия понятная цена заранее.</p>
+            <h1>Понять проблему — <span>бесплатно.</span><br />Дальше — один пакет без доплат.</h1>
+            <p>Никакой подписки, токенов или мелких платежей. Один пакет ToxicHR для работы с текущим резюме.</p>
           </div>
 
           <div className="grid">
@@ -48,30 +42,20 @@ export default function PricingPage() {
               <Link href="/" className="thr-btn thr-btn-line cta">Проверить резюме</Link>
             </div>
 
-            <div className="card pro">
+            <div className="card pro package-card">
               <div className="c-top">
-                <div className="c-k thr-mono">Новая версия <span className="beta">цена беты</span></div>
-                <div className="price toxic">{PAID_ACTION_PRICE_RUB} ₽ <span>/ одно действие</span></div>
+                <div className="c-k thr-mono">Пакет ToxicHR <span className="beta">цена беты</span></div>
+                <div className="price toxic">{TOXICHR_PACKAGE_PRICE_RUB} ₽ <span>/ одно резюме</span></div>
               </div>
-              <p className="promise">Не покупаешь ещё один отчёт. Покупаешь собранную новую версию резюме.</p>
-              <ul>{REVENGE.map((item) => <li key={item}><i aria-hidden>+</i>{item}</li>)}</ul>
+              <p className="promise">Не покупаешь каждый шаг отдельно. Пакет открывает персональную работу с резюме и выбранными вакансиями.</p>
+              <ul>{PACKAGE.map((item) => <li key={item}><i aria-hidden>+</i>{item}</li>)}</ul>
               <Link href="/" className="thr-btn thr-btn-tox cta">Сначала получить бесплатный разбор</Link>
-            </div>
-
-            <div className="card pro">
-              <div className="c-top">
-                <div className="c-k thr-mono">Сопоставление <span className="beta">цена беты</span></div>
-                <div className="price toxic">{PAID_ACTION_PRICE_RUB} ₽ <span>/ одна вакансия</span></div>
-              </div>
-              <p className="promise">Не абстрактный балл, а честный ответ: стоит ли откликаться и что реально доказывает резюме.</p>
-              <ul>{MATCH.map((item) => <li key={item}><i aria-hidden>+</i>{item}</li>)}</ul>
-              <Link href="/vacancy" className="thr-btn thr-btn-line cta">Разобрать вакансию бесплатно</Link>
             </div>
           </div>
 
           <div className="why">
             <b>Почему оплата только здесь?</b>
-            <p>Бесплатно ты видишь основной разбор, один второй взгляд, share и самостоятельный разбор вакансии. 199 ₽ — это либо готовая новая версия, либо match с конкретной вакансией. Это независимые действия.</p>
+            <p>Бесплатно ты видишь основной разбор, второй HR-взгляд, share и самостоятельный разбор вакансии. Пакет за 199 ₽ не подписка: внутри нет повторных оплат.</p>
           </div>
         </section>
       </main>

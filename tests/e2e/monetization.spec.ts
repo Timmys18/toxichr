@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { prisma } from "@/lib/prisma";
 
 const RESUME = `Анна Петрова
 Product Manager
@@ -26,6 +27,9 @@ test("платный match закрыт сервером, а самостоят�
   expect(analysisResponse.status()).toBe(200);
   const { analysisId } = await analysisResponse.json();
 
+  const secondHr = await request.post("/api/analyses", { data: { resumeId, personaId: "tamara" } });
+  expect(secondHr.status()).toBe(200);
+
   const standalone = await request.post("/api/vacancies/review", { data: { text: VACANCY } });
   expect(standalone.status()).toBe(200);
   expect((await standalone.json()).matched).toBe(false);
@@ -35,7 +39,6 @@ test("платный match закрыт сервером, а самостоят�
   const paywall = await match.json();
   expect(paywall).toMatchObject({
     paymentRequired: true,
-    product: "vacancy_match",
     priceRub: 199,
   });
   expect(paywall.vacancyId).toBeTruthy();
@@ -43,7 +46,6 @@ test("платный match закрыт сервером, а самостоят�
   const forgedCheckout = await request.post("/api/payments/checkout", {
     data: {
       analysisId,
-      product: "vacancy_match",
       vacancyId: "vacancy-id-that-was-never-saved",
     },
   });
@@ -52,15 +54,52 @@ test("платный match закрыт сервером, а самостоят�
     error: "Вакансия не найдена или недоступна.",
   });
 
-  const access = await request.get(`/api/payments/access?analysisId=${analysisId}&product=vacancy_match&vacancyId=${paywall.vacancyId}`);
+  const access = await request.get(`/api/payments/access?analysisId=${analysisId}`);
   expect(access.status()).toBe(200);
-  expect(await access.json()).toMatchObject({ paywallEnabled: true, hasAccess: false, priceRub: 199 });
+  expect(await access.json()).toMatchObject({ paywallEnabled: true, hasPackage: false, priceRub: 199 });
+
+  await prisma.toxicHrPackage.create({ data: { resumeId, source: "test" } });
+  const paidMatch = await request.post("/api/vacancies/review", { data: { text: VACANCY, analysisId, vacancyId: paywall.vacancyId } });
+  expect(paidMatch.status()).toBe(200);
+
+  const usedAccess = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(await usedAccess.json()).toMatchObject({ hasPackage: true, matchesUsed: 1, matchesRemaining: 4, improvementAvailable: true, adaptationAvailable: true, rechecksRemaining: 5 });
 
   const questions = await request.get(`/api/improvements/${analysisId}`);
   const questionData = await questions.json();
   const rewrite = await request.post(`/api/improvements/${analysisId}`, {
     data: { answers: [{ problemId: questionData.questions[0].problemId, answer: "Провела 8 интервью и проверила две гипотезы." }] },
   });
-  expect(rewrite.status()).toBe(402);
-  expect(await rewrite.json()).toMatchObject({ paymentRequired: true, priceRub: 199 });
+  expect(rewrite.status()).toBe(200);
+
+  const usedImprovement = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(await usedImprovement.json()).toMatchObject({ improvementUsed: true, improvementAvailable: false });
+
+  const thirdHr = await request.post("/api/analyses", { data: { resumeId, personaId: "vadik" } });
+  expect(thirdHr.status()).toBe(200);
+  const { analysisId: recheckAnalysisId } = await thirdHr.json();
+  const recheck = await request.post("/api/vacancies/review", { data: { text: VACANCY, analysisId: recheckAnalysisId, vacancyId: paywall.vacancyId } });
+  expect(recheck.status()).toBe(200);
+  expect((await recheck.json()).package).toMatchObject({ rechecksUsed: 1, rechecksRemaining: 4 });
+
+  // Уже израсходованные действия моделируем в изолированной БД. Это оставляет
+  // проверку серверного запрета реальной, но не гоняет Match Analyst ещё четыре раза.
+  const packageRecord = await prisma.toxicHrPackage.findUniqueOrThrow({
+    where: { resumeId },
+    select: { id: true },
+  });
+  await prisma.packageUsage.createMany({
+    data: Array.from({ length: 4 }, (_, index) => ({
+      packageId: packageRecord.id,
+      kind: "MATCH" as const,
+      status: "COMPLETED" as const,
+      dedupeKey: `seeded-match:${index}`,
+      completedAt: new Date(),
+    })),
+  });
+  const exhausted = await request.post("/api/vacancies/review", {
+    data: { text: `${VACANCY}\nЕщё одно отдельное условие.`, analysisId },
+  });
+  expect(exhausted.status()).toBe(403);
+  expect(await exhausted.json()).toMatchObject({ limitReached: true, paymentRequired: false });
 });

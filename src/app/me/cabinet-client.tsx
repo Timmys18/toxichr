@@ -14,8 +14,17 @@ export type CabItem = {
   achievements: number;
   unproven: number;
   filename: string;
+  resumeId: string;
   afterScore: number | null;
   hasImprovement: boolean;
+};
+
+export type CabinetPackage = {
+  active: boolean;
+  matchesRemaining: number;
+  rechecksRemaining: number;
+  improvementUsed: boolean;
+  adaptationUsed: boolean;
 };
 
 function timeAgo(iso: string): string {
@@ -32,10 +41,12 @@ export function CabinetClient({
   name,
   items,
   vacancyCount,
+  packageStatus,
 }: {
   name: string;
   items: CabItem[];
   vacancyCount: number;
+  packageStatus: CabinetPackage;
 }) {
   const last = items[0];
   const improved = items.filter((item) => item.hasImprovement);
@@ -101,11 +112,20 @@ export function CabinetClient({
               </div>
             </div>
             <Link href={`/revenge?analysisId=${last.id}`} className="thr-btn thr-btn-line rebtn">
-              {last.hasImprovement ? "Открыть новую версию и сравнение" : "Исправить резюме · 199 ₽"}
+              {last.hasImprovement ? "Открыть новую версию и сравнение" : "Исправить резюме · пакет ToxicHR"}
             </Link>
           </div>
 
           <div>
+            <div className="panel package-status">
+              <div className="p-t thr-mono"><span>Пакет ToxicHR</span><span>{packageStatus.active ? "активен" : "не открыт"}</span></div>
+              {packageStatus.active ? <>
+                <p>Сопоставления: осталось {packageStatus.matchesRemaining} из 5</p>
+                <p>Повторные проверки: осталось {packageStatus.rechecksRemaining} из 5</p>
+                <p>Улучшение: {packageStatus.improvementUsed ? "использовано" : "доступно"}</p>
+                <p>Адаптация под вакансию: {packageStatus.adaptationUsed ? "использована" : "доступна в следующем этапе"}</p>
+              </> : <><p>Один пакет за 199 ₽ открывает персональную работу с этим резюме.</p><Link href={`/revenge?analysisId=${last.id}`}>Открыть пакет →</Link></>}
+            </div>
             <div className="panel">
               <div className="p-t thr-mono" aria-label={`Мои разборы: ${items.length}`}>
                 <span>Мои разборы</span>
@@ -150,7 +170,7 @@ export function CabinetClient({
                 <div className="empty">
                   После первого улучшения здесь появится честное сравнение двух версий.
                   <br />
-                  <Link href={`/revenge?analysisId=${last.id}`}>Собрать новую версию · 199 ₽ →</Link>
+                  <Link href={`/revenge?analysisId=${last.id}`}>Собрать новую версию через пакет ToxicHR →</Link>
                 </div>
               )}
             </div>
@@ -422,6 +442,7 @@ export function CabinetClient({
           max-width: 52ch;
           line-height: 1.55;
         }
+        .package-status{margin-bottom:18px}.package-status p{font-size:16px;line-height:1.45;color:var(--dim);margin-top:9px}.package-status p:first-of-type{margin-top:0}.package-status :global(a){display:inline-block;margin-top:14px;color:var(--tox);font-size:16px;text-decoration:none}
         .empty-big h2 { font-size: clamp(26px,4vw,38px); letter-spacing: -.035em; }
         .empty-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
         .empty-big :global(.thr-btn) {

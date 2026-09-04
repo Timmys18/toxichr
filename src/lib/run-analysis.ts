@@ -8,6 +8,7 @@ import { ProfessionalAssessmentSchema, type ProfessionalAssessment } from "@/lib
 import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
+import { hasPaidPackageForResume } from "@/lib/package";
 
 export const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
@@ -44,9 +45,10 @@ async function createFreePersonaAnalysis(
       existing.map((item) => item.personaId).filter((value): value is string => Boolean(value)),
     );
 
-    if (!usedPersonaIds.has(personaId) && usedPersonaIds.size >= FREE_PERSONA_LIMIT) {
+    const packageOpen = await hasPaidPackageForResume(resumeId);
+    if (!usedPersonaIds.has(personaId) && usedPersonaIds.size >= FREE_PERSONA_LIMIT && !packageOpen) {
       throw new AnalysisInputError(
-        "Бесплатный лимит исчерпан: первый разбор и один дополнительный HR-взгляд уже доступны. Остальные голоса пока не продаём отдельно.",
+        "Бесплатный лимит исчерпан: первый разбор и один дополнительный HR-взгляд уже доступны. Остальные голоса открывает пакет ToxicHR.",
         403,
       );
     }

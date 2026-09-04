@@ -11,10 +11,14 @@ import {
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import {
-  hasProductAccess,
-  PAID_ACTION_PRICE_RUB,
-  vacancyMatchProductCode,
-} from "@/lib/payments";
+  completePackageAction,
+  getPackageSnapshot,
+  matchPackageAction,
+  PackageAccessError,
+  releasePackageAction,
+  reservePackageAction,
+  TOXICHR_PACKAGE_PRICE_RUB,
+} from "@/lib/package";
 import {
   reviewVacancy,
   VACANCY_ASSESSMENT_VERSION,
@@ -29,6 +33,8 @@ const BodySchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let reservationId: string | null = null;
+  let paywallVacancyId: string | null = null;
   const limited = rateLimit(`vacancy:${clientIp(request)}`, 20, 60_000);
   if (!limited.ok) {
     return NextResponse.json({ error: "Слишком много запросов." }, { status: 429 });
@@ -90,22 +96,7 @@ export async function POST(request: Request) {
       : await prisma.vacancy.create({
           data: { userId: ownerId, sourceText: parsed.data.text },
         });
-
-    if (analysis) {
-      const productCode = vacancyMatchProductCode(vacancy.id);
-      if (!(await hasProductAccess(analysis.id, productCode))) {
-        return NextResponse.json(
-          {
-            error: `Сопоставление резюме с этой вакансией стоит ${PAID_ACTION_PRICE_RUB} ₽.`,
-            paymentRequired: true,
-            product: "vacancy_match",
-            vacancyId: vacancy.id,
-            priceRub: PAID_ACTION_PRICE_RUB,
-          },
-          { status: 402 },
-        );
-      }
-    }
+    paywallVacancyId = vacancy.id;
 
     const cached = analysis
       ? await prisma.vacancyMatch.findUnique({
@@ -116,9 +107,21 @@ export async function POST(request: Request) {
     const cachedReview = cached?.result as VacancyReview | undefined;
     if (
       !sourceChanged &&
-      cachedReview?.schemaVersion === VACANCY_ASSESSMENT_VERSION
+      cachedReview?.schemaVersion === VACANCY_ASSESSMENT_VERSION && analysis
     ) {
-      return NextResponse.json({ vacancyId: vacancy.id, matched: true, cached: true, result: cachedReview });
+      return NextResponse.json({ vacancyId: vacancy.id, matched: true, cached: true, result: cachedReview, package: await getPackageSnapshot(analysis.id, session?.user?.id) });
+    }
+
+    let actionKind: "MATCH" | "RECHECK" | null = null;
+    if (analysis) {
+      actionKind = await matchPackageAction(analysis.id, vacancy.id, session?.user?.id);
+      const reservation = await reservePackageAction({
+        analysisId: analysis.id,
+        currentUserId: session?.user?.id,
+        kind: actionKind,
+        vacancyId: vacancy.id,
+      });
+      reservationId = reservation.reservationId;
     }
 
     // Match Analyst получает только сохранённую профессиональную оценку и её
@@ -162,6 +165,15 @@ export async function POST(request: Request) {
           interviewQuestions: (result.matchAssessment?.candidateQuestions ?? []) as Prisma.InputJsonValue,
         },
       });
+      await completePackageAction(reservationId);
+      reservationId = null;
+      if (actionKind) {
+        await trackServer(actionKind === "MATCH" ? "match_used" : "recheck_used", {
+          analysisId: analysis.id,
+          vacancyId: vacancy.id,
+          userId: session?.user?.id,
+        });
+      }
     }
 
     await trackServer("vacancy_review_completed", {
@@ -174,8 +186,25 @@ export async function POST(request: Request) {
       vacancyId: vacancy.id,
       matched: Boolean(analysis),
       result,
+      package: analysis ? await getPackageSnapshot(analysis.id, session?.user?.id) : null,
     });
   } catch (error) {
+    await releasePackageAction(reservationId).catch(() => undefined);
+    if (error instanceof PackageAccessError) {
+      if (error.reason === "limit_reached") {
+        await trackServer("package_limit_reached", { action: "match", userId: session?.user?.id }).catch(() => undefined);
+      }
+      return NextResponse.json(
+        {
+          error: error.message,
+          paymentRequired: error.reason === "package_required",
+          limitReached: error.reason === "limit_reached",
+          vacancyId: paywallVacancyId,
+          priceRub: TOXICHR_PACKAGE_PRICE_RUB,
+        },
+        { status: error.status },
+      );
+    }
     if (error instanceof ImprovementAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }

@@ -10,11 +10,6 @@ import {
   ImprovementAccessError,
   loadImprovementContext,
 } from "@/lib/improvement-server";
-import {
-  hasProductAccess,
-  PAID_ACTION_PRICE_RUB,
-  RESUME_REWRITE_PRODUCT_CODE,
-} from "@/lib/payments";
 import { trackServer } from "@/lib/analytics-server";
 
 export async function GET(
@@ -23,13 +18,6 @@ export async function GET(
 ) {
   try {
     const { analysisId } = await params;
-    if (!(await hasProductAccess(analysisId, RESUME_REWRITE_PRODUCT_CODE))) {
-      return Response.json(
-        { error: `Экспорт доступен после оплаты ${PAID_ACTION_PRICE_RUB} ₽.`, paymentRequired: true },
-        { status: 402 },
-      );
-    }
-
     const session = await auth();
     const analysis = await loadImprovementContext(analysisId, session?.user?.id);
     const improvement = analysis.improvements[0];
