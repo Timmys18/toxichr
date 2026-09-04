@@ -10,6 +10,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # ToxicHR agent notes
 
+- **ACTIVE release plan до закрытой беты: `docs/RELEASE-PLAN.md`. Читать перед любой продуктовой работой и выполнять спринты по порядку. Текущий спринт указан внутри файла.**
+- Не переходить к следующему спринту, пока Definition of Done текущего не выполнен либо Product Owner явно не изменил приоритет.
 - Product vision lives in chat + `docs/ROADMAP.md`
 - Progress / burndown: `BURNDOWN.md` — update every session
 - Language: RU only for v1
