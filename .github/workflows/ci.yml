@@ -1,10 +1,31 @@
 name: Проверка ToxicHR
+run-name: "ToxicHR · ${{ github.event_name == 'workflow_dispatch' && inputs.suite || 'quick' }} · ${{ github.ref_name }}"
 
 on:
   push:
     branches: [master, "codex/**"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      suite:
+        description: "full — финал спринта; иначе только выбранный контур"
+        type: choice
+        required: true
+        default: full
+        options:
+          - full
+          - quick
+          - safety
+          - persona
+          - vacancy
+          - monetization
+          - e2e
+
+# Новый push отменяет устаревшую быструю проверку той же ветки.
+# Ручные проверки имеют отдельную группу и не прерываются новым push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 permissions:
   contents: read
@@ -17,7 +38,8 @@ env:
 
 # Режим CI:
 # - любой обычный push/PR во время разработки: быстрые guardrails (lint + typecheck);
-# - полный acceptance-набор: только ручной workflow_dispatch на финальном commit спринта.
+# - ручной suite=full: полный acceptance на финальном commit спринта;
+# - ручной выбор контура: точечная диагностика, не полная приёмка.
 
 jobs:
   lint:
@@ -41,7 +63,7 @@ jobs:
       - run: npm run typecheck
 
   build:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.suite == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -52,7 +74,7 @@ jobs:
       - run: npm run build
 
   safety:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && (inputs.suite == 'full' || inputs.suite == 'safety')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -63,7 +85,7 @@ jobs:
       - run: npm run test:safety
 
   persona:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && (inputs.suite == 'full' || inputs.suite == 'persona')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -74,7 +96,7 @@ jobs:
       - run: npm run test:persona
 
   vacancy:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && (inputs.suite == 'full' || inputs.suite == 'vacancy')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -85,7 +107,7 @@ jobs:
       - run: npm run test:vacancy
 
   monetization:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && (inputs.suite == 'full' || inputs.suite == 'monetization')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -98,7 +120,7 @@ jobs:
       - run: npm run test:monetization
 
   e2e:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && (inputs.suite == 'full' || inputs.suite == 'e2e')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
