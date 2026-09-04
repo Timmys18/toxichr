@@ -4,6 +4,7 @@ on:
   push:
     branches: [master, "codex/**"]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,8 +16,8 @@ env:
   NEXT_PUBLIC_APP_URL: http://localhost:3100
 
 # Режим CI:
-# - промежуточный push в codex/**: только быстрые guardrails (lint + typecheck);
-# - pull request и push в master: полный acceptance-набор перед приёмкой/закрытием спринта.
+# - любой обычный push/PR во время разработки: быстрые guardrails (lint + typecheck);
+# - полный acceptance-набор: только ручной workflow_dispatch на финальном commit спринта.
 
 jobs:
   lint:
@@ -40,7 +41,7 @@ jobs:
       - run: npm run typecheck
 
   build:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -51,7 +52,7 @@ jobs:
       - run: npm run build
 
   safety:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -62,7 +63,7 @@ jobs:
       - run: npm run test:safety
 
   persona:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -73,7 +74,7 @@ jobs:
       - run: npm run test:persona
 
   vacancy:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -84,7 +85,7 @@ jobs:
       - run: npm run test:vacancy
 
   monetization:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -97,7 +98,7 @@ jobs:
       - run: npm run test:monetization
 
   e2e:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
