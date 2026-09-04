@@ -18,6 +18,53 @@ const VACANCY = `Senior Product Manager
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
 
+for (const entryPoint of ["access", "checkout"] as const) {
+  test(`старая покупка распознаётся через ${entryPoint} без повторной оплаты`, async ({ request }) => {
+    const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+    expect(resumeResponse.status()).toBe(200);
+    const { resumeId } = await resumeResponse.json();
+    const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+    expect(analysisResponse.status()).toBe(200);
+    const { analysisId } = await analysisResponse.json();
+
+    // Только старая покупка: reservePackageAction до первого обращения не вызывается.
+    await prisma.accessGrant.create({
+      data: { analysisId, productCode: "resume_improvement", source: "payment" },
+    });
+    expect(await prisma.toxicHrPackage.count({ where: { resumeId } })).toBe(0);
+
+    const firstResponse = entryPoint === "access"
+      ? await request.get(`/api/payments/access?analysisId=${analysisId}`)
+      : await request.post("/api/payments/checkout", { data: { analysisId } });
+    expect(firstResponse.status()).toBe(200);
+    expect(await firstResponse.json()).toMatchObject(entryPoint === "access"
+      ? { hasPackage: true, matchesRemaining: 5, rechecksRemaining: 5 }
+      : { access: true, checkoutUrl: null });
+
+    const migrated = await prisma.toxicHrPackage.findUniqueOrThrow({ where: { resumeId } });
+    expect(migrated.source).toBe("legacy_migration");
+    await prisma.packageUsage.create({
+      data: {
+        packageId: migrated.id,
+        kind: "MATCH",
+        status: "COMPLETED",
+        dedupeKey: "legacy-match-used",
+        completedAt: new Date(),
+      },
+    });
+
+    // Повторная проверка не создаёт платёж/второй пакет и не сбрасывает остатки.
+    const checkout = await request.post("/api/payments/checkout", { data: { analysisId } });
+    expect(checkout.status()).toBe(200);
+    expect(await checkout.json()).toMatchObject({ access: true, checkoutUrl: null });
+    const access = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+    expect(access.status()).toBe(200);
+    expect(await access.json()).toMatchObject({ hasPackage: true, matchesUsed: 1, matchesRemaining: 4 });
+    expect(await prisma.toxicHrPackage.count({ where: { resumeId } })).toBe(1);
+    expect(await prisma.payment.count({ where: { analysisId } })).toBe(0);
+  });
+}
+
 test("платный match закрыт сервером, а самостоятельный разбор вакансии остаётся бесплатным", async ({ request }) => {
   const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);

@@ -112,15 +112,17 @@ async function migrateLegacyGrant(context: PackageContext) {
 }
 
 async function findPackage(context: PackageContext) {
-  return prisma.toxicHrPackage.findUnique({
+  const existing = await prisma.toxicHrPackage.findUnique({
     where: { resumeId: context.resumeId },
     include: { usages: { where: { status: "COMPLETED" } } },
-  }) ?? migrateLegacyGrant(context).then(async (migrated) => {
-    if (!migrated) return null;
-    return prisma.toxicHrPackage.findUnique({
-      where: { id: migrated.id },
-      include: { usages: { where: { status: "COMPLETED" } } },
-    });
+  });
+  if (existing) return existing;
+
+  const migrated = await migrateLegacyGrant(context);
+  if (!migrated) return null;
+  return prisma.toxicHrPackage.findUnique({
+    where: { id: migrated.id },
+    include: { usages: { where: { status: "COMPLETED" } } },
   });
 }
 
