@@ -17,6 +17,18 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Language: RU only for v1
 - AI: facts → evidence → score → persona voice → grounding. Never invent facts.
 - Toxicity hits the resume, never the person.
+
+## Режим проверок во время разработки
+
+- Не запускать полный тяжёлый acceptance-набор после каждого небольшого куска работы внутри спринта.
+- После промежуточного изменения запускать только быстрые обязательные проверки (`typecheck`, `lint`) и точечные тесты изменённого контура.
+- Если изменение затрагивает критичный контур (платежи, auth/access control, миграции/схему данных, AI safety/grounding, сохранность пользовательских данных), дополнительно запускать релевантный специализированный тест до продолжения работы.
+- Полный набор acceptance-проверок (`production build`, все safety/persona/vacancy тесты, monetization E2E, полный E2E и прочие проверки Definition of Done) обязателен перед закрытием спринта, перед merge/финальным push в `master` или когда Product Owner явно просит полную приёмку.
+- Live AI acceptance и реальные платёжные smoke-тесты не запускать на каждый промежуточный коммит; запускать только когда менялся соответствующий контур и на контрольных точках, где это действительно нужно.
+- Зелёный полный CI нужен для закрытия спринта, но не является требованием для каждого промежуточного рабочего коммита.
+
+## UI / design system
+
 - New pages use the ToxicHR design system; do not introduce arbitrary colors, fonts, spacing, or duplicate button patterns.
 - Add each new visual primitive to `/ui-kit` before relying on it in a product screen.
 - Product pages must compose `src/components/ui/system.tsx` primitives and page templates; do not add page-local `<style>` blocks for shared layout, typography, actions, evidence, metrics, or states.
