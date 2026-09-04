@@ -20,6 +20,47 @@ export class AnalysisInputError extends Error {
   }
 }
 
+const FREE_PERSONA_LIMIT = 2;
+
+/**
+ * Один исходный разбор и ровно один дополнительный голос входят в бесплатный
+ * контур. Проверка находится рядом с созданием Analysis, а не в интерфейсе:
+ * прямой POST или ссылка на /session не могут обойти лимит.
+ */
+async function createFreePersonaAnalysis(
+  resumeVersionId: string,
+  resumeId: string,
+  personaId: string,
+) {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.analysis.findMany({
+      where: {
+        resumeVersion: { resumeId },
+        status: { in: ["RUNNING", "COMPLETED"] },
+      },
+      select: { personaId: true },
+    });
+    const usedPersonaIds = new Set(
+      existing.map((item) => item.personaId).filter((value): value is string => Boolean(value)),
+    );
+
+    if (!usedPersonaIds.has(personaId) && usedPersonaIds.size >= FREE_PERSONA_LIMIT) {
+      throw new AnalysisInputError(
+        "Бесплатный лимит исчерпан: первый разбор и один дополнительный HR-взгляд уже доступны. Остальные голоса пока не продаём отдельно.",
+        403,
+      );
+    }
+
+    return tx.analysis.create({
+      data: {
+        resumeVersionId,
+        personaId,
+        status: "RUNNING",
+      },
+    });
+  });
+}
+
 const REUSABLE_ANALYSIS_WINDOW_MS = 15 * 60 * 1000;
 
 export async function findReusableAnalysis(
@@ -82,13 +123,7 @@ export async function createAndRunAnalysis(
     });
   }
 
-  const analysis = await prisma.analysis.create({
-    data: {
-      resumeVersionId: version.id,
-      personaId: persona.id,
-      status: "RUNNING",
-    },
-  });
+  const analysis = await createFreePersonaAnalysis(version.id, resumeId, persona.id);
 
   await trackServer("analysis_started", { analysisId: analysis.id, personaId });
 

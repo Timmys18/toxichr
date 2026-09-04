@@ -57,11 +57,11 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     loading: true,
     paywallEnabled: false,
     hasAccess: true,
-    priceRub: 690,
+    priceRub: 199,
   });
 
   const refreshAccess = useCallback(async () => {
-    const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`, {
+    const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}&product=resume_rewrite`, {
       cache: "no-store",
     });
     const data = await response.json();
@@ -70,7 +70,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       loading: false,
       paywallEnabled: Boolean(data.paywallEnabled),
       hasAccess: Boolean(data.hasAccess),
-      priceRub: Number(data.priceRub) || 690,
+      priceRub: Number(data.priceRub) || 199,
     };
     setAccess(next);
     return next;
@@ -279,7 +279,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ analysisId }),
+        body: JSON.stringify({ analysisId, product: "resume_rewrite" }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Не удалось начать оплату");

@@ -18,7 +18,11 @@ import { prisma } from "@/lib/prisma";
 import { runHeuristicAnalysis } from "@/lib/ai/heuristics";
 import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { hasRevengeAccess, REVENGE_PRICE_RUB } from "@/lib/payments";
+import {
+  hasProductAccess,
+  PAID_ACTION_PRICE_RUB,
+  RESUME_REWRITE_PRODUCT_CODE,
+} from "@/lib/payments";
 
 const BodySchema = z.object({
   answers: z.array(z.object({
@@ -39,9 +43,9 @@ async function context(analysisId: string) {
 function paymentRequired() {
   return NextResponse.json(
     {
-      error: `Готовая новая версия стоит ${REVENGE_PRICE_RUB} ₽ в бете.`,
+      error: `Готовая новая версия стоит ${PAID_ACTION_PRICE_RUB} ₽ в бете.`,
       paymentRequired: true,
-      priceRub: REVENGE_PRICE_RUB,
+      priceRub: PAID_ACTION_PRICE_RUB,
     },
     { status: 402 },
   );
@@ -109,7 +113,7 @@ export async function POST(
     }
 
     const analysis = await context(analysisId);
-    if (!(await hasRevengeAccess(analysisId))) return paymentRequired();
+    if (!(await hasProductAccess(analysisId, RESUME_REWRITE_PRODUCT_CODE))) return paymentRequired();
 
     const report = analysis.reportPayload as AnalysisReport;
     const sanitizedText = analysis.resumeVersion.resume.sanitizedText ?? "";
@@ -222,7 +226,7 @@ export async function PATCH(
     }
 
     const { analysisId } = await params;
-    if (!(await hasRevengeAccess(analysisId))) return paymentRequired();
+    if (!(await hasProductAccess(analysisId, RESUME_REWRITE_PRODUCT_CODE))) return paymentRequired();
 
     const parsed = EditorSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {

@@ -13,6 +13,7 @@
     "test:vacancy": "playwright test --config=playwright.vacancy.config.ts",
     "test:vacancy:live": "RUN_LIVE_AI_ACCEPTANCE=1 playwright test --config=playwright.vacancy.config.ts tests/vacancy/live-acceptance.spec.ts",
     "test:e2e": "playwright test",
+    "test:monetization": "playwright test --config=playwright.monetization.config.ts",
     "test:e2e:report": "playwright show-report",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { createRevengeCheckout, isBetaPaywallEnabled } from "@/lib/payments";
+import {
+  createProductCheckout,
+  isBetaPaywallEnabled,
+  productCodeFor,
+  type PaidProduct,
+} from "@/lib/payments";
 import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const BodySchema = z.object({
   analysisId: z.string().min(1),
+  product: z.enum(["resume_rewrite", "vacancy_match"]),
+  vacancyId: z.string().min(1).optional(),
 });
 
 export async function POST(request: Request) {
@@ -20,9 +27,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Разбор не найден." }, { status: 400 });
   }
 
+  if (parsed.data.product === "vacancy_match" && !parsed.data.vacancyId) {
+    return NextResponse.json({ error: "Для сопоставления нужна вакансия." }, { status: 400 });
+  }
+
   const session = await auth();
   const origin = new URL(request.url).origin;
-  const returnUrl = `${origin}/revenge?analysisId=${encodeURIComponent(parsed.data.analysisId)}&payment=return`;
+  const productCode = productCodeFor(
+    parsed.data.product as PaidProduct,
+    parsed.data.vacancyId,
+  );
+  const returnUrl = parsed.data.product === "vacancy_match"
+    ? `${origin}/vacancy?analysisId=${encodeURIComponent(parsed.data.analysisId)}&vacancyId=${encodeURIComponent(parsed.data.vacancyId!)}&payment=return`
+    : `${origin}/revenge?analysisId=${encodeURIComponent(parsed.data.analysisId)}&payment=return`;
 
   try {
     await trackServer("checkout_started", {
@@ -30,9 +47,11 @@ export async function POST(request: Request) {
       userId: session?.user?.id,
       provider: "yookassa",
       paywallEnabled: isBetaPaywallEnabled(),
+      product: parsed.data.product,
     });
-    const checkout = await createRevengeCheckout({
+    const checkout = await createProductCheckout({
       analysisId: parsed.data.analysisId,
+      productCode,
       userId: session?.user?.id,
       returnUrl,
     });

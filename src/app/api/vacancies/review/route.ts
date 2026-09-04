@@ -11,6 +11,11 @@ import {
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import {
+  hasProductAccess,
+  PAID_ACTION_PRICE_RUB,
+  vacancyMatchProductCode,
+} from "@/lib/payments";
+import {
   reviewVacancy,
   VACANCY_ASSESSMENT_VERSION,
   type VacancyReview,
@@ -71,18 +76,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Вакансия не найдена." }, { status: 404 });
     }
 
-    const cached = analysis && existingVacancy
+    const sourceChanged = Boolean(
+      existingVacancy && existingVacancy.sourceText !== parsed.data.text,
+    );
+
+    // Сначала сохраняем текст вакансии: это бесплатно и позволяет вернуться к
+    // нему после оплаты. Сам Match Analyst до оплаты не запускается.
+    const vacancy = existingVacancy
+      ? await prisma.vacancy.update({
+          where: { id: existingVacancy.id },
+          data: { userId: ownerId, sourceText: parsed.data.text },
+        })
+      : await prisma.vacancy.create({
+          data: { userId: ownerId, sourceText: parsed.data.text },
+        });
+
+    if (analysis) {
+      const productCode = vacancyMatchProductCode(vacancy.id);
+      if (!(await hasProductAccess(analysis.id, productCode))) {
+        return NextResponse.json(
+          {
+            error: `Сопоставление резюме с этой вакансией стоит ${PAID_ACTION_PRICE_RUB} ₽.`,
+            paymentRequired: true,
+            product: "vacancy_match",
+            vacancyId: vacancy.id,
+            priceRub: PAID_ACTION_PRICE_RUB,
+          },
+          { status: 402 },
+        );
+      }
+    }
+
+    const cached = analysis
       ? await prisma.vacancyMatch.findUnique({
-          where: { vacancyId_analysisId: { vacancyId: existingVacancy.id, analysisId: analysis.id } },
+          where: { vacancyId_analysisId: { vacancyId: vacancy.id, analysisId: analysis.id } },
           select: { result: true },
         })
       : null;
     const cachedReview = cached?.result as VacancyReview | undefined;
     if (
-      existingVacancy?.sourceText === parsed.data.text &&
+      !sourceChanged &&
       cachedReview?.schemaVersion === VACANCY_ASSESSMENT_VERSION
     ) {
-      return NextResponse.json({ vacancyId: existingVacancy.id, matched: true, cached: true, result: cachedReview });
+      return NextResponse.json({ vacancyId: vacancy.id, matched: true, cached: true, result: cachedReview });
     }
 
     // Match Analyst получает только сохранённую профессиональную оценку и её
@@ -93,24 +129,13 @@ export async function POST(request: Request) {
       personaId: (analysis?.persona?.code as PersonaId | undefined) ?? "lera",
     });
 
-    const vacancy = existingVacancy
-      ? await prisma.vacancy.update({
-          where: { id: existingVacancy.id },
-          data: {
-            userId: ownerId,
-            sourceText: parsed.data.text,
-            title: result.vacancyAssessment.title,
-            review: result as Prisma.InputJsonValue,
-          },
-        })
-      : await prisma.vacancy.create({
-          data: {
-            userId: ownerId,
-            sourceText: parsed.data.text,
-            title: result.vacancyAssessment.title,
-            review: result as Prisma.InputJsonValue,
-          },
-        });
+    await prisma.vacancy.update({
+      where: { id: vacancy.id },
+      data: {
+        title: result.vacancyAssessment.title,
+        review: result as Prisma.InputJsonValue,
+      },
+    });
 
     if (analysis) {
       await prisma.vacancyMatch.upsert({

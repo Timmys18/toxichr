@@ -351,7 +351,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
           onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}
         >
           <span className="eyebrow thr-mono">Главный следующий шаг</span>
-          <b>Исправить резюме · 690 ₽</b>
+          <b>Исправить резюме · 199 ₽</b>
           <span>{problemCount === 1 ? "Разберём одно слабое место" : `Разберём слабые места: ${problemCount}`}, зададим вопросы по фактам и соберём новую версию.</span>
           <strong>Начать исправление →</strong>
         </Link>
@@ -385,7 +385,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
       {resumeId ? (
         <div className="opinion">
           <div className="hook-t">Одно резюме. Четыре разных фильтра.</div>
-          <div className="hook-s">Проверь, за что зацепится другой HR — файл загружать повторно не нужно.</div>
+          <div className="hook-s">Один дополнительный взгляд бесплатный. Файл загружать повторно не нужно; остальные голоса пока не продаём отдельно.</div>
           <div className="others">
             {ROSTER.filter((person) => person.id !== personaCode).map((person) => (
               <Link

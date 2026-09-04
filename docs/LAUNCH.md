@@ -20,14 +20,14 @@ Copy from `.env.example`. Never commit `.env`.
 
 ## Commercial beta
 
-Price: **690 ₽ one-time** for the corrected resume (“Реванш”). The full review and vacancy tools remain free.
+Цена: **199 ₽ за платное действие**: готовая новая версия резюме или match с одной вакансией. Полный разбор и самостоятельный разбор вакансии остаются бесплатными.
 
 Before switching `BETA_PAYWALL_ENABLED=true`:
 
 1. Add production YooKassa credentials.
 2. Configure YooKassa notification URL: `https://<production-host>/api/payments/yookassa/webhook` for successful/canceled payment events.
 3. Make one real low-risk production payment through `/revenge`.
-4. Confirm `Payment.status=PAID` and an `AccessGrant` appears for `productCode=resume_revenge`.
+4. Убедитесь, что `Payment.status=PAID`, а у `AccessGrant` появился `productCode=resume_rewrite` либо точный `vacancy_match:<vacancyId>`.
 5. Confirm return from YooKassa opens the same analysis and the user can build the corrected version.
 6. Confirm DOCX and print are inaccessible without the grant and available after payment.
 7. Only then set `BETA_PAYWALL_ENABLED=true` for public traffic.

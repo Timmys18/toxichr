@@ -88,6 +88,24 @@ export function EmptyState({ children, action, className }: { children: ReactNod
   return <div className={cn("ds-empty-state", className)}><p>{children}</p>{action}</div>;
 }
 
+export function PaymentPrompt({
+  title,
+  description,
+  price,
+  action,
+  secondary,
+  className,
+}: {
+  title: ReactNode;
+  description: ReactNode;
+  price: ReactNode;
+  action: ReactNode;
+  secondary?: ReactNode;
+  className?: string;
+}) {
+  return <section className={cn("ds-payment-prompt", className)} aria-label="Оплата действия"><div><SectionLabel>Платное действие</SectionLabel><h2>{title}</h2><p>{description}</p></div><div className="ds-payment-prompt-action"><b>{price}</b>{action}{secondary ? <span>{secondary}</span> : null}</div></section>;
+}
+
 export function InlineLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
   return <Link href={href} className={cn("ds-inline-link", className)}>{children}</Link>;
 }

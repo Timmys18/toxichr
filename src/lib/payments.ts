@@ -1,9 +1,35 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
-export const REVENGE_PRODUCT_CODE = "resume_revenge";
-export const REVENGE_PRICE_RUB = 690;
-const REVENGE_PRICE_MINOR = REVENGE_PRICE_RUB * 100;
+/**
+ * В бете продаётся не «премиум-доступ», а одно конкретное действие.
+ * Код match включает vacancyId, поэтому оплата одной вакансии не открывает
+ * сопоставление с другой.
+ */
+export const RESUME_REWRITE_PRODUCT_CODE = "resume_rewrite";
+export const PAID_ACTION_PRICE_RUB = 199;
+const PAID_ACTION_PRICE_MINOR = PAID_ACTION_PRICE_RUB * 100;
+
+export type PaidProduct = "resume_rewrite" | "vacancy_match";
+
+export function vacancyMatchProductCode(vacancyId: string) {
+  return `vacancy_match:${vacancyId}`;
+}
+
+export function productCodeFor(
+  product: PaidProduct,
+  vacancyId?: string | null,
+) {
+  if (product === "resume_rewrite") return RESUME_REWRITE_PRODUCT_CODE;
+  if (!vacancyId) throw new Error("Для сопоставления нужна вакансия.");
+  return vacancyMatchProductCode(vacancyId);
+}
+
+function productDescription(productCode: string) {
+  return productCode === RESUME_REWRITE_PRODUCT_CODE
+    ? "готовая новая версия резюме"
+    : "сопоставление резюме с вакансией";
+}
 
 export function isBetaPaywallEnabled() {
   return process.env.BETA_PAYWALL_ENABLED === "true";
@@ -51,13 +77,13 @@ async function yooRequest<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export async function hasRevengeAccess(analysisId: string) {
+export async function hasProductAccess(analysisId: string, productCode: string) {
   if (!isBetaPaywallEnabled()) return true;
   const grant = await prisma.accessGrant.findUnique({
     where: {
       analysisId_productCode: {
         analysisId,
-        productCode: REVENGE_PRODUCT_CODE,
+        productCode,
       },
     },
     select: { id: true },
@@ -65,12 +91,14 @@ export async function hasRevengeAccess(analysisId: string) {
   return Boolean(grant);
 }
 
-export async function createRevengeCheckout({
+export async function createProductCheckout({
   analysisId,
+  productCode,
   userId,
   returnUrl,
 }: {
   analysisId: string;
+  productCode: string;
   userId?: string | null;
   returnUrl: string;
 }) {
@@ -80,7 +108,7 @@ export async function createRevengeCheckout({
   if (!isYooKassaConfigured()) {
     throw new Error("Оплата временно не настроена.");
   }
-  if (await hasRevengeAccess(analysisId)) {
+  if (await hasProductAccess(analysisId, productCode)) {
     return { access: true as const, checkoutUrl: null };
   }
 
@@ -100,8 +128,8 @@ export async function createRevengeCheckout({
       userId: userId ?? analysis.userId,
       analysisId,
       provider: "yookassa",
-      productCode: REVENGE_PRODUCT_CODE,
-      amount: REVENGE_PRICE_MINOR,
+      productCode,
+      amount: PAID_ACTION_PRICE_MINOR,
       currency: "RUB",
       status: "PENDING",
     },
@@ -113,7 +141,7 @@ export async function createRevengeCheckout({
       headers: { "Idempotence-Key": randomUUID() },
       body: JSON.stringify({
         amount: {
-          value: REVENGE_PRICE_RUB.toFixed(2),
+          value: PAID_ACTION_PRICE_RUB.toFixed(2),
           currency: "RUB",
         },
         capture: true,
@@ -121,11 +149,11 @@ export async function createRevengeCheckout({
           type: "redirect",
           return_url: returnUrl,
         },
-        description: `ToxicHR · новая версия резюме · ${analysisId.slice(0, 8)}`,
+        description: `ToxicHR · ${productDescription(productCode)} · ${analysisId.slice(0, 8)}`,
         metadata: {
           localPaymentId: payment.id,
           analysisId,
-          productCode: REVENGE_PRODUCT_CODE,
+          productCode,
         },
       }),
     });

@@ -16,7 +16,6 @@ export function TopNav() {
       <div className="links desktop-links">
         <Link href="/hr">HR-состав</Link>
         <Link href="/vacancy">Разобрать вакансию</Link>
-        {authed ? <Link href="/vacancies">Мои вакансии</Link> : null}
         <Link href="/pricing">Цены</Link>
       </div>
 
@@ -32,7 +31,6 @@ export function TopNav() {
             <Link href="/vacancy">Разобрать вакансию</Link>
             <Link href="/hr">HR-состав</Link>
             <Link href="/pricing">Цена</Link>
-            {authed ? <Link href="/vacancies">Мои вакансии</Link> : null}
           </div>
         </details>
       </div>

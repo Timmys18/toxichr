@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { REVENGE_PRICE_RUB } from "@/lib/payments";
+import { PAID_ACTION_PRICE_RUB } from "@/lib/payments";
 
 function allowedEmails() {
   return (process.env.OPS_EMAILS ?? "")
@@ -123,7 +123,7 @@ export default async function FunnelPage({
         </div>
 
         <section className="commercial">
-          <div className="section-title"><h2>Деньги</h2><span>{paid} оплат · {revenueRub.toLocaleString("ru-RU")} ₽ выручки · цена {REVENGE_PRICE_RUB} ₽</span></div>
+          <div className="section-title"><h2>Деньги</h2><span>{paid} оплат · {revenueRub.toLocaleString("ru-RU")} ₽ выручки · базовая цена действия {PAID_ACTION_PRICE_RUB} ₽</span></div>
           <div className="funnel">
             {funnel.map(([label, value], index) => {
               const previous = index === 0 ? value : funnel[index - 1][1];

@@ -9,6 +9,7 @@ import {
   EmptyState,
   EvidenceItem,
   PageContainer,
+  PaymentPrompt,
   PrimaryAction,
   SectionLabel,
   SummaryRail,
@@ -45,6 +46,8 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const [draftState, setDraftState] = useState<"idle" | "restored" | "saving" | "saved">("idle");
   const [resultStale, setResultStale] = useState(false);
   const [editorOpen, setEditorOpen] = useState(!vacancyId);
+  const [matchPaywall, setMatchPaywall] = useState<{ vacancyId: string; priceRub: number } | null>(null);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
 
   useEffect(() => {
     track("vacancy_review_opened", { analysisId: analysisId ?? null, source: analysisId ? "resume_result" : "direct" });
@@ -72,9 +75,42 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     setBusy(true); setError(null);
     try {
       const response = await fetch("/api/vacancies/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, analysisId, vacancyId: savedVacancyId || undefined }) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
+      const data = await response.json();
+      if (response.status === 402 && data.paymentRequired && data.vacancyId) {
+        setSavedVacancyId(data.vacancyId);
+        setMatchPaywall({ vacancyId: data.vacancyId, priceRub: Number(data.priceRub) || 199 });
+        track("paywall_viewed", { analysisId, vacancyId: data.vacancyId, product: "vacancy_match" });
+        return;
+      }
+      if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
       setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (analysisId) clearPendingVacancy();
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Ошибка разбора"); } finally { setBusy(false); }
+  }
+
+  async function checkoutMatch() {
+    if (!analysisId || !matchPaywall || checkoutBusy) return;
+    setCheckoutBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/payments/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analysisId, product: "vacancy_match", vacancyId: matchPaywall.vacancyId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Не удалось начать оплату");
+      if (data.access) {
+        setMatchPaywall(null);
+        await submit();
+        return;
+      }
+      if (!data.checkoutUrl) throw new Error("Не получили ссылку на оплату");
+      window.location.assign(data.checkoutUrl);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Ошибка оплаты");
+    } finally {
+      setCheckoutBusy(false);
+    }
   }
 
   const review = useMemo(() => result ? { assessment: result.vacancyAssessment, match: result.matchAssessment, persona: result.persona } : null, [result]);
@@ -95,6 +131,13 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     {resultStale ? <p className="ds-comparison-stale-note" role="status">Текст изменился. Результат ниже относится к прошлой версии.</p> : null}
     {error ? <p className="ds-comparison-error" role="alert">{error}</p> : null}
     {canSubmit || (!result && showEditor) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
+    {matchPaywall ? <PaymentPrompt
+      title="Узнать, подходишь ли ты на эту роль"
+      description="Вакансия сохранена. После оплаты Match Analyst сверит требования только с подтверждённым опытом и покажет, что реально работает на отклик."
+      price={`${matchPaywall.priceRub} ₽`}
+      action={<button type="button" className="thr-btn thr-btn-tox" onClick={() => void checkoutMatch()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Оплатить ${matchPaywall.priceRub} ₽`}</button>}
+      secondary="Одна вакансия и одно резюме. Новую версию резюме это не открывает."
+    /> : null}
 
     {review ? <div className="ds-comparison-result">
       {review.match ? <VerdictBlock title={review.match.decision.headline} summary={<>{review.match.decision.reasoning} {review.persona.comment}</>} metrics={decisionMetrics(review.match)} /> : <VerdictBlock title="Вакансия разобрана" summary={<>{review.assessment.roleReality} {review.persona.comment}</>} />}
@@ -122,7 +165,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
           {review.assessment.employerQuestions.length ? <CollapsibleSection title="Что спросить работодателя"><ol>{review.assessment.employerQuestions.map((item) => <li key={item}>{item}</li>)}</ol></CollapsibleSection> : null}
         </section>
       </>}
-      <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Адаптировать резюме под вакансию →</Link>} hint="Только на основании подтверждённого опыта" secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} />
+      <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? "Готовая новая версия — отдельное действие за 199 ₽" : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} />
     </div> : null}
   </PageContainer>;
 }
