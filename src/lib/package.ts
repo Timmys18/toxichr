@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export const TOXICHR_PACKAGE_PRODUCT_CODE = "toxichr_package";
 export const TOXICHR_PACKAGE_PRICE_RUB = 199;
 const PACKAGE_PRICE_MINOR = TOXICHR_PACKAGE_PRICE_RUB * 100;
+const PACKAGE_RESERVATION_TTL_MS = 15 * 60 * 1000;
 
 export const PACKAGE_LIMITS = {
   MATCH: 5,
@@ -232,8 +233,22 @@ export async function reservePackageAction({
     });
     if (existing?.status === "COMPLETED") return { reservationId: null, reused: true };
     if (existing?.status === "PENDING") {
-      throw new PackageAccessError("Это действие уже выполняется. Подожди готовый результат.", 409, "in_progress");
+      if (existing.createdAt.getTime() <= Date.now() - PACKAGE_RESERVATION_TTL_MS) {
+        await tx.packageUsage.delete({ where: { id: existing.id } });
+      } else {
+        throw new PackageAccessError("Это действие уже выполняется. Подожди готовый результат.", 409, "in_progress");
+      }
     }
+
+    // Незавершённый запрос после падения процесса не становится использованным
+    // действием и не должен уменьшать доступный лимит навсегда.
+    await tx.packageUsage.deleteMany({
+      where: {
+        packageId: current.id,
+        status: "PENDING",
+        createdAt: { lte: new Date(Date.now() - PACKAGE_RESERVATION_TTL_MS) },
+      },
+    });
 
     const used = await tx.packageUsage.count({
       where: { packageId: current.id, kind: kind as PackageUsageKind, status: { in: ["PENDING", "COMPLETED"] } },

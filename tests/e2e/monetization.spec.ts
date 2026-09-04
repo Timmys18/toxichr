@@ -58,7 +58,18 @@ test("платный match закрыт сервером, а самостоят�
   expect(access.status()).toBe(200);
   expect(await access.json()).toMatchObject({ paywallEnabled: true, hasPackage: false, priceRub: 199 });
 
-  await prisma.toxicHrPackage.create({ data: { resumeId, source: "test" } });
+  const testPackage = await prisma.toxicHrPackage.create({ data: { resumeId, source: "test" } });
+  // Имитируем оборванный старый запрос: следующая попытка обязана освободить
+  // бронь, а не считать её использованным match.
+  await prisma.packageUsage.create({
+    data: {
+      packageId: testPackage.id,
+      kind: "MATCH",
+      status: "PENDING",
+      dedupeKey: "abandoned-match",
+      createdAt: new Date(Date.now() - 16 * 60 * 1000),
+    },
+  });
   const paidMatch = await request.post("/api/vacancies/review", { data: { text: VACANCY, analysisId, vacancyId: paywall.vacancyId } });
   expect(paidMatch.status()).toBe(200);
 
