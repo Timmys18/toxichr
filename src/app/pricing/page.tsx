@@ -30,7 +30,7 @@ const REVENGE = [
 export default function PricingPage() {
   return (
     <ServicePage>
-      <div className="flex flex-1 flex-col">
+      <main id="main" className="flex flex-1 flex-col">
         <section className="pricing">
           <div className="ph">
             <div className="over thr-mono">Цены без сюрпризов</div>
@@ -74,7 +74,7 @@ export default function PricingPage() {
             <p>Бесплатно ты видишь основной разбор, один второй взгляд, share и самостоятельный разбор вакансии. 199 ₽ — это либо готовая новая версия, либо match с конкретной вакансией. Это независимые действия.</p>
           </div>
         </section>
-      </div>
+      </main>
 
       <style>{`
         .pricing{width:100%;max-width:1000px;box-sizing:border-box;margin:0 auto;padding:48px 40px 90px}.pricing .ph{text-align:center;max-width:720px;margin:0 auto}.pricing .over{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}.pricing h1{font-weight:800;font-size:clamp(32px,4.4vw,54px);line-height:1.04;letter-spacing:-.04em;margin-top:16px}.pricing h1 span{color:var(--tox)}.pricing .ph p{max-width:58ch;margin:18px auto 0;font-size:16px;line-height:1.6;color:var(--dim)}
