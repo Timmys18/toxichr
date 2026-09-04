@@ -40,6 +40,18 @@ test("платный match закрыт сервером, а самостоят�
   });
   expect(paywall.vacancyId).toBeTruthy();
 
+  const forgedCheckout = await request.post("/api/payments/checkout", {
+    data: {
+      analysisId,
+      product: "vacancy_match",
+      vacancyId: "vacancy-id-that-was-never-saved",
+    },
+  });
+  expect(forgedCheckout.status()).toBe(404);
+  expect(await forgedCheckout.json()).toMatchObject({
+    error: "Вакансия не найдена или недоступна.",
+  });
+
   const access = await request.get(`/api/payments/access?analysisId=${analysisId}&product=vacancy_match&vacancyId=${paywall.vacancyId}`);
   expect(access.status()).toBe(200);
   expect(await access.json()).toMatchObject({ paywallEnabled: true, hasAccess: false, priceRub: 199 });

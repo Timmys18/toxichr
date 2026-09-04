@@ -7,6 +7,11 @@ import {
   productCodeFor,
   type PaidProduct,
 } from "@/lib/payments";
+import {
+  ImprovementAccessError,
+  loadImprovementContext,
+} from "@/lib/improvement-server";
+import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
@@ -15,6 +20,32 @@ const BodySchema = z.object({
   product: z.enum(["resume_rewrite", "vacancy_match"]),
   vacancyId: z.string().min(1).optional(),
 });
+
+async function assertVacancyMatchCheckoutContext({
+  analysisId,
+  vacancyId,
+  currentUserId,
+}: {
+  analysisId: string;
+  vacancyId: string;
+  currentUserId?: string | null;
+}) {
+  const analysis = await loadImprovementContext(analysisId, currentUserId);
+  // Вакансия могла быть создана уже после входа пользователя, хотя сам
+  // бесплатный разбор начался в гостевом режиме. Используем ту же логику
+  // владельца, что и при сохранении вакансии в /api/vacancies/review.
+  const ownerId = currentUserId ?? analysis.userId ?? null;
+  const vacancy = await prisma.vacancy.findFirst({
+    where: { id: vacancyId, userId: ownerId },
+    select: { id: true },
+  });
+
+  if (!vacancy) {
+    // Не раскрываем, существует ли чужая вакансия, и не создаём платёж
+    // для произвольного productCode.
+    throw new ImprovementAccessError("Вакансия не найдена или недоступна.", 404);
+  }
+}
 
 export async function POST(request: Request) {
   const limited = rateLimit(`checkout:${clientIp(request)}`, 10, 60_000);
@@ -32,6 +63,25 @@ export async function POST(request: Request) {
   }
 
   const session = await auth();
+  if (parsed.data.product === "vacancy_match") {
+    try {
+      await assertVacancyMatchCheckoutContext({
+        analysisId: parsed.data.analysisId,
+        vacancyId: parsed.data.vacancyId!,
+        currentUserId: session?.user?.id,
+      });
+    } catch (error) {
+      if (error instanceof ImprovementAccessError) {
+        return NextResponse.json({ error: error.message }, { status: error.status });
+      }
+      console.error(error);
+      return NextResponse.json(
+        { error: "Не удалось проверить сохранённую вакансию." },
+        { status: 500 },
+      );
+    }
+  }
+
   const origin = new URL(request.url).origin;
   const productCode = productCodeFor(
     parsed.data.product as PaidProduct,
