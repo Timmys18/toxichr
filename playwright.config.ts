@@ -44,7 +44,7 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"], ...localBrowser },
-      testIgnore: /(mobile|monetization)\.spec\.ts/,
+      testIgnore: /(mobile|monetization|adaptation)\.spec\.ts/,
     },
     {
       name: "mobile-chromium",
