@@ -123,7 +123,7 @@ export function CabinetClient({
                 <p>Сопоставления: осталось {packageStatus.matchesRemaining} из 5</p>
                 <p>Повторные проверки: осталось {packageStatus.rechecksRemaining} из 5</p>
                 <p>Улучшение: {packageStatus.improvementUsed ? "использовано" : "доступно"}</p>
-                <p>Адаптация под вакансию: {packageStatus.adaptationUsed ? "использована" : "доступна в следующем этапе"}</p>
+                <p>Адаптация под вакансию: {packageStatus.adaptationUsed ? "использована" : "доступна"}</p>
               </> : <><p>Один пакет за 199 ₽ открывает персональную работу с этим резюме.</p><Link href={`/revenge?analysisId=${last.id}`}>Открыть пакет →</Link></>}
             </div>
             <div className="panel">

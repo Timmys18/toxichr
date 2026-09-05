@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "./button";
@@ -54,7 +54,7 @@ export function SummaryRail({ title, meta, action, className }: { title: ReactNo
 
 export type Metric = { value: ReactNode; label: ReactNode };
 export function MetricStrip({ items, className }: { items: Metric[]; className?: string }) {
-  return <div className={cn("ds-metric-strip", className)}>{items.map((item, index) => <div key={index}><b>{item.value}</b><span>{item.label}</span></div>)}</div>;
+  return <div className={cn("ds-metric-strip", className)} style={{ "--metrics-count": items.length } as CSSProperties}>{items.map((item, index) => <div key={index}><b>{item.value}</b><span>{item.label}</span></div>)}</div>;
 }
 
 export function VerdictBlock({ label = "Вердикт", title, summary, metrics, className }: { label?: ReactNode; title: ReactNode; summary: ReactNode; metrics?: Metric[]; className?: string }) {
@@ -71,6 +71,26 @@ export function EvidenceQuote({ children, className }: { children: ReactNode; cl
 
 export function EvidenceItem({ title, description, quote, className }: { title: ReactNode; description: ReactNode; quote?: ReactNode; className?: string }) {
   return <article className={cn("ds-evidence-item", className)}><b>{title}</b><p>{description}</p>{quote ? <EvidenceQuote>{quote}</EvidenceQuote> : null}</article>;
+}
+
+export function QuestionField({
+  label,
+  hint,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  id,
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  id?: string;
+}) {
+  return <label className="ds-question-field" htmlFor={id}><b>{label}</b>{hint ? <span>{hint}</span> : null}<textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} disabled={disabled} rows={5} maxLength={1_500} /></label>;
 }
 
 export function PrimaryAction(props: ButtonProps) { return <Button {...props} variant="primary" className={cn("ds-primary-action", props.className)} />; }

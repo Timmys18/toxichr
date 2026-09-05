@@ -10,6 +10,7 @@ import {
   PageShell,
   PageTitle,
   PrimaryAction,
+  QuestionField,
   SectionLabel,
   SecondaryAction,
   SummaryRail,
@@ -63,6 +64,11 @@ export default function UiKitPage() {
           <SectionLabel>Вторичные блоки</SectionLabel>
           <CollapsibleSection title="Риски и словесный шум"><p>Показываем как дополнительный материал: спокойно и без конкуренции с вердиктом.</p></CollapsibleSection>
           <EmptyState action={<PrimaryAction href="/vacancy">Разобрать вакансию</PrimaryAction>}>Прямых совпадений пока нет. Не приписываем опыт, которого резюме не доказывает.</EmptyState>
+        </section>
+
+        <section className="ui-block">
+          <SectionLabel>Уточнение факта</SectionLabel>
+          <QuestionField label="Что именно изменилось после твоего действия?" hint="Показываем источник и просим только подтверждённый факт." value="" onChange={() => undefined} placeholder="Напиши факты обычными словами" />
         </section>
 
         <CommandRail primary={<span>Исправить резюме →</span>} hint="Только на основании подтверждённого опыта" secondary={<SecondaryAction href="/vacancy">Другая вакансия</SecondaryAction>} />

@@ -57,6 +57,7 @@ model User {
   payments            Payment[]
   grants              AccessGrant[]
   improvements        ResumeImprovement[]
+  adaptations         ResumeAdaptation[]
   vacancies           Vacancy[]
   vacancyMatches      VacancyMatch[]
   packages            ToxicHrPackage[]
@@ -107,6 +108,7 @@ model ResumeVersion {
   candidateProfile  CandidateProfile?
   analyses          Analysis[]
   improvement       ResumeImprovement?
+  adaptation        ResumeAdaptation?
 }
 
 model CandidateProfile {
@@ -159,6 +161,8 @@ model Analysis {
   payments        Payment[]
   grants          AccessGrant[]
   improvements    ResumeImprovement[]
+  adaptations     ResumeAdaptation[]
+  rechecksForAdaptation ResumeAdaptation[] @relation("AdaptationRecheck")
   vacancyMatches  VacancyMatch[]
 }
 
@@ -182,6 +186,29 @@ model ResumeImprovement {
   @@index([userId, updatedAt])
 }
 
+model ResumeAdaptation {
+  id                String         @id @default(cuid())
+  analysisId        String
+  analysis          Analysis       @relation(fields: [analysisId], references: [id])
+  vacancyId         String
+  vacancy           Vacancy        @relation(fields: [vacancyId], references: [id])
+  userId            String?
+  user              User?          @relation(fields: [userId], references: [id])
+  resumeVersionId   String?        @unique
+  resumeVersion     ResumeVersion? @relation(fields: [resumeVersionId], references: [id])
+  recheckAnalysisId String?        @unique
+  recheckAnalysis   Analysis?      @relation("AdaptationRecheck", fields: [recheckAnalysisId], references: [id])
+  status            String         @default("questions")
+  answers           Json?
+  changes           Json?
+  adaptedText       String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([vacancyId, analysisId])
+  @@index([userId, updatedAt])
+}
+
 model Vacancy {
   id         String         @id @default(cuid())
   userId     String?
@@ -193,6 +220,7 @@ model Vacancy {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
   matches    VacancyMatch[]
+  adaptations ResumeAdaptation[]
 
   @@index([userId, updatedAt])
 }

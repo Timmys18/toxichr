@@ -62,7 +62,8 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   useEffect(() => {
     track("vacancy_review_opened", { analysisId: analysisId ?? null, source: analysisId ? "resume_result" : "direct" });
     if (vacancyId) {
-      void fetch(`/api/vacancies/${vacancyId}`).then(async (response) => {
+      const source = `/api/vacancies/${vacancyId}${analysisId ? `?analysisId=${encodeURIComponent(analysisId)}` : ""}`;
+      void fetch(source).then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "Вакансия не найдена");
         setText(data.text ?? ""); setResult((data.result as VacancyReview | null) ?? null); setEditorOpen(!data.result);
@@ -188,7 +189,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
           {review.assessment.employerQuestions.length ? <CollapsibleSection title="Что спросить работодателя"><ol>{review.assessment.employerQuestions.map((item) => <li key={item}>{item}</li>)}</ol></CollapsibleSection> : null}
         </section>
       </>}
-      <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? "Адаптация под эту вакансию уже входит в пакет и появится в Sprint 2." : "Адаптация под эту вакансию уже использована." : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} />
+      <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : packageState?.adaptationAvailable && savedVacancyId ? <Link href={`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(savedVacancyId)}`}>Адаптировать резюме под вакансию →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? "Адаптация под эту вакансию входит в пакет. Сначала подтвердим только нужные факты." : "Адаптация под эту вакансию уже использована. Проверь новую версию." : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} />
     </div> : null}
   </PageContainer>;
 }

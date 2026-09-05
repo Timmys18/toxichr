@@ -390,7 +390,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         <div className="paywall" role="dialog" aria-label="Оплата новой версии">
           <div className="pw-top"><span className="thr-mono">Пакет ToxicHR</span><strong>{access.priceRub} ₽</strong></div>
           <h2>Факты собраны. Открой пакет и переходи к новой версии.</h2>
-          <p>В пакет входят все HR-взгляды, 5 сопоставлений, одно улучшение, будущая адаптация под вакансию и 5 повторных проверок.</p>
+          <p>В пакет входят все HR-взгляды, 5 сопоставлений, одно улучшение, адаптация под вакансию и 5 повторных проверок.</p>
           <div className="pw-proof"><b>Что покупаешь</b><span>Один пакет для этого резюме</span><span>Только на твоих фактах — без выдуманных достижений</span><span>Один платёж, без подписки и доплат внутри</span></div>
           <button type="button" className="thr-btn thr-btn-tox pay" onClick={() => void checkout()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Оплатить пакет ${access.priceRub} ₽`}</button>
           <button type="button" className="later" onClick={() => setPaywallOpen(false)}>Вернуться к ответам</button>

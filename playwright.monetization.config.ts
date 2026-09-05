@@ -7,7 +7,7 @@ process.env.DATABASE_URL = "file:/tmp/toxichr-e2e.db";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: /monetization\.spec\.ts/,
+  testMatch: /(monetization|adaptation)\.spec\.ts/,
   fullyParallel: false,
   timeout: 120_000,
   expect: { timeout: 15_000 },

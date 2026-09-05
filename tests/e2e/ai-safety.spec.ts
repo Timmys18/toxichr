@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import {
   isGroundedImprovementText,
+  isGroundedAdaptationText,
   isUsefulImprovementAnswer,
+  selectSafeAdaptationReplacement,
   selectSafeReplacement,
 } from "../../src/lib/improvement";
 import type { Problem } from "../../src/lib/ai/schemas";
@@ -156,6 +158,19 @@ test("бессодержательный ответ не считается фа
       "Не помню точную цифру, но провёл интервью с пользователями.",
     ),
   ).toBe("Проводил интервью с пользователями.");
+});
+
+test("адаптация сохраняет исходное действие и не принимает новый факт от модели", () => {
+  const original = "Проводила интервью с пользователями и формировала дорожную карту.";
+  const answer = "Лично провела 8 интервью и проверила две гипотезы.";
+  const fabricated = "Провела 8 интервью, внедрила Amplitude и увеличила конверсию на 30%.";
+
+  expect(isGroundedAdaptationText(fabricated, original, answer)).toBe(false);
+  expect(selectSafeAdaptationReplacement(original, answer, fabricated)).toBe(
+    "Проводила интервью с пользователями и формировала дорожную карту. Лично провела 8 интервью и проверила две гипотезы.",
+  );
+  expect(isGroundedAdaptationText("Проводила интервью с пользователями и формировала дорожную карту. Лично провела 8 интервью и проверила две гипотезы.", original, answer)).toBe(true);
+  expect(selectSafeAdaptationReplacement(original, "не знаю", fabricated)).toBe(original);
 });
 
 test("сломанный JSON вакансии отклоняется до использования в интерфейсе", () => {

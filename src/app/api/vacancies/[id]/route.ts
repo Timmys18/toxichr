@@ -3,20 +3,25 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth();
-  if (!session?.user?.id) {
+  const requestedAnalysisId = new URL(request.url).searchParams.get("analysisId");
+  if (!session?.user?.id && !requestedAnalysisId) {
     return NextResponse.json({ error: "Нужен вход." }, { status: 401 });
   }
 
   const { id } = await params;
   const vacancy = await prisma.vacancy.findFirst({
-    where: { id, userId: session.user.id },
+    where: session?.user?.id
+      ? { id, OR: [{ userId: session.user.id }, { userId: null }] }
+      : { id, userId: null, matches: { some: { analysisId: requestedAnalysisId! } } },
     include: {
       matches: {
-        where: { userId: session.user.id },
+        where: requestedAnalysisId
+          ? { analysisId: requestedAnalysisId }
+          : { userId: session?.user?.id },
         orderBy: { updatedAt: "desc" },
         select: { analysisId: true, result: true },
       },

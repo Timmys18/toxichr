@@ -244,6 +244,41 @@ export function selectSafeReplacement(
     : fallback;
 }
 
+/**
+ * Для адаптации ответ кандидата — подтверждённый источник факта, но исходная
+ * строка остаётся обязательной опорой. Так новый масштаб не вытесняет действие,
+ * которое уже было в резюме.
+ */
+export function isGroundedAdaptationText(
+  candidate: string,
+  original: string,
+  answer: string,
+): boolean {
+  const candidateTokens = groundingTokens(candidate);
+  const originalTokens = groundingTokens(original);
+  const answerTokens = groundingTokens(answer);
+  if (!candidateTokens.length || !originalTokens.length || !answerTokens.length) return false;
+  const allowed = [...originalTokens, ...answerTokens];
+  return (
+    isOrderedSubsequence(candidateTokens, allowed) &&
+    isOrderedSubsequence(contentTokens(original), contentTokens(candidate)) &&
+    numbers(original).every((number) => numbers(candidate).includes(number))
+  );
+}
+
+export function selectSafeAdaptationReplacement(
+  original: string,
+  answer: string,
+  aiCandidate?: string,
+): string {
+  const fact = usefulImprovementFact(answer);
+  if (!fact) return original;
+  const candidate = aiCandidate?.replace(/\s+/g, " ").trim();
+  if (candidate && isGroundedAdaptationText(candidate, original, fact)) return candidate;
+  const base = original.replace(/[.!?;:]+$/, "").trim();
+  return `${base}. ${fact.charAt(0).toUpperCase()}${fact.slice(1)}`;
+}
+
 const AiReplacementsSchema = z.object({
   replacements: z
     .array(
