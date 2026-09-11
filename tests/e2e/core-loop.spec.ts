@@ -42,8 +42,16 @@ test("полный путь: два HR → редактор → вакансия
   const firstAnalysisId = new URL(improvementHref!, "http://local").searchParams.get("analysisId");
   expect(firstAnalysisId).toBeTruthy();
 
+  await page.getByRole("button", { name: "Поделиться", exact: true }).click();
+  await expect(page.getByText("Ссылка готова", { exact: true })).toBeVisible();
+  const publicShareHref = await page.locator(".sharelink a").getAttribute("href");
+  expect(publicShareHref).toMatch(/\/toast\//);
+
   await page.getByRole("link", { name: /Тамара/i }).click();
   await expect(page).toHaveURL(/personaId=tamara/);
+  await expect(page.locator(".presence .nm")).toHaveText("Тамара Петровна");
+  await expect(page.locator(".presence .st")).toContainText("заключение готово", { timeout: 60_000 });
+  await page.reload();
   await expect(page.locator(".presence .nm")).toHaveText("Тамара Петровна");
   await expect(page.locator(".presence .st")).toContainText("заключение готово", { timeout: 60_000 });
 
@@ -76,6 +84,10 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByLabel("Текст вакансии").fill(VACANCY);
   await page.getByRole("button", { name: "Сопоставить с резюме" }).click();
   await expect(page.getByText(/Вакансия сохранена · \d+ знаков/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: /Откликайся|Сначала поправь резюме|Не трать время/ })).toBeVisible();
+  const matchedVacancyUrl = page.url();
+  await page.reload();
+  await expect(page).toHaveURL(matchedVacancyUrl);
   await expect(page.getByRole("heading", { name: /Откликайся|Сначала поправь резюме|Не трать время/ })).toBeVisible();
 
   const email = `e2e-${Date.now()}@example.com`;
