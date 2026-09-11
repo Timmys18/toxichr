@@ -419,3 +419,9 @@
 - `/session` переведён на системные `PageContainer`, `VerdictBlock`, `EditorialSection`, `EvidenceItem`, `SurfacePanel`, `EmptyState` и общие действия без изменения streaming/persona-логики.
 - Два больших встроенных global-style блока удалены; правила результата перенесены в общий scoped-слой `product-flows.css`, поэтому короткие классы результата больше не затрагивают другие страницы.
 - Состояние ошибки проверено глазами на desktop/mobile без horizontal overflow; добавлена точечная mobile-регрессия. Готовый отчёт будет повторно пройден в финальном journey Sprint 3.
+
+## Sprint 3 — rewrite, 11.09.2026
+
+- `/revenge` использует общие `PageIntro`, `InfoNote`, `QuestionField`, `EvidenceQuote`, `SurfacePanel` и системные действия; логика черновика, доступа, оплаты, grounding и сохранения версии не менялась.
+- Большой page-local style block удалён и перенесён в изолированный `.revenge`-контур общего `product-flows.css`; важный текст формы, оплаты и результата приведён минимум к 16 px.
+- Недоступный разбор визуально проверен на desktop/mobile без overflow и закреплён точечной mobile-регрессией. Полный rewrite с результатом остаётся частью финального journey.

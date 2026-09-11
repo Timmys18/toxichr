@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "./button";
@@ -185,8 +185,8 @@ export function HistoryRow({ href, status, title, meta, aside, tone = "neutral" 
   </Link>;
 }
 
-export function SurfacePanel({ children, className, label, action }: { children: ReactNode; className?: string; label?: ReactNode; action?: ReactNode }) {
-  return <section className={cn("ds-surface-panel", className)}>
+export function SurfacePanel({ children, className, label, action, ...props }: { children: ReactNode; className?: string; label?: ReactNode; action?: ReactNode } & HTMLAttributes<HTMLElement>) {
+  return <section className={cn("ds-surface-panel", className)} {...props}>
     {label || action ? <header><SectionLabel>{label}</SectionLabel>{action}</header> : null}
     {children}
   </section>;

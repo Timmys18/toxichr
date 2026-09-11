@@ -68,6 +68,15 @@ test("ошибка разбора остаётся в общем mobile-конт
   );
 });
 
+test("rewrite сохраняет общий mobile-контур при недоступном разборе", async ({ page }) => {
+  await page.goto("/revenge?analysisId=missing");
+  await expect(page.getByRole("heading", { name: "Теперь исправим то, что HR разнёс." })).toBeVisible();
+  await expect(page.getByText("Разбор не найден.")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    await page.evaluate(() => window.innerWidth + 1),
+  );
+});
+
 test("мобильная вакансия объясняет минимум текста и сохраняет черновик", async ({ page }) => {
   await page.goto("/vacancy");
 
