@@ -436,3 +436,9 @@
 
 - Перед единственным `suite=full` проверены quick-runs: облачный typecheck выявил зависимость корневой страницы от сгенерированного dev-only глобального `PageProps`.
 - Главная получила явный тип `searchParams`, доступный в чистом CI checkout. Полный run не был потрачен на заведомо красный SHA.
+
+## Sprint 3 закрыт, Sprint 4 начат — 11.09.2026
+
+- Итоговый исполняемый SHA Sprint 3: `95159c5`.
+- GitHub Actions `34644236839`, `suite=full`: зелёные build, lint, typecheck, safety, persona, vacancy, monetization и E2E; все восемь jobs выполнены без пропусков.
+- Sprint 3 отмечен COMPLETE. Сводка release plan синхронизирована: Sprint 2 и Sprint 3 закрыты, активен Sprint 4 — Full Journey & States.

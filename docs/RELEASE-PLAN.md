@@ -1,7 +1,7 @@
 # ToxicHR — Release Plan до закрытой беты
 
 > Статус: **ACTIVE**
-> Текущий спринт: **Sprint 3 — UX & Design Unification**
+> Текущий спринт: **Sprint 4 — Full Journey & States**
 > Правило: не добавлять новые продуктовые направления, пока основной путь не проходит Definition of Done ниже.
 
 ## Цель релиза
@@ -169,7 +169,7 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 3 — UX & Design Unification
 
-> Статус: **ACTIVE · 11.09.2026**
+> Статус: **COMPLETE · 11.09.2026**
 
 ## Цель
 
@@ -227,11 +227,14 @@ Sprint считается закрытым только если вручную 
 - Основные экраны используют page templates и примитивы `src/components/ui/system.tsx`; новые паттерны сначала отражены в `/ui-kit`.
 - HR-состав, pricing, auth, история вакансий, кабинет, результат разбора и rewrite больше не держат самостоятельные большие page-local style blocks.
 - Vacancy-only, vacancy match и adaptation уже используют общий comparison/result-контур. Главная остаётся исходной визуальной точкой продукта и использует общий landing template.
-- Desktop/mobile-проверки изменённых экранов и точечные регрессии зелёные. Sprint остаётся ACTIVE до команды Product Owner на итоговую тяжёлую проверку и одного GitHub Actions `suite=full`.
+- Desktop/mobile-проверки изменённых экранов и точечные регрессии зелёные.
+- Финальный GitHub Actions `suite=full` на `95159c5` завершён успешно: build, lint, typecheck, safety, persona, vacancy, monetization и E2E выполнены без пропусков. Run: https://github.com/Timmys18/toxichr/actions/runs/34644236839
 
 ---
 
 # Sprint 4 — Full Journey & States
+
+> Статус: **ACTIVE · 11.09.2026**
 
 ## Цель
 
@@ -391,8 +394,8 @@ Sprint считается закрытым только если вручную 
 
 - Sprint 1 — COMPLETE
 - Sprint 1.1 — COMPLETE
-- Sprint 2 — **ACTIVE**
-- Sprint 3 — PLANNED
-- Sprint 4 — PLANNED
+- Sprint 2 — COMPLETE
+- Sprint 3 — COMPLETE
+- Sprint 4 — **ACTIVE**
 - Sprint 5 — PLANNED
 - Sprint 6 — PLANNED
