@@ -425,3 +425,9 @@
 - `/revenge` использует общие `PageIntro`, `InfoNote`, `QuestionField`, `EvidenceQuote`, `SurfacePanel` и системные действия; логика черновика, доступа, оплаты, grounding и сохранения версии не менялась.
 - Большой page-local style block удалён и перенесён в изолированный `.revenge`-контур общего `product-flows.css`; важный текст формы, оплаты и результата приведён минимум к 16 px.
 - Недоступный разбор визуально проверен на desktop/mobile без overflow и закреплён точечной mobile-регрессией. Полный rewrite с результатом остаётся частью финального journey.
+
+## Sprint 3 — реализация по scope завершена, 11.09.2026
+
+- Gap-аудит подтвердил общий системный контур для главной, результата, vacancy-only/match, rewrite/adaptation, HR-состава, pricing, auth и кабинета.
+- В продуктовых страницах Sprint 3 не осталось больших page-local style blocks; стили сложных result-flow изолированы по корневым классам в общем `product-flows.css`.
+- Тяжёлая финальная проверка намеренно не запущена по указанию Product Owner. Sprint остаётся ACTIVE до отдельной команды на полный journey и единственный GitHub `suite=full`.

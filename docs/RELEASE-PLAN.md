@@ -222,6 +222,13 @@ Sprint считается закрытым только если вручную 
 - нет случайных карточек/стилей;
 - нет horizontal overflow и визуальных провалов на mobile.
 
+## Текущий прогресс
+
+- Основные экраны используют page templates и примитивы `src/components/ui/system.tsx`; новые паттерны сначала отражены в `/ui-kit`.
+- HR-состав, pricing, auth, история вакансий, кабинет, результат разбора и rewrite больше не держат самостоятельные большие page-local style blocks.
+- Vacancy-only, vacancy match и adaptation уже используют общий comparison/result-контур. Главная остаётся исходной визуальной точкой продукта и использует общий landing template.
+- Desktop/mobile-проверки изменённых экранов и точечные регрессии зелёные. Sprint остаётся ACTIVE до команды Product Owner на итоговую тяжёлую проверку и одного GitHub Actions `suite=full`.
+
 ---
 
 # Sprint 4 — Full Journey & States
