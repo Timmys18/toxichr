@@ -7,6 +7,8 @@ import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
+import { clearPendingResume, readPendingResume, savePendingResume } from "@/lib/pending-resume";
+import { requestErrorMessage } from "@/lib/user-facing-errors";
 import styles from "./home-client.module.css";
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -19,11 +21,26 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
   const [dragActive, setDragActive] = useState(false);
   const [showPaste, setShowPaste] = useState(false);
   const [pastedText, setPastedText] = useState("");
+  const [draftRestored, setDraftRestored] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     track("landing_viewed", {});
+    const timer = window.setTimeout(() => {
+      const draft = readPendingResume();
+      if (draft) {
+        setPastedText(draft);
+        setShowPaste(true);
+        setDraftRestored(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => savePendingResume(pastedText), 300);
+    return () => window.clearTimeout(timer);
+  }, [pastedText]);
 
   const selected = ROSTER.find((person) => person.id === sel) ?? ROSTER[0];
 
@@ -54,7 +71,7 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       await updateReferral("started", { resumeId: data.resumeId }).catch(() => undefined);
       router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+      setError(requestErrorMessage(reason, "Не удалось загрузить файл. Попробуй ещё раз."));
       setBusy(false);
     }
   }, [router, sel]);
@@ -74,9 +91,10 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       if (!response.ok) throw new Error(data.error ?? "Не удалось прочитать текст");
       track("resume_uploaded", { mime: "text/plain" });
       await updateReferral("started", { resumeId: data.resumeId }).catch(() => undefined);
+      clearPendingResume();
       router.push(`/session?resumeId=${data.resumeId}&personaId=${sel}`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+      setError(requestErrorMessage(reason, "Не удалось отправить текст. Черновик сохранён — попробуй ещё раз."));
       setBusy(false);
     }
   }, [pastedText, router, sel]);
@@ -159,7 +177,7 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
           <div><b>Резюме без файла</b><span className="thr-mono">{pastedLength} / 60 000</span></div>
           <textarea
             value={pastedText}
-            onChange={(event) => setPastedText(event.target.value)}
+            onChange={(event) => { setPastedText(event.target.value); setDraftRestored(false); }}
             placeholder="Опыт, проекты, результаты, образование…"
             rows={8}
             aria-label="Текст резюме"
@@ -167,7 +185,9 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
             aria-describedby="paste-requirement"
           />
           <p id="paste-requirement" aria-live="polite">
-            {pastedLength === 0
+            {draftRestored
+              ? "Черновик восстановлен. Проверь текст и продолжай."
+              : pastedLength === 0
               ? "Нужно минимум 80 символов — обычно это несколько строк об опыте."
               : missingPasteChars > 0
                 ? `Добавьте ещё ${missingPasteChars} симв. — и можно запускать разбор.`

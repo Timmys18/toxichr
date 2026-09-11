@@ -25,6 +25,23 @@ test("мобильная главная не вылезает за экран и
   await expect(page.getByRole("button", { name: /Отдать текст/ })).toBeDisabled();
 });
 
+test("черновик резюме переживает refresh и back/forward", async ({ page }) => {
+  const draft = "Product Manager. Проводил исследования пользователей, запускал эксперименты, работал с метриками и координировал команду разработки.";
+  await page.goto("/");
+  await page.getByRole("button", { name: "Вставить текст" }).click();
+  await page.getByLabel("Текст резюме").fill(draft);
+  await page.waitForTimeout(350);
+  await page.reload();
+  await expect(page.getByLabel("Текст резюме")).toHaveValue(draft);
+  await expect(page.getByText("Черновик восстановлен. Проверь текст и продолжай.")).toBeVisible();
+
+  await page.goto("/pricing");
+  await page.goBack();
+  await expect(page.getByLabel("Текст резюме")).toHaveValue(draft);
+  await page.goForward();
+  await expect(page).toHaveURL(/\/pricing$/);
+});
+
 test("HR-состав не вылезает за экран и возвращает выбранного HR в основной flow", async ({ page }) => {
   await page.goto("/hr");
   await expect(page.getByRole("heading", { name: "Четыре взгляда. Факты — одни." })).toBeVisible();
