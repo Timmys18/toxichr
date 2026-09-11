@@ -69,6 +69,8 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryAction, setRetryAction] = useState<"load" | "package" | "adapt" | "recheck">("load");
+  const [draftReady, setDraftReady] = useState(false);
+  const draftKey = `toxichr:adaptation:${analysisId}:${vacancyId}`;
 
   const load = useCallback(async () => {
     setError(null);
@@ -81,8 +83,28 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
     const savedAnswers = next.adaptation?.answers;
     if (Array.isArray(savedAnswers)) {
       setAnswers(Object.fromEntries(savedAnswers.filter((item): item is { requirementId: string; answer: string } => Boolean(item && typeof item === "object" && "requirementId" in item && "answer" in item)).map((item) => [item.requirementId, item.answer])));
+    } else {
+      try {
+        const draft = JSON.parse(window.localStorage.getItem(draftKey) ?? "{}") as Record<string, unknown>;
+        setAnswers(Object.fromEntries(Object.entries(draft).filter((entry): entry is [string, string] => typeof entry[1] === "string")));
+      } catch {
+        // Без локального черновика остаются сохранённые серверные данные.
+      }
     }
-  }, [analysisId, vacancyId]);
+    setDraftReady(true);
+  }, [analysisId, draftKey, vacancyId]);
+
+  useEffect(() => {
+    if (!draftReady || data?.adaptation?.status === "ready") return;
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(draftKey, JSON.stringify(answers));
+      } catch {
+        // Поля остаются заполненными, если локальное хранилище недоступно.
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [answers, data?.adaptation?.status, draftKey, draftReady]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -124,6 +146,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
       const payload = await response.json();
       if (response.status === 402) { await load(); return; }
       if (!response.ok) throw new Error(messageFrom(response, payload));
+      try { window.localStorage.removeItem(draftKey); } catch { /* сервер уже сохранил ответы */ }
       await load();
     } catch (reason) {
       setError(requestErrorMessage(reason, "Не удалось собрать адаптированную версию. Ответы сохранены — попробуй ещё раз."));

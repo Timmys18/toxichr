@@ -130,10 +130,10 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   }, [analysisId]);
 
   useEffect(() => {
-    if (analysisId || vacancyId || text.trim().length < MIN_VACANCY_LENGTH) return;
+    if (vacancyId || text.trim().length < MIN_VACANCY_LENGTH) return;
     const timer = window.setTimeout(() => { savePendingVacancy(text); setDraftState("saved"); }, 350);
     return () => window.clearTimeout(timer);
-  }, [analysisId, text, vacancyId]);
+  }, [text, vacancyId]);
 
   async function submit() {
     setBusy(true); setError(null); setRetryAction("review");
@@ -147,7 +147,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
         return;
       }
       if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
-      setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (data.package) setPackageState(data.package as PackageState); if (analysisId) clearPendingVacancy();
+      setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (data.package) setPackageState(data.package as PackageState); clearPendingVacancy();
     } catch (reason) { setError(requestErrorMessage(reason, "Не удалось разобрать вакансию. Попробуй ещё раз — текст сохранён.")); } finally { setBusy(false); }
   }
 
@@ -199,7 +199,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       { value: packageState.improvementAvailable ? "да" : "использовано", label: "улучшение" },
       { value: packageState.adaptationAvailable ? "доступна" : "использована", label: "адаптация" },
     ]} /> : null}
-    {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!analysisId && !vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={10} placeholder="Вставь сюда текст вакансии целиком…" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} /><div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span><b className="thr-mono">{textLength} / 30 000</b></div></div> : null}
+    {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={10} placeholder="Вставь сюда текст вакансии целиком…" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} /><div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span><b className="thr-mono">{textLength} / 30 000</b></div></div> : null}
     {resultStale ? <p className="ds-comparison-stale-note" role="status">Текст изменился. Результат ниже относится к прошлой версии.</p> : null}
     {error ? <EmptyState className="ds-comparison-error" action={<button type="button" className="ds-inline-link" onClick={() => void retry()} disabled={busy || checkoutBusy}>{busy ? "Повторяем…" : "Попробовать ещё раз"}</button>}>{error}</EmptyState> : null}
     {!error && (canSubmit || (!result && showEditor)) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}

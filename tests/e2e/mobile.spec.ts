@@ -108,6 +108,8 @@ test("мобильная вакансия объясняет минимум те
   );
   await expect(submit).toBeEnabled();
   await expect(page.getByText("Черновик сохранён на этом устройстве")).toBeVisible();
+  await page.reload();
+  await expect(page.locator('textarea[aria-label="Текст вакансии"]:visible')).toHaveValue(/Ищем менеджера продукта/);
 
   const metrics = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
