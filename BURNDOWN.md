@@ -509,3 +509,9 @@
 - Отдельно зелёные payment-status и adaptation → новая версия → re-check точной вакансии; lint, typecheck и production build успешны.
 - Desktop/mobile главной и vacancy проверены по локальным QA-снимкам без горизонтального переполнения основных действий.
 - Исполняемый код готов; следующий шаг — один GitHub Actions `workflow_dispatch` с `suite=full` на итоговом SHA.
+
+## Sprint 4 закрыт, Sprint 5 начат — 12.09.2026
+
+- Итоговый SHA Sprint 4: `35bb0d54c98153859c9faf78a35fb9acbf9c2318`.
+- Единственный GitHub Actions `34648225012`, `suite=full`: build, lint, typecheck, safety, persona, vacancy, monetization и e2e зелёные; 8/8 jobs выполнены без пропусков.
+- Sprint 4 отмечен COMPLETE. Активирован Sprint 5 — Real Beta Calibration; продуктовый scope не расширяется.

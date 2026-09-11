@@ -1,7 +1,7 @@
 # ToxicHR — Release Plan до закрытой беты
 
 > Статус: **ACTIVE**
-> Текущий спринт: **Sprint 4 — Full Journey & States**
+> Текущий спринт: **Sprint 5 — Real Beta Calibration**
 > Правило: не добавлять новые продуктовые направления, пока основной путь не проходит Definition of Done ниже.
 
 ## Цель релиза
@@ -234,7 +234,7 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 4 — Full Journey & States
 
-> Статус: **ACTIVE · реализация и точечная приёмка готовы 12.09.2026**
+> Статус: **COMPLETE · 12.09.2026**
 
 ## Цель
 
@@ -274,11 +274,20 @@ Sprint считается закрытым только если вручную 
 - Медленный AI, ошибка AI, сетевой сбой и безопасный повтор не раскрывают инфраструктурные детали и сохраняют контекст.
 - Регистрация после анализа, share, возврат из оплаты, `pending / paid / failed`, adaptation и re-check точной вакансии покрыты существующими и обновлёнными сценариями.
 - Точечный полный journey и отдельные monetization/adaptation проверки зелёные на актуальном production build.
-- Desktop/mobile проверены визуально. Sprint остаётся ACTIVE до единственного GitHub Actions `suite=full` на итоговом SHA.
+- Desktop/mobile проверены визуально. До закрытия Sprint оставался ACTIVE до единственного GitHub Actions `suite=full` на итоговом SHA.
+
+### Закрытие Sprint 4 · 12.09.2026
+
+- Итоговый SHA: `35bb0d54c98153859c9faf78a35fb9acbf9c2318`.
+- Единственный GitHub Actions `suite=full`: https://github.com/Timmys18/toxichr/actions/runs/34648225012
+- Режим `workflow_dispatch`; build, lint, typecheck, safety, persona, vacancy, monetization и e2e завершились `success`, 8/8 jobs без пропусков.
+- Sprint 4 закрыт; активирован Sprint 5 без расширения его scope.
 
 ---
 
 # Sprint 5 — Real Beta Calibration
+
+> Статус: **ACTIVE · 12.09.2026**
 
 ## Цель
 
@@ -404,6 +413,6 @@ Sprint считается закрытым только если вручную 
 - Sprint 1.1 — COMPLETE
 - Sprint 2 — COMPLETE
 - Sprint 3 — COMPLETE
-- Sprint 4 — **ACTIVE**
-- Sprint 5 — PLANNED
+- Sprint 4 — COMPLETE
+- Sprint 5 — **ACTIVE**
 - Sprint 6 — PLANNED
