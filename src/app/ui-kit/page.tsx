@@ -18,6 +18,7 @@ import {
   SectionLabel,
   SecondaryAction,
   SummaryRail,
+  SurfacePanel,
   VerdictBlock,
 } from "@/components/ui/system";
 import { ROSTER } from "@/components/home/hr-roster";
@@ -100,6 +101,11 @@ export default function UiKitPage() {
         <section className="ui-block">
           <SectionLabel>Строка истории</SectionLabel>
           <div className="ds-history-list"><HistoryRow href="/vacancy" status="Сопоставлено" tone="success" title="Менеджер продукта" meta="11 сентября 2026" aside={<b>Можно откликаться</b>} /></div>
+        </section>
+
+        <section className="ui-block">
+          <SectionLabel>Рабочая панель</SectionLabel>
+          <SurfacePanel label="Пакет ToxicHR" action={<span>активен</span>}><p>Сопоставления: осталось 4 из 5</p></SurfacePanel>
         </section>
 
         <CommandRail primary={<span>Исправить резюме →</span>} hint="Только на основании подтверждённого опыта" secondary={<SecondaryAction href="/vacancy">Другая вакансия</SecondaryAction>} />

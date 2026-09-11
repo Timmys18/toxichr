@@ -407,3 +407,9 @@
 - `/vacancies` переведён на общий `PageIntro`, `EmptyState` и новую `HistoryRow`; статусы, заголовок, дата и решение сохранили прежние данные и маршруты.
 - `HistoryRow` и `StatusPill` добавлены в design system и показаны в `/ui-kit`; desktop/mobile-композиция не имеет горизонтального overflow.
 - Исправлен runtime самой dev-витрины: `QuestionField` теперь допускает статический пример без передачи event handler из Server Component. Управляемые продуктовые поля сохранили прежнее поведение.
+
+## Sprint 3 — кабинет, 11.09.2026
+
+- Кабинет переведён на `PageContainer`, `PageIntro`, системные действия, `EmptyState` и новую `SurfacePanel`; большой client-local style block удалён.
+- Последний разбор, остатки пакета, история, версии и переход к вакансиям сохранили прежние данные и URL. Общие визуальные правила перенесены в design system.
+- `SurfacePanel` добавлена в `/ui-kit`; витрина компилируется и визуально проверена без horizontal overflow. Полный пользовательский путь оставлен на финальную приёмку Sprint 3.

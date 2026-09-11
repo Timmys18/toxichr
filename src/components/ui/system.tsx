@@ -184,3 +184,10 @@ export function HistoryRow({ href, status, title, meta, aside, tone = "neutral" 
     <span className="ds-history-row-aside">{aside}</span>
   </Link>;
 }
+
+export function SurfacePanel({ children, className, label, action }: { children: ReactNode; className?: string; label?: ReactNode; action?: ReactNode }) {
+  return <section className={cn("ds-surface-panel", className)}>
+    {label || action ? <header><SectionLabel>{label}</SectionLabel>{action}</header> : null}
+    {children}
+  </section>;
+}
