@@ -543,3 +543,10 @@
 - Итоговый SHA Sprint 5: `cb565e7e51083dced8a993b486071b77e00646ff`.
 - Единственный GitHub Actions `34652375721`, `suite=full`: build, lint, typecheck, safety, persona, vacancy, monetization и e2e зелёные; 8/8 jobs выполнены без пропусков.
 - Sprint 5 отмечен COMPLETE. Активирован Sprint 6 — Release Hardening; продуктовый scope не расширяется.
+
+## Sprint 6 — отдельное состояние отменённой оплаты, 12.09.2026
+
+- Статус YooKassa `canceled` больше не маскируется под технический `failed`: БД и access API возвращают отдельный `canceled`, доступ не открывается.
+- Vacancy и rewrite после возврата явно сообщают об отмене и сохранности контекста; повтор оплаты остаётся доступен.
+- Webhook фиксирует отмену в платёжной аналитике с причиной `canceled`; синхронизация состояния остаётся идемпотентной через запрос к YooKassa и upsert пакета.
+- После обновлённого production build зелёные lint, typecheck и monetization: 9/9 сценариев.

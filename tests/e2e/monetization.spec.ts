@@ -18,7 +18,7 @@ const VACANCY = `Senior Product Manager
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
 
-test("доступ сообщает pending, failed и paid для возврата после оплаты", async ({ request }) => {
+test("доступ различает pending, failed, canceled и paid при возврате после оплаты", async ({ request }) => {
   const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
@@ -33,6 +33,10 @@ test("доступ сообщает pending, failed и paid для возвра�
   await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
   const failed = await request.get(`/api/payments/access?analysisId=${analysisId}`);
   expect(await failed.json()).toMatchObject({ hasPackage: false, paymentStatus: "failed" });
+
+  await prisma.payment.update({ where: { id: payment.id }, data: { status: "CANCELED" } });
+  const canceled = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(await canceled.json()).toMatchObject({ hasPackage: false, paymentStatus: "canceled" });
 
   await prisma.payment.update({ where: { id: payment.id }, data: { status: "PAID", paidAt: new Date() } });
   await prisma.toxicHrPackage.create({ data: { resumeId, paymentId: payment.id, source: "test" } });

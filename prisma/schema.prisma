@@ -25,6 +25,7 @@ enum PaymentStatus {
   PENDING
   PAID
   FAILED
+  CANCELED
   REFUNDED
 }
 

@@ -37,7 +37,7 @@ type AccessState = {
   priceRub: number;
   improvementAvailable: boolean;
   improvementUsed: boolean;
-  paymentStatus: "none" | "pending" | "paid" | "failed";
+  paymentStatus: "none" | "pending" | "paid" | "failed" | "canceled";
 };
 
 export function RevengeClient({ analysisId }: { analysisId: string }) {
@@ -82,7 +82,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       priceRub: Number(data.priceRub) || 199,
       improvementAvailable: Boolean(data.improvementAvailable),
       improvementUsed: Boolean(data.improvementUsed),
-      paymentStatus: data.paymentStatus === "pending" || data.paymentStatus === "paid" || data.paymentStatus === "failed" ? data.paymentStatus : "none",
+      paymentStatus: data.paymentStatus === "pending" || data.paymentStatus === "paid" || data.paymentStatus === "failed" || data.paymentStatus === "canceled" ? data.paymentStatus : "none",
     };
     setAccess(next);
     return next;
@@ -210,6 +210,10 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         }
         if (current?.paymentStatus === "failed") {
           setPaymentNotice("Оплата не завершилась. Можно попробовать ещё раз — ответы сохранены.");
+          return;
+        }
+        if (current?.paymentStatus === "canceled") {
+          setPaymentNotice("Оплата отменена. Доступ не открыт; можно попробовать ещё раз — ответы сохранены.");
           return;
         }
         setPaymentNotice("Проверяем оплату. Ответы и выбранный разбор сохранены.");

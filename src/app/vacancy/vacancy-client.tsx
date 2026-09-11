@@ -30,7 +30,7 @@ type PackageState = {
   rechecksRemaining: number;
   improvementAvailable: boolean;
   adaptationAvailable: boolean;
-  paymentStatus: "none" | "pending" | "paid" | "failed";
+  paymentStatus: "none" | "pending" | "paid" | "failed" | "canceled";
 };
 
 function normalizeTitle(title: string) { return title.replace(/\s*\/\s*/g, " · ").trim(); }
@@ -119,6 +119,10 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       }
       if (data.paymentStatus === "failed") {
         setPaymentNotice("Оплата не завершилась. Можно попробовать ещё раз — данные вакансии сохранены.");
+        return;
+      }
+      if (data.paymentStatus === "canceled") {
+        setPaymentNotice("Оплата отменена. Доступ не открыт; можно попробовать ещё раз — данные вакансии сохранены.");
         return;
       }
       setPaymentNotice("Проверяем оплату. Эта вакансия и резюме уже сохранены.");

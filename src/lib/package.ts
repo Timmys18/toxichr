@@ -46,7 +46,7 @@ export type PackageSnapshot = {
   improvementAvailable: boolean;
   adaptationUsed: boolean;
   adaptationAvailable: boolean;
-  paymentStatus: "none" | "pending" | "paid" | "failed";
+  paymentStatus: "none" | "pending" | "paid" | "failed" | "canceled";
 };
 
 function paywallEnabled() {
@@ -163,6 +163,7 @@ async function latestPaymentStatus(analysisId: string): Promise<PackageSnapshot[
   });
   if (!payment) return "none";
   if (payment.status === "PAID") return "paid";
+  if (payment.status === "CANCELED") return "canceled";
   if (payment.status === "FAILED" || payment.status === "REFUNDED") return "failed";
   return "pending";
 }
@@ -390,8 +391,8 @@ export async function syncYooKassaPayment(externalId: string) {
     return { handled: true as const, status: "PAID" as const, productCode: payment.productCode };
   }
   if (yoo.status === "canceled") {
-    await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
-    return { handled: true as const, status: "FAILED" as const, productCode: payment.productCode };
+    await prisma.payment.update({ where: { id: payment.id }, data: { status: "CANCELED" } });
+    return { handled: true as const, status: "CANCELED" as const, productCode: payment.productCode };
   }
   return { handled: true as const, status: "PENDING" as const, productCode: payment.productCode };
 }

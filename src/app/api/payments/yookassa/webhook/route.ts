@@ -24,10 +24,11 @@ export async function POST(request: Request) {
           provider: "yookassa",
         }).catch(() => undefined);
       }
-    } else if (result.status === "FAILED") {
+    } else if (result.status === "CANCELED") {
       await trackServer("payment_failed", {
         externalId,
         provider: "yookassa",
+        reason: "canceled",
       }).catch(() => undefined);
     }
     return NextResponse.json({ ok: true });
