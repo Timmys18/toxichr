@@ -413,3 +413,9 @@
 - Кабинет переведён на `PageContainer`, `PageIntro`, системные действия, `EmptyState` и новую `SurfacePanel`; большой client-local style block удалён.
 - Последний разбор, остатки пакета, история, версии и переход к вакансиям сохранили прежние данные и URL. Общие визуальные правила перенесены в design system.
 - `SurfacePanel` добавлена в `/ui-kit`; витрина компилируется и визуально проверена без horizontal overflow. Полный пользовательский путь оставлен на финальную приёмку Sprint 3.
+
+## Sprint 3 — результат разбора, 11.09.2026
+
+- `/session` переведён на системные `PageContainer`, `VerdictBlock`, `EditorialSection`, `EvidenceItem`, `SurfacePanel`, `EmptyState` и общие действия без изменения streaming/persona-логики.
+- Два больших встроенных global-style блока удалены; правила результата перенесены в общий scoped-слой `product-flows.css`, поэтому короткие классы результата больше не затрагивают другие страницы.
+- Состояние ошибки проверено глазами на desktop/mobile без horizontal overflow; добавлена точечная mobile-регрессия. Готовый отчёт будет повторно пройден в финальном journey Sprint 3.

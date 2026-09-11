@@ -58,6 +58,16 @@ test("цены и auth используют единый mobile-контур б�
   );
 });
 
+test("ошибка разбора остаётся в общем mobile-контуре", async ({ page }) => {
+  await page.goto("/session?resumeId=missing&personaId=lera");
+  await expect(page.getByText("Резюме не найдено.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Попробовать снова" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "На главную" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    await page.evaluate(() => window.innerWidth + 1),
+  );
+});
+
 test("мобильная вакансия объясняет минимум текста и сохраняет черновик", async ({ page }) => {
   await page.goto("/vacancy");
 

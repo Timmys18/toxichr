@@ -4,6 +4,7 @@ import { RouteTransition } from "@/components/shared/route-transition";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./conversion.css";
+import "@/components/ui/product-flows.css";
 
 export const metadata: Metadata = {
   title: {
