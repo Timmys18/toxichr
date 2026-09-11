@@ -84,13 +84,16 @@ export function QuestionField({
 }: {
   label: ReactNode;
   hint?: ReactNode;
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   id?: string;
 }) {
-  return <label className="ds-question-field" htmlFor={id}><b>{label}</b>{hint ? <span>{hint}</span> : null}<textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} disabled={disabled} rows={5} maxLength={1_500} /></label>;
+  const textarea = onChange
+    ? <textarea id={id} value={value ?? ""} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} disabled={disabled} rows={5} maxLength={1_500} />
+    : <textarea id={id} defaultValue={value} placeholder={placeholder} disabled={disabled} rows={5} maxLength={1_500} />;
+  return <label className="ds-question-field" htmlFor={id}><b>{label}</b>{hint ? <span>{hint}</span> : null}{textarea}</label>;
 }
 
 export function PrimaryAction(props: ButtonProps) { return <Button {...props} variant="primary" className={cn("ds-primary-action", props.className)} />; }
@@ -168,4 +171,16 @@ export function FormCard({ label, title, description, children, footer, classNam
     {children}
     {footer ? <footer>{footer}</footer> : null}
   </section>;
+}
+
+export function StatusPill({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "success" | "data" }) {
+  return <span className={cn("ds-status-pill", `ds-status-pill-${tone}`)}>{children}</span>;
+}
+
+export function HistoryRow({ href, status, title, meta, aside, tone = "neutral" }: { href: string; status: ReactNode; title: ReactNode; meta: ReactNode; aside: ReactNode; tone?: "neutral" | "success" | "data" }) {
+  return <Link href={href} className="ds-history-row">
+    <StatusPill tone={tone}>{status}</StatusPill>
+    <span className="ds-history-row-content"><b>{title}</b><small>{meta}</small></span>
+    <span className="ds-history-row-aside">{aside}</span>
+  </Link>;
 }

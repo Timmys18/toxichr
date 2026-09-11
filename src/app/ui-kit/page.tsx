@@ -5,6 +5,7 @@ import {
   EmptyState,
   EvidenceItem,
   FormCard,
+  HistoryRow,
   LeadText,
   MetricStrip,
   OfferCard,
@@ -72,7 +73,7 @@ export default function UiKitPage() {
 
         <section className="ui-block">
           <SectionLabel>Уточнение факта</SectionLabel>
-          <QuestionField label="Что именно изменилось после твоего действия?" hint="Показываем источник и просим только подтверждённый факт." value="" onChange={() => undefined} placeholder="Напиши факты обычными словами" />
+          <QuestionField label="Что именно изменилось после твоего действия?" hint="Показываем источник и просим только подтверждённый факт." value="" placeholder="Напиши факты обычными словами" />
         </section>
 
         <section className="ui-block">
@@ -94,6 +95,11 @@ export default function UiKitPage() {
           <FormCard label="Вход в ToxicHR" title="С возвращением" description="Почта и пароль. Без анкет и лишних шагов.">
             <form className="ds-auth-form"><input aria-label="Пример почты" placeholder="you@example.com" /><PrimaryAction type="button">Продолжить</PrimaryAction></form>
           </FormCard>
+        </section>
+
+        <section className="ui-block">
+          <SectionLabel>Строка истории</SectionLabel>
+          <div className="ds-history-list"><HistoryRow href="/vacancy" status="Сопоставлено" tone="success" title="Менеджер продукта" meta="11 сентября 2026" aside={<b>Можно откликаться</b>} /></div>
         </section>
 
         <CommandRail primary={<span>Исправить резюме →</span>} hint="Только на основании подтверждённого опыта" secondary={<SecondaryAction href="/vacancy">Другая вакансия</SecondaryAction>} />
