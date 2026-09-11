@@ -1,7 +1,7 @@
 # ToxicHR — Release Plan до закрытой беты
 
 > Статус: **ACTIVE**
-> Текущий спринт: **Sprint 5 — Real Beta Calibration**
+> Текущий спринт: **Sprint 6 — Release Hardening**
 > Правило: не добавлять новые продуктовые направления, пока основной путь не проходит Definition of Done ниже.
 
 ## Цель релиза
@@ -287,7 +287,7 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 5 — Real Beta Calibration
 
-> Статус: **ACTIVE · 12.09.2026**
+> Статус: **COMPLETE · 12.09.2026**
 
 ## Цель
 
@@ -343,9 +343,18 @@ Sprint считается закрытым только если вручную 
 - Generic rewrite и vacancy-aware rewrite проверены на junior, senior technical и руководителе. Все применённые изменения связаны с исходной строкой и явно подтверждённым ответом; повторяющий ответ корректно оставляет generic rewrite без изменений.
 - Safety, persona, vacancy, lint и typecheck зелёные. До закрытия Sprint остаётся один GitHub Actions `suite=full` на итоговом SHA.
 
+### Закрытие Sprint 5 · 12.09.2026
+
+- Итоговый SHA: `cb565e7e51083dced8a993b486071b77e00646ff`.
+- Единственный GitHub Actions `suite=full`: https://github.com/Timmys18/toxichr/actions/runs/34652375721
+- Режим `workflow_dispatch`; build, lint, typecheck, safety, persona, vacancy, monetization и e2e завершились `success`, 8/8 jobs без пропусков.
+- Sprint 5 закрыт; активирован Sprint 6 без расширения его scope.
+
 ---
 
 # Sprint 6 — Release Hardening
+
+> Статус: **ACTIVE · 12.09.2026**
 
 ## Цель
 
@@ -422,5 +431,5 @@ Sprint считается закрытым только если вручную 
 - Sprint 2 — COMPLETE
 - Sprint 3 — COMPLETE
 - Sprint 4 — COMPLETE
-- Sprint 5 — **ACTIVE**
-- Sprint 6 — PLANNED
+- Sprint 5 — COMPLETE
+- Sprint 6 — **ACTIVE**
