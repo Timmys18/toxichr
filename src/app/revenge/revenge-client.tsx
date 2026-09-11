@@ -36,6 +36,7 @@ type AccessState = {
   priceRub: number;
   improvementAvailable: boolean;
   improvementUsed: boolean;
+  paymentStatus: "none" | "pending" | "paid" | "failed";
 };
 
 export function RevengeClient({ analysisId }: { analysisId: string }) {
@@ -56,6 +57,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [restoredAnswersCount, setRestoredAnswersCount] = useState(0);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
   const [access, setAccess] = useState<AccessState>({
     loading: true,
     paywallEnabled: false,
@@ -63,6 +65,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     priceRub: 199,
     improvementAvailable: true,
     improvementUsed: false,
+    paymentStatus: "none",
   });
 
   const refreshAccess = useCallback(async () => {
@@ -78,6 +81,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       priceRub: Number(data.priceRub) || 199,
       improvementAvailable: Boolean(data.improvementAvailable),
       improvementUsed: Boolean(data.improvementUsed),
+      paymentStatus: data.paymentStatus === "pending" || data.paymentStatus === "paid" || data.paymentStatus === "failed" ? data.paymentStatus : "none",
     };
     setAccess(next);
     return next;
@@ -200,10 +204,17 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         const current = await refreshAccess().catch(() => null);
         if (current?.hasPackage) {
           setPaywallOpen(false);
+          setPaymentNotice("Оплата подтверждена. Можно продолжать с сохранёнными ответами.");
           return;
         }
+        if (current?.paymentStatus === "failed") {
+          setPaymentNotice("Оплата не завершилась. Можно попробовать ещё раз — ответы сохранены.");
+          return;
+        }
+        setPaymentNotice("Проверяем оплату. Ответы и выбранный разбор сохранены.");
         await new Promise((resolve) => window.setTimeout(resolve, 1200));
       }
+      if (!cancelled) setPaymentNotice("Оплата ещё обрабатывается. Обнови страницу чуть позже — ответы сохранены.");
     }
     void poll();
     return () => {
@@ -339,6 +350,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     <PageContainer className="revenge">
       <PageIntro label="Реванш" title="Теперь исправим то, что HR разнёс." lead="Ответь только фактами. Если точной цифры не помнишь — не придумывай: сервис соберёт честную формулировку без неё." />
       <InfoNote className="deal" title={`Новая версия входит в пакет ToxicHR за ${access.priceRub} ₽.`}>{access.improvementUsed ? "Улучшение уже использовано для этого резюме." : "Одно улучшение, без подписки и доплат."}</InfoNote>
+      {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
 
       {restoredAnswersCount > 0 && !result ? (
         <div className="restored" role="status"><b>Черновик на месте.</b> Вернули ответов: {restoredAnswersCount}. Продолжаем с первого незаполненного вопроса.</div>

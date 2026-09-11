@@ -18,6 +18,28 @@ const VACANCY = `Senior Product Manager
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
 
+test("доступ сообщает pending, failed и paid для возврата после оплаты", async ({ request }) => {
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const { resumeId } = await resumeResponse.json();
+  const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const { analysisId } = await analysisResponse.json();
+
+  const payment = await prisma.payment.create({
+    data: { analysisId, provider: "test", productCode: "toxichr_package", amount: 19_900, currency: "RUB" },
+  });
+  const pending = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(await pending.json()).toMatchObject({ hasPackage: false, paymentStatus: "pending" });
+
+  await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
+  const failed = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(await failed.json()).toMatchObject({ hasPackage: false, paymentStatus: "failed" });
+
+  await prisma.payment.update({ where: { id: payment.id }, data: { status: "PAID", paidAt: new Date() } });
+  await prisma.toxicHrPackage.create({ data: { resumeId, paymentId: payment.id, source: "test" } });
+  const paid = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+  expect(await paid.json()).toMatchObject({ hasPackage: true, paymentStatus: "paid" });
+});
+
 for (const entryPoint of ["access", "checkout"] as const) {
   test(`старая покупка распознаётся через ${entryPoint} без повторной оплаты`, async ({ request }) => {
     const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });

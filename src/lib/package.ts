@@ -46,6 +46,7 @@ export type PackageSnapshot = {
   improvementAvailable: boolean;
   adaptationUsed: boolean;
   adaptationAvailable: boolean;
+  paymentStatus: "none" | "pending" | "paid" | "failed";
 };
 
 function paywallEnabled() {
@@ -150,14 +151,28 @@ function noPackageSnapshot(): PackageSnapshot {
     improvementAvailable: true,
     adaptationUsed: false,
     adaptationAvailable: true,
+    paymentStatus: "none",
   };
+}
+
+async function latestPaymentStatus(analysisId: string): Promise<PackageSnapshot["paymentStatus"]> {
+  const payment = await prisma.payment.findFirst({
+    where: { analysisId, productCode: TOXICHR_PACKAGE_PRODUCT_CODE },
+    orderBy: { createdAt: "desc" },
+    select: { status: true },
+  });
+  if (!payment) return "none";
+  if (payment.status === "PAID") return "paid";
+  if (payment.status === "FAILED" || payment.status === "REFUNDED") return "failed";
+  return "pending";
 }
 
 export async function getPackageSnapshot(analysisId: string, currentUserId?: string | null): Promise<PackageSnapshot> {
   const context = await packageContext(analysisId, currentUserId);
   if (!paywallEnabled()) return noPackageSnapshot();
   const current = await findPackage(context);
-  if (!current) return { ...noPackageSnapshot(), hasPackage: false };
+  const paymentStatus = await latestPaymentStatus(analysisId);
+  if (!current) return { ...noPackageSnapshot(), hasPackage: false, paymentStatus };
   const matchesUsed = usageCount(current, "MATCH");
   const rechecksUsed = usageCount(current, "RECHECK");
   const improvementUsed = usageCount(current, "IMPROVEMENT") > 0;
@@ -174,6 +189,7 @@ export async function getPackageSnapshot(analysisId: string, currentUserId?: str
     improvementAvailable: !improvementUsed,
     adaptationUsed,
     adaptationAvailable: !adaptationUsed,
+    paymentStatus: "paid",
   };
 }
 

@@ -28,6 +28,7 @@ type PackageState = {
   rechecksRemaining: number;
   improvementAvailable: boolean;
   adaptationAvailable: boolean;
+  paymentStatus: "none" | "pending" | "paid" | "failed";
 };
 
 function normalizeTitle(title: string) { return title.replace(/\s*\/\s*/g, " · ").trim(); }
@@ -59,6 +60,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const [matchPaywall, setMatchPaywall] = useState<{ vacancyId: string; priceRub: number } | null>(null);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [packageState, setPackageState] = useState<PackageState | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
 
   const loadSavedVacancy = useCallback(async () => {
     if (!vacancyId) return;
@@ -98,9 +100,32 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
 
   useEffect(() => {
     if (!analysisId) return;
-    void fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`)
-      .then((response) => response.ok ? response.json() : null)
-      .then((data) => data && setPackageState(data as PackageState));
+    const returnedFromPayment = new URLSearchParams(window.location.search).get("payment") === "return";
+    let cancelled = false;
+    let timer: number | undefined;
+    let attempt = 0;
+    const refresh = async () => {
+      const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`, { cache: "no-store" });
+      const data = response.ok ? await response.json() as PackageState : null;
+      if (cancelled || !data) return;
+      setPackageState(data);
+      if (!returnedFromPayment) return;
+      if (data.hasPackage || data.paymentStatus === "paid") {
+        setPaymentNotice("Оплата подтверждена. Продолжаем с этой вакансией.");
+        setMatchPaywall(null);
+        return;
+      }
+      if (data.paymentStatus === "failed") {
+        setPaymentNotice("Оплата не завершилась. Можно попробовать ещё раз — данные вакансии сохранены.");
+        return;
+      }
+      setPaymentNotice("Проверяем оплату. Эта вакансия и резюме уже сохранены.");
+      attempt += 1;
+      if (attempt < 6) timer = window.setTimeout(refresh, 1200);
+      else setPaymentNotice("Оплата ещё обрабатывается. Обнови страницу чуть позже — контекст сохранён.");
+    };
+    void refresh();
+    return () => { cancelled = true; if (timer) window.clearTimeout(timer); };
   }, [analysisId]);
 
   useEffect(() => {
@@ -163,6 +188,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       <div className="ds-comparison-intro-top"><p className="over thr-mono">Вакансия без корпоративного тумана</p><Link href="/vacancies">История вакансий →</Link></div>
       <h1>{analysisId ? "Подходишь ли ты на эту роль?" : "Что здесь на самом деле хотят?"}</h1>
       <p>{analysisId ? "Сопоставим требования только с сохранённой профессиональной оценкой и точными цитатами из резюме." : "Разберём реальную роль, приоритеты и то, что стоит проверить до отклика."}</p>
+      {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
     </div>
 
     {review ? <SummaryRail title={normalizeTitle(review.assessment.title)} meta={<>Вакансия сохранена · {textLength} знаков</>} action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>} /> : null}

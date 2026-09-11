@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     return NextResponse.json(checkout);
   } catch (error) {
     await trackServer("payment_failed", { analysisId: parsed.data.analysisId, userId: session?.user?.id, reason: error instanceof Error ? error.message : "unknown" }).catch(() => undefined);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Не удалось начать оплату." }, { status: 503 });
+    console.error("[payments/checkout]", error);
+    return NextResponse.json({ error: "Не удалось начать оплату. Попробуй ещё раз чуть позже." }, { status: 503 });
   }
 }
