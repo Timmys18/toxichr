@@ -234,7 +234,7 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 4 — Full Journey & States
 
-> Статус: **ACTIVE · 11.09.2026**
+> Статус: **ACTIVE · реализация и точечная приёмка готовы 12.09.2026**
 
 ## Цель
 
@@ -267,6 +267,14 @@ Sprint считается закрытым только если вручную 
 `landing → resume → HR → result → second HR → share → vacancy → paid match → adaptation → payment → new version → re-check → account/history`
 
 Ни на одном шаге пользователь не теряет уже введённые данные или контекст.
+
+### Готовность к финальной приёмке · 12.09.2026
+
+- Back/forward, refresh и локальные черновики закреплены точечными browser-сценариями.
+- Медленный AI, ошибка AI, сетевой сбой и безопасный повтор не раскрывают инфраструктурные детали и сохраняют контекст.
+- Регистрация после анализа, share, возврат из оплаты, `pending / paid / failed`, adaptation и re-check точной вакансии покрыты существующими и обновлёнными сценариями.
+- Точечный полный journey и отдельные monetization/adaptation проверки зелёные на актуальном production build.
+- Desktop/mobile проверены визуально. Sprint остаётся ACTIVE до единственного GitHub Actions `suite=full` на итоговом SHA.
 
 ---
 
