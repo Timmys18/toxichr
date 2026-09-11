@@ -44,11 +44,19 @@ test("адаптация создаёт новую версию по подтв�
   const preparedData = await prepared.json();
   expect(preparedData.questions.length).toBeGreaterThan(0);
 
+  await page.goto(`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(vacancyId)}`);
+  const adaptationDraft = "Лично провела 8 интервью и проверила две гипотезы.";
+  const answerField = page.getByLabel("Что можно честно уточнить в этой строке?").first();
+  await answerField.fill(adaptationDraft);
+  await page.waitForTimeout(350);
+  await page.reload();
+  await expect(page.getByLabel("Что можно честно уточнить в этой строке?").first()).toHaveValue(adaptationDraft);
+
   const adaptation = await request.post("/api/adaptations", {
     data: {
       analysisId,
       vacancyId,
-      answers: [{ requirementId: preparedData.questions[0].requirementId, answer: "Лично провела 8 интервью и проверила две гипотезы." }],
+      answers: [{ requirementId: preparedData.questions[0].requirementId, answer: adaptationDraft }],
     },
   });
   expect(adaptation.status()).toBe(200);

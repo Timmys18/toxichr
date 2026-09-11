@@ -20,6 +20,7 @@ import { track } from "@/lib/analytics";
 import type { MatchAssessment, StructuredVacancyAssessment, VacancyReview } from "@/lib/vacancy";
 import { clearPendingVacancy, readPendingVacancy, savePendingVacancy } from "@/lib/pending-vacancy";
 import { requestErrorMessage } from "@/lib/user-facing-errors";
+import { vacancyResultUrl } from "@/lib/navigation";
 
 const MIN_VACANCY_LENGTH = 80;
 
@@ -148,6 +149,12 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       }
       if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
       setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (data.package) setPackageState(data.package as PackageState); clearPendingVacancy();
+      if (typeof data.vacancyId === "string" && data.vacancyId) {
+        const resultUrl = analysisId
+          ? vacancyResultUrl(analysisId, data.vacancyId)
+          : `/vacancy?vacancyId=${encodeURIComponent(data.vacancyId)}`;
+        window.history.replaceState(window.history.state, "", resultUrl);
+      }
     } catch (reason) { setError(requestErrorMessage(reason, "Не удалось разобрать вакансию. Попробуй ещё раз — текст сохранён.")); } finally { setBusy(false); }
   }
 

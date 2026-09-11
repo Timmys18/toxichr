@@ -284,7 +284,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
           mode: "loud",
           format: "og",
           quoteId,
-          metrics: [],
+          metrics: ["total", "evidence"],
           anonymization: { showName: false, showPhoto: false, showCompanies: false, showRole: true, showLevel: true },
         }),
       });

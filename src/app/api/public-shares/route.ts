@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid payload", details: parsed.error.flatten() },
+      { error: "Не удалось подготовить ссылку. Обнови страницу и попробуй ещё раз." },
       { status: 400 },
     );
   }
@@ -46,13 +46,13 @@ export async function POST(request: Request) {
 
   if (!analysis || analysis.status !== "COMPLETED" || !analysis.reportPayload) {
     return NextResponse.json(
-      { error: "Analysis not ready" },
+      { error: "Разбор ещё не готов для публикации." },
       { status: 404 },
     );
   }
 
   if (analysis.userId && analysis.userId !== session?.user?.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Нет доступа к этому разбору." }, { status: 403 });
   }
 
   const report = analysis.reportPayload as AnalysisReport;
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     report.shareQuotes.find((q) => q.id === quoteId) ?? report.shareQuotes[0];
 
   if (!quote) {
-    return NextResponse.json({ error: "No quote" }, { status: 400 });
+    return NextResponse.json({ error: "В разборе нет подходящей цитаты для ссылки." }, { status: 400 });
   }
 
   const roleLabel = anonymization.showRole
