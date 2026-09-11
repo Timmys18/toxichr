@@ -389,3 +389,9 @@
 - Итоговый код Sprint 2 зафиксирован на `d6b0524`.
 - GitHub Actions `34581338126`, `suite=full`: зелёные build, lint, typecheck, safety, persona, vacancy, monetization и E2E; пропущенных jobs нет.
 - Sprint 2 отмечен COMPLETE. По разрешению Product Owner активирован Sprint 3 — UX & Design Unification.
+
+## Sprint 3 — единый HR-состав, 11.09.2026
+
+- `/hr` переведён с отдельной локальной вёрстки на общие `PageIntro`, `PageContainer` и новую эталонную `PersonaCard` из design system; компонент добавлен в `/ui-kit`.
+- Каталог и главная используют один источник данных персонажей. CTA каждой карточки возвращает в основной flow с уже выбранным HR и фокусом на загрузке резюме.
+- Desktop и mobile проверены глазами; горизонтального overflow и обрезания CTA нет. Добавлена точечная mobile-регрессия выбора HR.

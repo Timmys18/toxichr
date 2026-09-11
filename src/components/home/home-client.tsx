@@ -11,9 +11,9 @@ import styles from "./home-client.module.css";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
-export function HomeClient() {
+export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: PersonaId }) {
   const router = useRouter();
-  const [sel, setSel] = useState<PersonaId>("vadik");
+  const [sel, setSel] = useState<PersonaId>(initialPersona);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -108,6 +108,7 @@ export function HomeClient() {
         </div>
 
         <div
+          id="resume-start"
           className={`${styles.uploadRail} ${dragActive ? styles.drag : ""}`}
           onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
           onDragOver={(event) => event.preventDefault()}

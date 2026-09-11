@@ -25,6 +25,23 @@ test("мобильная главная не вылезает за экран и
   await expect(page.getByRole("button", { name: /Отдать текст/ })).toBeDisabled();
 });
 
+test("HR-состав не вылезает за экран и возвращает выбранного HR в основной flow", async ({ page }) => {
+  await page.goto("/hr");
+  await expect(page.getByRole("heading", { name: "Четыре взгляда. Факты — одни." })).toBeVisible();
+
+  const metrics = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(metrics.scrollWidth, JSON.stringify(metrics)).toBeLessThanOrEqual(metrics.innerWidth + 1);
+
+  const leraCard = page.getByRole("article").filter({ has: page.getByRole("heading", { name: "Лера" }) });
+  await leraCard.getByRole("link", { name: "Выбрать этого HR" }).click();
+
+  await expect(page).toHaveURL(/\/?\?persona=lera#resume-start$/);
+  await expect(page.getByRole("img", { name: "Лера, Бигтех" })).toBeVisible();
+});
+
 test("мобильная вакансия объясняет минимум текста и сохраняет черновик", async ({ page }) => {
   await page.goto("/vacancy");
 

@@ -129,3 +129,17 @@ export function PaymentPrompt({
 export function InlineLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
   return <Link href={href} className={cn("ds-inline-link", className)}>{children}</Link>;
 }
+
+export function PersonaCard({ name, role, tag, image, quote, focus, lenses, description, href }: { name: string; role: string; tag: string; image: string; quote: string; focus: string; lenses: string[]; description: string; href: string }) {
+  return <article className="ds-persona-card">
+    <div className="ds-persona-card-photo thr-photo" style={{ backgroundImage: `url('${image}')` }} role="img" aria-label={`${name}, ${role}`}><SectionLabel className="ds-persona-card-tag">{tag}</SectionLabel></div>
+    <div className="ds-persona-card-body">
+      <div><h2>{name}</h2><p>{role}</p></div>
+      <blockquote>{quote}</blockquote>
+      <p>{focus}</p>
+      <ul aria-label="Фокус разбора">{lenses.map((lens) => <li key={lens}>{lens}</li>)}</ul>
+      <p>{description}</p>
+      <PrimaryAction href={href}>Выбрать этого HR</PrimaryAction>
+    </div>
+  </article>;
+}
