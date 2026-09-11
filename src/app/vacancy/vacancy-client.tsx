@@ -19,6 +19,7 @@ import {
 import { track } from "@/lib/analytics";
 import type { MatchAssessment, StructuredVacancyAssessment, VacancyReview } from "@/lib/vacancy";
 import { clearPendingVacancy, readPendingVacancy, savePendingVacancy } from "@/lib/pending-vacancy";
+import { requestErrorMessage } from "@/lib/user-facing-errors";
 
 const MIN_VACANCY_LENGTH = 80;
 
@@ -80,7 +81,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       }
     } catch (reason) {
       setRetryAction("load");
-      setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+      setError(requestErrorMessage(reason, "Не удалось загрузить вакансию. Попробуй ещё раз — контекст сохранён."));
     } finally {
       setLoadingSaved(false);
     }
@@ -147,7 +148,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       }
       if (!response.ok) throw new Error(data.error ?? "Ошибка разбора");
       setResult(data.result as VacancyReview); setResultStale(false); setEditorOpen(false); setSavedVacancyId(data.vacancyId ?? ""); if (data.package) setPackageState(data.package as PackageState); if (analysisId) clearPendingVacancy();
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Ошибка разбора"); } finally { setBusy(false); }
+    } catch (reason) { setError(requestErrorMessage(reason, "Не удалось разобрать вакансию. Попробуй ещё раз — текст сохранён.")); } finally { setBusy(false); }
   }
 
   async function checkoutMatch() {
@@ -170,7 +171,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       if (!data.checkoutUrl) throw new Error("Не получили ссылку на оплату");
       window.location.assign(data.checkoutUrl);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Ошибка оплаты");
+      setError(requestErrorMessage(reason, "Не удалось открыть оплату. Попробуй ещё раз — вакансия сохранена."));
     } finally {
       setCheckoutBusy(false);
     }

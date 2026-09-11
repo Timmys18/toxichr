@@ -17,6 +17,7 @@ import {
   SummaryRail,
 } from "@/components/ui/system";
 import { vacancyResultUrl } from "@/lib/navigation";
+import { requestErrorMessage } from "@/lib/user-facing-errors";
 
 type Question = {
   requirementId: string;
@@ -85,7 +86,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void load().catch((reason) => setError(reason instanceof Error ? reason.message : "Не удалось открыть адаптацию."));
+      void load().catch((reason) => setError(requestErrorMessage(reason, "Не удалось открыть адаптацию. Попробуй ещё раз — вакансия сохранена.")));
     }, 0);
     return () => window.clearTimeout(timer);
   }, [load]);
@@ -103,7 +104,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
       if (!payload.checkoutUrl) throw new Error("Не получили ссылку на оплату.");
       window.location.assign(payload.checkoutUrl);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Не удалось открыть оплату.");
+      setError(requestErrorMessage(reason, "Не удалось открыть оплату. Попробуй ещё раз — контекст сохранён."));
     } finally {
       setCheckoutBusy(false);
     }
@@ -125,7 +126,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
       if (!response.ok) throw new Error(messageFrom(response, payload));
       await load();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Не удалось собрать адаптированную версию.");
+      setError(requestErrorMessage(reason, "Не удалось собрать адаптированную версию. Ответы сохранены — попробуй ещё раз."));
     } finally {
       setBusy(false);
     }
@@ -146,7 +147,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
       }
       router.push(vacancyResultUrl(payload.analysisId, payload.vacancyId));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Не удалось повторно проверить новую версию.");
+      setError(requestErrorMessage(reason, "Не удалось повторно проверить новую версию. Она сохранена — попробуй ещё раз."));
       setRechecking(false);
     }
   }

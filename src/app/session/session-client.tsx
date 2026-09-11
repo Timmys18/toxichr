@@ -9,7 +9,7 @@ import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
 import { readPendingVacancy } from "@/lib/pending-vacancy";
-import { ANALYSIS_RETRY_MESSAGE } from "@/lib/user-facing-errors";
+import { ANALYSIS_RETRY_MESSAGE, requestErrorMessage } from "@/lib/user-facing-errors";
 import { EditorialSection, EmptyState, EvidenceItem, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel, VerdictBlock } from "@/components/ui/system";
 
 type StreamEvent =
@@ -182,7 +182,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         settled = true;
         window.clearTimeout(watch);
         if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : "Ошибка анализа");
+          setError(requestErrorMessage(reason, ANALYSIS_RETRY_MESSAGE));
           setPhase("error");
         }
       }
@@ -294,7 +294,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
       setShareUrl(url);
       track("share_created", { analysisId });
     } catch (reason) {
-      setShareErr(reason instanceof Error ? reason.message : "Ошибка шаринга");
+      setShareErr(requestErrorMessage(reason, "Не удалось создать ссылку. Попробуй ещё раз — разбор сохранён."));
     } finally {
       setSharing(false);
     }

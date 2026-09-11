@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { track } from "@/lib/analytics";
 import { EvidenceQuote, InfoNote, PageContainer, PageIntro, PrimaryAction, QuestionField, SecondaryAction, SectionLabel, SurfacePanel } from "@/components/ui/system";
+import { requestErrorMessage } from "@/lib/user-facing-errors";
 
 type Question = {
   problemId: string;
@@ -163,7 +164,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       refreshAccess(),
     ])
       .catch((reason) => {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+        if (!cancelled) setError(requestErrorMessage(reason, "Не удалось загрузить вопросы. Попробуй ещё раз — разбор сохранён."));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -284,7 +285,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         80,
       );
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Ошибка сохранения");
+      setError(requestErrorMessage(reason, "Не удалось сохранить версию. Черновик остался на этом устройстве."));
     } finally {
       setSaving(false);
     }
@@ -310,7 +311,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       if (!data.checkoutUrl) throw new Error("Не получили ссылку на оплату");
       window.location.assign(data.checkoutUrl);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Ошибка оплаты");
+      setError(requestErrorMessage(reason, "Не удалось открыть оплату. Попробуй ещё раз — ответы сохранены."));
       setCheckoutBusy(false);
     }
   }
@@ -338,7 +339,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
         // Сервер уже сохранил версию.
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Ошибка сохранения");
+      setError(requestErrorMessage(reason, "Не удалось сохранить правки. Черновик остался на этом устройстве."));
     } finally {
       setEditorSaving(false);
     }

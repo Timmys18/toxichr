@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   ANALYSIS_RETRY_MESSAGE,
   analysisErrorMessage,
+  requestErrorMessage,
 } from "../../src/lib/user-facing-errors";
 
 test("ошибка анализа не раскрывает инфраструктуру и обещает сохранность данных", () => {
@@ -17,4 +18,11 @@ test("ошибка анализа не раскрывает инфраструк
     expect(message).not.toMatch(/vpn|openai|anthropic|api[_ -]?key|сервер|провайдер/i);
     expect(message).toContain("данные сохранены");
   }
+});
+
+test("сетевой сбой получает понятный текст, а продуктовая ошибка сохраняется", () => {
+  const fallback = "Не удалось продолжить. Данные сохранены — попробуй ещё раз.";
+  expect(requestErrorMessage(new TypeError("Failed to fetch"), fallback)).toBe(fallback);
+  expect(requestErrorMessage(new Error("OpenAI 503"), fallback)).toBe(fallback);
+  expect(requestErrorMessage(new Error("Вакансия не найдена или недоступна."), fallback)).toBe("Вакансия не найдена или недоступна.");
 });
