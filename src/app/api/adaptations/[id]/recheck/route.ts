@@ -5,14 +5,13 @@ import { ProfessionalAssessmentSchema } from "@/lib/ai/professional-assessment";
 import { trackServer } from "@/lib/analytics-server";
 import {
   completePackageAction,
-  matchPackageAction,
   PackageAccessError,
   releasePackageAction,
   reservePackageAction,
 } from "@/lib/package";
 import { prisma } from "@/lib/prisma";
 import { createAndRunAnalysis } from "@/lib/run-analysis";
-import { reviewVacancy } from "@/lib/vacancy";
+import { reviewVacancy, VacancyAiError } from "@/lib/vacancy";
 import type { PersonaId } from "@/lib/personas";
 
 type Params = { params: Promise<{ id: string }> };
@@ -39,18 +38,28 @@ export async function POST(_request: Request, { params }: Params) {
     }
     if (adaptation.recheckAnalysis?.status === "COMPLETED") {
       const saved = await prisma.vacancyMatch.findUnique({ where: { vacancyId_analysisId: { vacancyId: adaptation.vacancyId, analysisId: adaptation.recheckAnalysis.id } } });
-      return NextResponse.json({ analysisId: adaptation.recheckAnalysis.id, vacancyId: adaptation.vacancyId, result: saved?.result ?? null, reused: true });
+      if (saved?.result) return NextResponse.json({ analysisId: adaptation.recheckAnalysis.id, vacancyId: adaptation.vacancyId, result: saved.result, reused: true });
     }
 
     const personaId = (adaptation.analysis.persona?.code ?? "lera") as PersonaId;
-    const { analysisId } = await createAndRunAnalysis(adaptation.analysis.resumeVersion.resumeId, personaId);
+    const reservation = await reservePackageAction({
+      analysisId: adaptation.analysisId,
+      currentUserId: session?.user?.id,
+      kind: "RECHECK",
+      vacancyId: adaptation.vacancyId,
+      resumeVersionId: adaptation.resumeVersionId,
+    });
+    reservationId = reservation.reservationId;
+    const { analysisId } = await createAndRunAnalysis(
+      adaptation.analysis.resumeVersion.resumeId,
+      personaId,
+      undefined,
+      adaptation.resumeVersionId,
+    );
     const recheck = await prisma.analysis.findUnique({ where: { id: analysisId }, select: { reportPayload: true } });
     const professional = ProfessionalAssessmentSchema.safeParse((recheck?.reportPayload as { professionalAssessment?: unknown } | null)?.professionalAssessment);
     if (!professional.success) throw new Error("Новая версия не получила профессиональную оценку.");
 
-    const kind = await matchPackageAction(analysisId, adaptation.vacancyId, session?.user?.id);
-    const reservation = await reservePackageAction({ analysisId, currentUserId: session?.user?.id, kind, vacancyId: adaptation.vacancyId });
-    reservationId = reservation.reservationId;
     const result = await reviewVacancy({ vacancyText: adaptation.vacancy.sourceText, professionalAssessment: professional.data, personaId });
     const interviewQuestions = (result.matchAssessment?.candidateQuestions ?? []) as Prisma.InputJsonValue;
     await prisma.$transaction([
@@ -62,7 +71,7 @@ export async function POST(_request: Request, { params }: Params) {
       }),
       prisma.resumeAdaptation.update({ where: { id }, data: { recheckAnalysisId: analysisId } }),
     ]);
-    await completePackageAction(reservationId);
+    await completePackageAction(reservationId, { analysisId, resumeVersionId: adaptation.resumeVersionId });
     reservationId = null;
     await trackServer("recheck_used", { analysisId, vacancyId: adaptation.vacancyId, adaptationId: id });
     return NextResponse.json({ analysisId, vacancyId: adaptation.vacancyId, result });
@@ -71,6 +80,9 @@ export async function POST(_request: Request, { params }: Params) {
     if (error instanceof PackageAccessError) {
       if (error.reason === "limit_reached") await trackServer("package_limit_reached", { action: "recheck" }).catch(() => undefined);
       return NextResponse.json({ error: error.message, paymentRequired: error.reason === "package_required", limitReached: error.reason === "limit_reached" }, { status: error.status });
+    }
+    if (error instanceof VacancyAiError) {
+      return NextResponse.json({ error: "AI не завершил повторную проверку. Лимит не списан — попробуй ещё раз.", retryable: true }, { status: 502 });
     }
     console.error(error);
     return NextResponse.json({ error: "Не удалось повторно проверить новую версию." }, { status: 500 });

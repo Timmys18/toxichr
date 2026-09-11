@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isCurrentVacancyReview } from "@/lib/vacancy";
 
 export async function GET(
   request: Request,
@@ -33,11 +34,16 @@ export async function GET(
   }
 
   const latestMatch = vacancy.matches[0] ?? null;
+  const storedResult = latestMatch?.result ?? vacancy.review;
+  const result = isCurrentVacancyReview(storedResult, vacancy.sourceText) ? storedResult : null;
   return NextResponse.json({
     id: vacancy.id,
     text: vacancy.sourceText,
     analysisId: latestMatch?.analysisId ?? null,
-    result: latestMatch?.result ?? vacancy.review,
+    result,
+    resultError: storedResult && !result
+      ? "Предыдущий результат не прошёл профессиональную проверку. Запусти сравнение ещё раз."
+      : null,
     createdAt: vacancy.createdAt,
   });
 }

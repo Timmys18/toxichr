@@ -60,7 +60,7 @@ export function isYooKassaConfigured() {
   return Boolean(process.env.YOOKASSA_SHOP_ID && process.env.YOOKASSA_SECRET_KEY);
 }
 
-async function packageContext(analysisId: string, currentUserId?: string | null): Promise<PackageContext> {
+async function packageContext(analysisId: string, currentUserId?: string | null, requestedResumeVersionId?: string): Promise<PackageContext> {
   const analysis = await prisma.analysis.findUnique({
     where: { id: analysisId },
     select: {
@@ -78,10 +78,17 @@ async function packageContext(analysisId: string, currentUserId?: string | null)
   if (analysis.userId && analysis.userId !== currentUserId) {
     throw new Error("Нет доступа к этому разбору.");
   }
+  if (requestedResumeVersionId) {
+    const target = await prisma.resumeVersion.findFirst({
+      where: { id: requestedResumeVersionId, resumeId: analysis.resumeVersion.resumeId },
+      select: { id: true },
+    });
+    if (!target) throw new Error("Версия резюме не относится к этому разбору.");
+  }
   return {
     analysisId: analysis.id,
     resumeId: analysis.resumeVersion.resumeId,
-    resumeVersionId: analysis.resumeVersionId,
+    resumeVersionId: requestedResumeVersionId ?? analysis.resumeVersionId,
     userId: currentUserId ?? analysis.userId ?? null,
   };
 }
@@ -198,13 +205,15 @@ export async function reservePackageAction({
   currentUserId,
   kind,
   vacancyId,
+  resumeVersionId,
 }: {
   analysisId: string;
   currentUserId?: string | null;
   kind: PackageAction;
   vacancyId?: string;
+  resumeVersionId?: string;
 }) {
-  const context = await packageContext(analysisId, currentUserId);
+  const context = await packageContext(analysisId, currentUserId, resumeVersionId);
   if (!paywallEnabled()) return { reservationId: null, reused: false, snapshot: noPackageSnapshot() };
 
   return prisma.$transaction(async (tx) => {
@@ -272,11 +281,14 @@ export async function reservePackageAction({
   });
 }
 
-export async function completePackageAction(reservationId: string | null) {
+export async function completePackageAction(
+  reservationId: string | null,
+  result?: { analysisId?: string; resumeVersionId?: string },
+) {
   if (!reservationId) return;
   await prisma.packageUsage.update({
     where: { id: reservationId },
-    data: { status: "COMPLETED", completedAt: new Date() },
+    data: { status: "COMPLETED", completedAt: new Date(), ...result },
   });
 }
 

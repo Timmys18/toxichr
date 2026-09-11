@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CollapsibleSection,
@@ -52,6 +52,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const [loadingSaved, setLoadingSaved] = useState(Boolean(vacancyId));
   const [savedVacancyId, setSavedVacancyId] = useState(vacancyId ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [retryAction, setRetryAction] = useState<"load" | "review" | "checkout">("review");
   const [draftState, setDraftState] = useState<"idle" | "restored" | "saving" | "saved">("idle");
   const [resultStale, setResultStale] = useState(false);
   const [editorOpen, setEditorOpen] = useState(!vacancyId);
@@ -59,22 +60,41 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [packageState, setPackageState] = useState<PackageState | null>(null);
 
+  const loadSavedVacancy = useCallback(async () => {
+    if (!vacancyId) return;
+    setLoadingSaved(true);
+    setError(null);
+    try {
+      const source = `/api/vacancies/${vacancyId}${analysisId ? `?analysisId=${encodeURIComponent(analysisId)}` : ""}`;
+      const response = await fetch(source);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Вакансия не найдена");
+      setText(data.text ?? "");
+      setResult((data.result as VacancyReview | null) ?? null);
+      setEditorOpen(!data.result);
+      if (data.resultError) {
+        setRetryAction("review");
+        setError(data.resultError);
+      }
+    } catch (reason) {
+      setRetryAction("load");
+      setError(reason instanceof Error ? reason.message : "Ошибка загрузки");
+    } finally {
+      setLoadingSaved(false);
+    }
+  }, [analysisId, vacancyId]);
+
   useEffect(() => {
     track("vacancy_review_opened", { analysisId: analysisId ?? null, source: analysisId ? "resume_result" : "direct" });
     if (vacancyId) {
-      const source = `/api/vacancies/${vacancyId}${analysisId ? `?analysisId=${encodeURIComponent(analysisId)}` : ""}`;
-      void fetch(source).then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error ?? "Вакансия не найдена");
-        setText(data.text ?? ""); setResult((data.result as VacancyReview | null) ?? null); setEditorOpen(!data.result);
-      }).catch((reason) => setError(reason instanceof Error ? reason.message : "Ошибка загрузки")).finally(() => setLoadingSaved(false));
-      return;
+      const timer = window.setTimeout(() => void loadSavedVacancy(), 0);
+      return () => window.clearTimeout(timer);
     }
     const timer = window.setTimeout(() => {
       const pending = readPendingVacancy(); if (pending) { setText(pending); setDraftState("restored"); } setLoadingSaved(false);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [analysisId, vacancyId]);
+  }, [analysisId, loadSavedVacancy, vacancyId]);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -90,7 +110,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   }, [analysisId, text, vacancyId]);
 
   async function submit() {
-    setBusy(true); setError(null);
+    setBusy(true); setError(null); setRetryAction("review");
     try {
       const response = await fetch("/api/vacancies/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, analysisId, vacancyId: savedVacancyId || undefined }) });
       const data = await response.json();
@@ -108,7 +128,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   async function checkoutMatch() {
     if (!analysisId || !matchPaywall || checkoutBusy) return;
     setCheckoutBusy(true);
-    setError(null);
+    setError(null); setRetryAction("checkout");
     try {
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
@@ -136,6 +156,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const inputStatus = loadingSaved ? "Загружаем сохранённую вакансию…" : textLength === 0 ? "Минимум 80 символов — вставь описание целиком" : textLength < MIN_VACANCY_LENGTH ? `Добавь ещё ${MIN_VACANCY_LENGTH - textLength} симв. для точного разбора` : draftState === "saved" ? "Черновик сохранён на этом устройстве" : "Текста достаточно для разбора";
   const showEditor = !result || editorOpen;
   const canSubmit = !loadingSaved && !busy && textLength >= MIN_VACANCY_LENGTH && (!result || resultStale);
+  const retry = retryAction === "load" ? loadSavedVacancy : retryAction === "checkout" ? checkoutMatch : submit;
 
   return <PageContainer className="ds-comparison">
     <div className="ds-comparison-intro">
@@ -153,11 +174,11 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     ]} /> : null}
     {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!analysisId && !vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={10} placeholder="Вставь сюда текст вакансии целиком…" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} /><div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span><b className="thr-mono">{textLength} / 30 000</b></div></div> : null}
     {resultStale ? <p className="ds-comparison-stale-note" role="status">Текст изменился. Результат ниже относится к прошлой версии.</p> : null}
-    {error ? <p className="ds-comparison-error" role="alert">{error}</p> : null}
-    {canSubmit || (!result && showEditor) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
+    {error ? <EmptyState className="ds-comparison-error" action={<button type="button" className="ds-inline-link" onClick={() => void retry()} disabled={busy || checkoutBusy}>{busy ? "Повторяем…" : "Попробовать ещё раз"}</button>}>{error}</EmptyState> : null}
+    {!error && (canSubmit || (!result && showEditor)) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
     {matchPaywall ? <PaymentPrompt
       title="Открыть пакет ToxicHR"
-      description="Вакансия сохранена. В пакет входят 5 сопоставлений, все HR-взгляды, одно улучшение и будущая адаптация под вакансию."
+      description="Вакансия сохранена. В пакет входят 5 сопоставлений, все HR-взгляды, одно улучшение и одна адаптация под выбранную вакансию."
       price={`${matchPaywall.priceRub} ₽`}
       action={<button type="button" className="thr-btn thr-btn-tox" onClick={() => void checkoutMatch()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Открыть пакет за ${matchPaywall.priceRub} ₽`}</button>}
       secondary="Один платёж без подписки и дополнительных оплат внутри пакета."

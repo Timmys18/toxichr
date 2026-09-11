@@ -64,6 +64,34 @@ const PLACEHOLDER_COPY = /(короткий вывод|свободный зак
 const UNNECESSARY_ANGLICISMS = /\b(?:governance|adoption|senior|head|director-level|initial\s+screening|capex|opex|pmo|trade-offs?|measurable|escalation|owner|raci|steering\s+committee)\b/iu;
 const BRIGHT_MOMENT = /(?:[?!]|—|уже|пока|даже|видимо|неловко|осталось|прекрасн|раздражает|состоялось)/iu;
 
+/** Убирает запрещённый словарь из сгенерированного текста, не меняя цитаты источника. */
+export function sanitizeUserFacingLanguage(textValue: string): string {
+  const replacements: Array<[RegExp, string]> = [
+    [/(?:кандидат|человек|вы|ты|он|она)[^.!?\n]{0,60}(?:умеет|может|способен|способна|неспособен|неспособна|не\s+знает|знает)(?![а-яё])/giu, "Роль требует"],
+    [/\bgovernance\b/giu, "система управления"],
+    [/\bdelivery\b/giu, "доставке"],
+    [/\bproduct\s+owner\b/giu, "владелец продукта"],
+    [/\bproduct\s+manager\b/giu, "продуктовый менеджер"],
+    [/\badoption\b/giu, "внедрение"],
+    [/\bsenior\b/giu, "старший уровень"],
+    [/\bhead\b/giu, "руководитель"],
+    [/\bdirector-level\b/giu, "директорский уровень"],
+    [/\binitial\s+screening\b/giu, "первичный отбор"],
+    [/\bcapex\b/giu, "капитальные затраты"],
+    [/\bopex\b/giu, "операционные затраты"],
+    [/\bpmo\b/giu, "проектный офис"],
+    [/\btrade-offs?\b/giu, "компромиссы"],
+    [/\bmeasurable\b/giu, "измеримый"],
+    [/\bescalation\b/giu, "разрешение спорных вопросов"],
+    [/\bowner\b/giu, "ответственный"],
+    [/\braci\b/giu, "матрица ответственности"],
+    [/\bsteering\s+committee\b/giu, "управляющий комитет"],
+    [/способност(?:ь|и|ей|ям|ями|ях)/giu, "профессиональный опыт"],
+    [/умени(?:е|я|й|ям|ями|ях)/giu, "практический опыт"],
+  ];
+  return replacements.reduce((value, [pattern, replacement]) => value.replace(pattern, replacement), textValue).replace(/\s{2,}/g, " ").trim();
+}
+
 const PERSONA_MARKERS: Record<PersonaId, RegExp> = {
   tamara: /(статус|вес|полномочи|ответствен|управлен|масштаб|зрел|устойчив|корпоратив|директор|должност|руковод)/giu,
   lera: /(позиционир|секунд|рынок|чита|заголов|навык|одинак|ai-|канцеляр|рекрутер|профил|сигнал|отлич)/giu,

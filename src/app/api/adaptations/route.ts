@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import {
+  AdaptationAiError,
   buildAdaptationQuestions,
   buildAdaptedResume,
   type AdaptationAnswer,
@@ -18,7 +19,7 @@ import {
   TOXICHR_PACKAGE_PRICE_RUB,
 } from "@/lib/package";
 import { prisma } from "@/lib/prisma";
-import type { VacancyReview } from "@/lib/vacancy";
+import { isCurrentVacancyReview, type VacancyReview } from "@/lib/vacancy";
 
 const QuerySchema = z.object({ analysisId: z.string().min(1), vacancyId: z.string().min(1) });
 const BodySchema = QuerySchema.extend({
@@ -37,7 +38,9 @@ async function loadAdaptationContext(analysisId: string, vacancyId: string, user
   });
   if (!match) throw new ImprovementAccessError("Сначала сопоставь это резюме с вакансией.", 409);
   const review = match.result as VacancyReview;
-  if (!review.matchAssessment) throw new ImprovementAccessError("Для этой вакансии пока нет персонального сопоставления.", 409);
+  if (!isCurrentVacancyReview(review, vacancy.sourceText) || !review.matchAssessment) {
+    throw new ImprovementAccessError("Сопоставление относится к прежнему тексту вакансии. Сначала запусти его заново.", 409);
+  }
   const adaptation = await prisma.resumeAdaptation.findUnique({
     where: { vacancyId_analysisId: { vacancyId, analysisId } },
   });
@@ -54,6 +57,9 @@ function responseError(error: unknown) {
     }, { status: error.status });
   }
   if (error instanceof ImprovementAccessError) return NextResponse.json({ error: error.message }, { status: error.status });
+  if (error instanceof AdaptationAiError) {
+    return NextResponse.json({ error: "AI не завершил адаптацию. Лимит не списан — попробуй ещё раз.", retryable: true }, { status: 502 });
+  }
   console.error(error);
   return NextResponse.json({ error: "Не удалось подготовить адаптацию." }, { status: 500 });
 }
@@ -113,14 +119,14 @@ export async function POST(request: Request) {
 
     const versionContent = context.analysis.resumeVersion.structuredContent as { text?: string } | null;
     const resumeText = versionContent?.text?.trim() || await loadOriginalResumeText(context.analysis.resumeVersion.resume);
-    if (!resumeText.trim()) return NextResponse.json({ error: "Текст резюме недоступен." }, { status: 409 });
+    if (!resumeText.trim()) throw new ImprovementAccessError("Текст резюме недоступен.", 409);
     const result = await buildAdaptedResume({
       resumeText,
       vacancy: context.review.vacancyAssessment,
       match: context.review.matchAssessment!,
       answers: answers as AdaptationAnswer[],
     });
-    if (!result.changes.length) return NextResponse.json({ error: "Пока подтверждённых фактов недостаточно, чтобы безопасно адаптировать текст. Уточни личное действие или оставь строку без изменений." }, { status: 422 });
+    if (!result.changes.length) throw new ImprovementAccessError("Пока подтверждённых фактов недостаточно, чтобы безопасно адаптировать текст. Уточни личное действие или оставь строку без изменений.", 422);
 
     const saved = await prisma.$transaction(async (tx) => {
       const latest = await tx.resumeVersion.aggregate({ where: { resumeId: context.analysis.resumeVersion.resumeId }, _max: { versionNumber: true } });

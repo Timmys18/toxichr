@@ -3,13 +3,18 @@ import {
   MATCH_ASSESSMENT_VERSION,
   MatchAssessmentSchema,
   reviewVacancy,
+  isCurrentVacancyReview,
   StructuredVacancyAssessmentSchema,
   validateMatchAssessment,
+  VACANCY_ASSESSMENT_JSON_SCHEMA,
   VACANCY_ASSESSMENT_VERSION,
+  MATCH_ASSESSMENT_JSON_SCHEMA,
+  vacancyFingerprint,
   writeVacancyPersona,
   writeVacancyWriter,
 } from "../../src/lib/vacancy";
 import type { ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
+import { vacancyResultUrl } from "../../src/lib/navigation";
 
 const vacancy = {
   schemaVersion: VACANCY_ASSESSMENT_VERSION,
@@ -50,6 +55,32 @@ test("структурированная оценка вакансии и match 
   expect(StructuredVacancyAssessmentSchema.safeParse(vacancyAssessment).success).toBe(true);
   expect(MatchAssessmentSchema.safeParse(matchAssessment).success).toBe(true);
   expect(matchAssessment.matches.find((item) => item.status === "unknown")?.explanation).toContain("Резюме этого не показывает");
+});
+
+test("strict JSON Schema у обоих AI-этапов объявляет тип версии", () => {
+  const vacancyProperties = VACANCY_ASSESSMENT_JSON_SCHEMA.properties as Record<string, { type?: string }>;
+  const matchProperties = MATCH_ASSESSMENT_JSON_SCHEMA.properties as Record<string, { type?: string }>;
+  expect(vacancyProperties.schemaVersion.type).toBe("string");
+  expect(matchProperties.schemaVersion.type).toBe("string");
+});
+
+test("ссылка повторной проверки всегда сохраняет разбор и вакансию", () => {
+  const target = new URL(vacancyResultUrl("analysis with space", "vacancy/42"), "http://localhost");
+  expect(target.pathname).toBe("/vacancy");
+  expect(target.searchParams.get("analysisId")).toBe("analysis with space");
+  expect(target.searchParams.get("vacancyId")).toBe("vacancy/42");
+});
+
+test("изменённый текст вакансии делает сохранённый результат устаревшим", () => {
+  const sourceText = vacancy.requirements.map((item) => item.sourceQuote).join("\n");
+  const result = {
+    schemaVersion: VACANCY_ASSESSMENT_VERSION,
+    vacancyAssessment: { ...vacancyAssessment, vacancyFingerprint: vacancyFingerprint(sourceText) },
+    matchAssessment,
+    persona: { id: "lera" as const, comment: "Короткий комментарий.", contentBlocks: [{ type: "summary" as const, requirementIds: [], content: "Сопоставление по фактам резюме." }] },
+  };
+  expect(isCurrentVacancyReview(result, sourceText)).toBe(true);
+  expect(isCurrentVacancyReview(result, `${sourceText}\nНовое обязательное требование.`)).toBe(false);
 });
 
 test("решения об отклике представлены всеми четырьмя исходами без процентов", () => {

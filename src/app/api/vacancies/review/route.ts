@@ -20,8 +20,9 @@ import {
   TOXICHR_PACKAGE_PRICE_RUB,
 } from "@/lib/package";
 import {
+  isCurrentVacancyReview,
   reviewVacancy,
-  VACANCY_ASSESSMENT_VERSION,
+  VacancyAiError,
   type VacancyReview,
 } from "@/lib/vacancy";
 import type { PersonaId } from "@/lib/personas";
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
     const cachedReview = cached?.result as VacancyReview | undefined;
     if (
       !sourceChanged &&
-      cachedReview?.schemaVersion === VACANCY_ASSESSMENT_VERSION && analysis
+      isCurrentVacancyReview(cachedReview, vacancy.sourceText) && analysis
     ) {
       return NextResponse.json({ vacancyId: vacancy.id, matched: true, cached: true, result: cachedReview, package: await getPackageSnapshot(analysis.id, session?.user?.id) });
     }
@@ -207,6 +208,12 @@ export async function POST(request: Request) {
     }
     if (error instanceof ImprovementAccessError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    if (error instanceof VacancyAiError) {
+      return NextResponse.json(
+        { error: "AI не завершил профессиональный разбор. Лимит не списан — попробуй ещё раз.", retryable: true },
+        { status: 502 },
+      );
     }
     console.error(error);
     return NextResponse.json(

@@ -15,7 +15,7 @@ const VACANCY = `Senior Product Manager
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
 
-test("адаптация создаёт новую версию по подтверждённому факту и повторно сопоставляет её без второго списания", async ({ request }) => {
+test("адаптация создаёт новую версию по подтверждённому факту и повторно сопоставляет её без второго списания", async ({ request, page }) => {
   const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
@@ -60,10 +60,18 @@ test("адаптация создаёт новую версию по подтв�
   const accessAfterAdaptation = await request.get(`/api/payments/access?analysisId=${analysisId}`);
   expect(await accessAfterAdaptation.json()).toMatchObject({ adaptationUsed: true, adaptationAvailable: false, rechecksRemaining: 5 });
 
-  const recheck = await request.post(`/api/adaptations/${adaptationData.adaptationId}/recheck`);
-  expect(recheck.status()).toBe(200);
-  const recheckData = await recheck.json();
+  await page.goto(`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(vacancyId)}`);
+  await page.getByRole("button", { name: "Повторно проверить под эту вакансию →" }).click();
+  await page.waitForURL((url) => url.pathname === "/vacancy" && url.searchParams.get("analysisId") !== null && url.searchParams.get("vacancyId") === vacancyId);
+  const redirected = new URL(page.url());
+  const recheckData = { analysisId: redirected.searchParams.get("analysisId")!, vacancyId: redirected.searchParams.get("vacancyId")! };
   expect(recheckData.analysisId).toBeTruthy();
+  expect(recheckData.vacancyId).toBe(vacancyId);
+
+  const savedAdaptation = await prisma.resumeAdaptation.findUniqueOrThrow({ where: { id: adaptationData.adaptationId } });
+  const recheckAnalysis = await prisma.analysis.findUniqueOrThrow({ where: { id: recheckData.analysisId } });
+  expect(recheckAnalysis.resumeVersionId).toBe(savedAdaptation.resumeVersionId);
+
   const repeated = await request.post(`/api/adaptations/${adaptationData.adaptationId}/recheck`);
   expect(repeated.status()).toBe(200);
   expect(await repeated.json()).toMatchObject({ reused: true, analysisId: recheckData.analysisId });

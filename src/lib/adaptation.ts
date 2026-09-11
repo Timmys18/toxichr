@@ -28,6 +28,17 @@ export type AdaptationChange = {
   vacancyQuote: string;
 };
 
+export class AdaptationAiError extends Error {
+  constructor(
+    readonly reason: "invalid_json" | "validation_failed" | "provider_error",
+    message: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "AdaptationAiError";
+  }
+}
+
 const AiAdaptationSchema = z.object({
   replacements: z.array(z.object({
     requirementId: z.string().min(1),
@@ -85,25 +96,60 @@ async function aiAdaptedReplacements(input: {
   questions: AdaptationQuestion[];
   answers: AdaptationAnswer[];
 }): Promise<Record<string, string>> {
-  if (!aiLiveEnabled()) return {};
+  const testInput = JSON.stringify(input);
+  const testFailure = process.env.AI_TEST_VACANCY_FAILURES === "markers"
+    ? testInput.includes("[[TOXICHR_TEST_AI_ERROR]]")
+      ? "provider_error"
+      : testInput.includes("[[TOXICHR_TEST_AI_INVALID_JSON]]")
+        ? "invalid_json"
+        : null
+    : null;
+  if (!aiLiveEnabled() && !testFailure) return {};
   const answerByRequirement = Object.fromEntries(input.answers.map((item) => [item.requirementId, item.answer]));
-  const response = await runAi({
-    stage: "anti_generic",
-    system: `Ты адаптируешь резюме под вакансию. Перепиши только данные строки резюме.
+  let response: Awaited<ReturnType<typeof runAi>>;
+  try {
+    if (testFailure === "provider_error") throw new Error("Смоделированный отказ AI-провайдера.");
+    response = testFailure === "invalid_json" ? {
+      provider: "openai",
+      model: "test-invalid-json",
+      content: "{invalid-json",
+      tokensIn: 0,
+      tokensOut: 0,
+      costUsd: 0,
+    } : await runAi({
+      stage: "anti_generic",
+      system: `Ты адаптируешь резюме под вакансию. Перепиши только данные строки резюме.
 Сохрани исходное действие и все его числа. Используй только слова и факты из исходной строки и подтверждённого ответа кандидата.
 Не добавляй компании, технологии, команды, бюджеты, сроки, результаты или способности. Не пиши о личности кандидата.
 Если безопасно объединить строку и ответ нельзя, верни исходную строку без изменений.
 Верни только JSON: {"replacements":[{"requirementId":"...","text":"..."}]}.`,
-    user: JSON.stringify({ questions: input.questions, answers: answerByRequirement }),
-    jsonSchemaName: "resume_vacancy_adaptation",
-    temperature: 0.15,
-    maxTokens: 1_600,
-  });
+      user: JSON.stringify({ questions: input.questions, answers: answerByRequirement }),
+      jsonSchemaName: "resume_vacancy_adaptation",
+      temperature: 0.15,
+      maxTokens: 1_600,
+    });
+  } catch (error) {
+    console.error("[adaptation-ai] stage=anti_generic reason=provider_error", error);
+    throw new AdaptationAiError("provider_error", "AI не смог собрать адаптацию.", { cause: error });
+  }
   const start = response.content.indexOf("{");
   const end = response.content.lastIndexOf("}");
-  if (start < 0 || end <= start) return {};
-  const parsed = AiAdaptationSchema.safeParse(JSON.parse(response.content.slice(start, end + 1)));
-  if (!parsed.success) return {};
+  if (start < 0 || end <= start) {
+    console.error("[adaptation-ai] stage=anti_generic reason=invalid_json");
+    throw new AdaptationAiError("invalid_json", "AI вернул повреждённый ответ для адаптации.");
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(response.content.slice(start, end + 1));
+  } catch (error) {
+    console.error("[adaptation-ai] stage=anti_generic reason=invalid_json", error);
+    throw new AdaptationAiError("invalid_json", "AI вернул повреждённый ответ для адаптации.", { cause: error });
+  }
+  const parsed = AiAdaptationSchema.safeParse(raw);
+  if (!parsed.success) {
+    console.error("[adaptation-ai] stage=anti_generic reason=validation_failed", parsed.error.issues);
+    throw new AdaptationAiError("validation_failed", "Ответ AI не прошёл проверку адаптации.");
+  }
   const allowed = new Set(input.questions.map((item) => item.requirementId));
   return Object.fromEntries(parsed.data.replacements.filter((item) => allowed.has(item.requirementId)).map((item) => [item.requirementId, item.text]));
 }
@@ -114,17 +160,20 @@ export async function buildAdaptedResume(input: {
   match: MatchAssessment;
   answers: AdaptationAnswer[];
 }) {
+  const liveAi = aiLiveEnabled();
   const questions = buildAdaptationQuestions(input.vacancy, input.match);
   const answerMap = new Map(input.answers.map((item) => [item.requirementId, item.answer.trim()]));
   const usefulAnswers = input.answers.filter((item) => isUsefulImprovementAnswer(item.answer));
-  const ai = await aiAdaptedReplacements({ questions, answers: usefulAnswers }).catch(() => ({} as Record<string, string>));
+  const ai = await aiAdaptedReplacements({ questions, answers: usefulAnswers });
 
   let adaptedText = input.resumeText;
   const changes: AdaptationChange[] = [];
   for (const question of questions) {
     const answer = answerMap.get(question.requirementId) ?? "";
     if (!isUsefulImprovementAnswer(answer) || !adaptedText.includes(question.resumeQuote)) continue;
-    const replacement = selectSafeAdaptationReplacement(question.resumeQuote, answer, ai[question.requirementId]);
+    const aiCandidate = ai[question.requirementId];
+    if (liveAi && !aiCandidate) continue;
+    const replacement = selectSafeAdaptationReplacement(question.resumeQuote, answer, aiCandidate);
     if (!isGroundedAdaptationText(replacement, question.resumeQuote, answer) || replacement === question.resumeQuote) continue;
     adaptedText = adaptedText.replace(question.resumeQuote, replacement);
     changes.push({

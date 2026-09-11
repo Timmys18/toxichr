@@ -71,6 +71,7 @@ export function resolveProvider(): AiProvider {
 }
 
 export function aiLiveEnabled(): boolean {
+  if (aiMockEnabled()) return false;
   const provider = resolveProvider();
   if (provider === "openai") return hasOpenAiKey();
   return hasAnthropicKey();

@@ -16,6 +16,7 @@ import {
   SectionLabel,
   SummaryRail,
 } from "@/components/ui/system";
+import { vacancyResultUrl } from "@/lib/navigation";
 
 type Question = {
   requirementId: string;
@@ -66,9 +67,11 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
   const [rechecking, setRechecking] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryAction, setRetryAction] = useState<"load" | "package" | "adapt" | "recheck">("load");
 
   const load = useCallback(async () => {
     setError(null);
+    setRetryAction("load");
     const response = await fetch(`/api/adaptations?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(vacancyId)}`);
     const payload = await response.json();
     if (!response.ok) throw new Error(messageFrom(response, payload));
@@ -91,6 +94,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
     if (checkoutBusy) return;
     setCheckoutBusy(true);
     setError(null);
+    setRetryAction("package");
     try {
       const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ analysisId, vacancyId }) });
       const payload = await response.json();
@@ -109,6 +113,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
     if (!data || busy) return;
     setBusy(true);
     setError(null);
+    setRetryAction("adapt");
     try {
       const response = await fetch("/api/adaptations", {
         method: "POST",
@@ -131,11 +136,15 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
     if (!adaptationId || rechecking) return;
     setRechecking(true);
     setError(null);
+    setRetryAction("recheck");
     try {
       const response = await fetch(`/api/adaptations/${encodeURIComponent(adaptationId)}/recheck`, { method: "POST" });
       const payload = await response.json();
       if (!response.ok) throw new Error(messageFrom(response, payload));
-      router.push(`/vacancy?analysisId=${encodeURIComponent(payload.analysisId)}&vacancyId=${encodeURIComponent(payload.vacancyId)}`);
+      if (typeof payload.analysisId !== "string" || typeof payload.vacancyId !== "string") {
+        throw new Error("Повторная проверка завершилась без ссылки на результат. Лимит не списан — попробуй ещё раз.");
+      }
+      router.push(vacancyResultUrl(payload.analysisId, payload.vacancyId));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось повторно проверить новую версию.");
       setRechecking(false);
@@ -148,6 +157,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
   const ready = adaptation?.status === "ready" && adaptation.adaptedText;
   const hasAnswers = Object.values(answers).some((answer) => answer.trim().length > 0);
   const noPackage = Boolean(data && data.package.paywallEnabled && !data.package.hasPackage);
+  const retry = retryAction === "package" ? openPackage : retryAction === "adapt" ? submit : retryAction === "recheck" ? recheck : load;
 
   return <PageContainer className="ds-adaptation">
     <PageIntro label="Адаптация под вакансию" title={ready ? "Новая версия собрана по фактам" : "Уточним только то, что относится к этой вакансии"} lead={ready ? "Изменения привязаны к требованиям ниже. Ничего нового в опыт не добавлено." : "Ответь своими словами. Если факта нет, оставь поле пустым — сервис не станет его придумывать."} />
@@ -156,7 +166,7 @@ export function AdaptationClient({ analysisId, vacancyId }: { analysisId: string
       { value: data.package.adaptationUsed ? "использована" : "доступна", label: "адаптация" },
       { value: `${data.package.rechecksRemaining}/5`, label: "повторных проверок осталось" },
     ]} /> : null}
-    {error ? <EmptyState action={<button type="button" className="ds-inline-link" onClick={() => void load()}>Попробовать ещё раз</button>}>{error}</EmptyState> : null}
+    {error ? <EmptyState action={<button type="button" className="ds-inline-link" onClick={() => void retry()} disabled={busy || rechecking || checkoutBusy}>Попробовать ещё раз</button>}>{error}</EmptyState> : null}
     {noPackage && data ? <PaymentPrompt title="Открыть пакет ToxicHR" description="Адаптация под вакансию входит в один пакет: без подписки и дополнительных оплат внутри." price={`${data.package.priceRub} ₽`} action={<button type="button" className="thr-btn thr-btn-tox" onClick={() => void openPackage()} disabled={checkoutBusy}>{checkoutBusy ? "Переходим к оплате…" : `Открыть пакет за ${data.package.priceRub} ₽`}</button>} secondary="После оплаты не нужно повторно загружать резюме или вакансию." /> : null}
     {data && !ready && !noPackage ? <section className="ds-adaptation-questions"><SectionLabel>Подтверждённые уточнения</SectionLabel>{data.questions.length ? data.questions.map((question, index) => <div className="ds-adaptation-question" key={question.requirementId}><p className="ds-adaptation-index">{String(index + 1).padStart(2, "0")}</p><EvidenceItem title={question.requirement} description={question.question} quote={`Резюме: «${question.resumeQuote}» · Вакансия: «${question.vacancyQuote}»`} /><QuestionField id={`adaptation-${question.requirementId}`} label="Что можно честно уточнить в этой строке?" hint="Нужны только личное действие, факт или результат, который ты можешь подтвердить." value={answers[question.requirementId] ?? ""} onChange={(value) => setAnswers((previous) => ({ ...previous, [question.requirementId]: value }))} placeholder="Напиши факты обычными словами" /></div>) : <EmptyState>В сохранённом сопоставлении нет строк, которые можно безопасно усилить. Ничего не дорисовываем.</EmptyState>}</section> : null}
     {data && !ready && !noPackage && data.questions.length ? <CommandRail primary={<button type="button" className="ds-command-button" onClick={() => void submit()} disabled={!hasAnswers || busy}>{busy ? "Собираем новую версию…" : "Собрать версию под вакансию →"}</button>} hint="Доступ расходуется только после готовой новой версии." secondary={<Link className="ds-inline-link" href={`/vacancy?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(vacancyId)}`}>Оставить без изменений</Link>} /> : null}

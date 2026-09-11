@@ -104,10 +104,15 @@ export async function createAndRunAnalysis(
   resumeId: string,
   personaId: PersonaId,
   onEvent?: (event: PipelineEvent) => void,
+  targetResumeVersionId?: string,
 ): Promise<{ analysisId: string }> {
   const resume = await prisma.resume.findUnique({
     where: { id: resumeId },
-    include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
+    include: {
+      versions: targetResumeVersionId
+        ? { where: { id: targetResumeVersionId }, take: 1 }
+        : { orderBy: { versionNumber: "desc" }, take: 1 },
+    },
   });
 
   if (!resume?.sanitizedText || resume.deletedAt) {

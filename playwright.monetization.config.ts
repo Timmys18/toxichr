@@ -7,7 +7,7 @@ process.env.DATABASE_URL = "file:/tmp/toxichr-e2e.db";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: /(monetization|adaptation)\.spec\.ts/,
+  testMatch: /(monetization|adaptation(?:-ai-failure)?)\.spec\.ts/,
   fullyParallel: false,
   timeout: 120_000,
   expect: { timeout: 15_000 },
@@ -23,6 +23,7 @@ export default defineConfig({
       DATABASE_URL: "file:/tmp/toxichr-e2e.db",
       AUTH_SECRET: "monetization-only-secret-not-for-production",
       AI_PROVIDER: "mock",
+      AI_TEST_VACANCY_FAILURES: "markers",
       NEXT_PUBLIC_APP_URL: baseURL,
       BETA_PAYWALL_ENABLED: "true",
     },
