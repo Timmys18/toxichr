@@ -9,6 +9,7 @@ import { track } from "@/lib/analytics";
 import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
 import { readPendingVacancy } from "@/lib/pending-vacancy";
+import { ANALYSIS_RETRY_MESSAGE } from "@/lib/user-facing-errors";
 import { EditorialSection, EmptyState, EvidenceItem, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel, VerdictBlock } from "@/components/ui/system";
 
 type StreamEvent =
@@ -51,7 +52,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
     const watch = window.setTimeout(() => {
       if (!cancelled && !settled) {
         settled = true;
-        setError("Разбор идёт дольше обычного — похоже, ИИ сейчас недоступен. Проверь VPN и попробуй ещё раз.");
+        setError(ANALYSIS_RETRY_MESSAGE);
         setPhase("error");
       }
     }, 75_000);

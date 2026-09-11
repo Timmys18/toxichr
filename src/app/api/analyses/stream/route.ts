@@ -4,10 +4,10 @@
  * работы конвейера, в конце — completed с analysisId (или error).
  */
 
-import { AiConfigError } from "@/lib/ai/gateway";
 import type { PersonaId } from "@/lib/personas";
 import { readJson } from "@/lib/api";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { analysisErrorMessage } from "@/lib/user-facing-errors";
 import {
   AnalysisInputError,
   PERSONA_CODES,
@@ -93,11 +93,9 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error("[analyses/stream]", error);
         const message =
-          error instanceof AiConfigError || error instanceof AnalysisInputError
+          error instanceof AnalysisInputError
             ? error.message
-            : error instanceof Error && error.message
-              ? error.message
-              : "Анализ не удался. Попробуй ещё раз.";
+            : analysisErrorMessage(error);
         send({ type: "error", message });
       } finally {
         try {

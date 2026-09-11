@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson } from "@/lib/api";
-import { AiConfigError } from "@/lib/ai/gateway";
 import type { PersonaId } from "@/lib/personas";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { analysisErrorMessage } from "@/lib/user-facing-errors";
 import {
   AnalysisInputError,
   PERSONA_CODES,
@@ -39,13 +39,6 @@ export async function POST(request: Request) {
     if (error instanceof AnalysisInputError) {
       return jsonError(error.message, error.status);
     }
-    if (error instanceof AiConfigError) {
-      return jsonError(error.message, 503);
-    }
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : "Анализ не удался. Попробуй ещё раз.";
-    return jsonError(message, 500);
+    return jsonError(analysisErrorMessage(error), 503);
   }
 }
