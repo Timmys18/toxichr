@@ -114,6 +114,17 @@ test("динамический match целиком проходит общий 
   expect(validateMatchAssessment(bannedCopy, vacancyAssessment, resumeAssessment)).toBeNull();
 });
 
+test("match восстанавливает точные цитаты по выбранным evidenceId", () => {
+  const paraphrased = {
+    ...matchAssessment,
+    matches: matchAssessment.matches.map((item) => item.requirementId === "VR01"
+      ? { ...item, resumeQuotes: ["Запускал сервис для пользователей."] }
+      : item),
+  };
+  const validated = validateMatchAssessment(paraphrased, vacancyAssessment, resumeAssessment);
+  expect(validated?.matches[0].resumeQuotes).toEqual(["Запустил новый сервис для клиентов."]);
+});
+
 test("общий автор вакансии не подменяется персоной и проходит общий lexical gate", async () => {
   const before = process.env.AI_PROVIDER;
   process.env.AI_PROVIDER = "mock";

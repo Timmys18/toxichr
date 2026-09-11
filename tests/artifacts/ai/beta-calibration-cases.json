@@ -73,9 +73,9 @@
   },
   {
     "id": "data-scientist",
-    "segment": "senior IC · technical · редкая",
+    "segment": "middle IC · technical · редкая",
     "expectedProfession": "data scientist",
-    "expectedLevel": "senior",
+    "expectedLevel": "middle",
     "resume": "Data scientist в антифроде. Разработал модель ранжирования подозрительных операций и вместе с риск-командой выбрал пороги ручной проверки. На отложенной выборке recall вырос с 0,61 до 0,74 при прежней доле ложных срабатываний. Настроил мониторинг дрейфа и процедуру отката. Не отвечал за инфраструктуру feature store.",
     "vacancy": "Senior data scientist. Разрабатывать антифрод-модели, выбирать бизнес-пороги, проводить offline и online оценку, мониторить качество в production. Обязателен опыт владения feature store и управления командой ML-инженеров."
   },

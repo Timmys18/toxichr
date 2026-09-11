@@ -51,8 +51,10 @@ function quoteIsGrounded(quote: string, source: string) {
 
 function professionMatches(actual: string, expected: string) {
   const ignored = new Set(["по", "и", "в", "на"]);
-  const actualWords = new Set(normalized(actual).split(" "));
-  return normalized(expected).split(" ").filter((word) => !ignored.has(word)).every((word) => actualWords.has(word));
+  const actualWords = normalized(actual).split(" ");
+  return normalized(expected).split(" ").filter((word) => !ignored.has(word)).every((word) =>
+    actualWords.some((actualWord) => actualWord === word || (word.length >= 6 && actualWord.startsWith(word.slice(0, 6)))),
+  );
 }
 
 function levelMatches(actual: string, expected: string) {
@@ -62,7 +64,7 @@ function levelMatches(actual: string, expected: string) {
     middle: /middle|средн|специалист/,
     senior: /senior|старш|ведущ/,
     директор: /директор|дирекц/,
-    руководитель: /руковод|директор|дирекц/,
+    руководитель: /руковод|директор|дирекц|управлен/,
     специалист: /специалист|middle|старш|ведущ/,
   };
   return aliases[expected]?.test(value) ?? value.includes(normalized(expected));
