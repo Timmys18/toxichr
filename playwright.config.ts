@@ -36,6 +36,7 @@ export default defineConfig({
       DATABASE_URL: process.env.DATABASE_URL ?? "file:/tmp/toxichr-e2e.db",
       AUTH_SECRET: process.env.AUTH_SECRET ?? "e2e-only-secret-not-for-production",
       AI_PROVIDER: "mock",
+      AI_TEST_VACANCY_FAILURES: "markers",
       NEXT_PUBLIC_APP_URL: baseURL,
       BETA_PAYWALL_ENABLED: "false",
     },
