@@ -4,8 +4,10 @@ import {
   EditorialSection,
   EmptyState,
   EvidenceItem,
+  FormCard,
   LeadText,
   MetricStrip,
+  OfferCard,
   PageContainer,
   PageShell,
   PageTitle,
@@ -78,6 +80,20 @@ export default function UiKitPage() {
           <div className="ds-persona-grid">
             <PersonaCard name={ROSTER[0].name} role={ROSTER[0].role} tag={ROSTER[0].tag} image={ROSTER[0].img} quote={ROSTER[0].quote} focus={ROSTER[0].focus} lenses={ROSTER[0].lenses} description={ROSTER[0].pick} href={`/?persona=${ROSTER[0].id}#resume-start`} />
           </div>
+        </section>
+
+        <section className="ui-block">
+          <SectionLabel>Карточка предложения</SectionLabel>
+          <div className="ds-offer-grid">
+            <OfferCard highlighted label="Пакет ToxicHR" badge="цена беты" price="199 ₽" priceNote="одно резюме" description="Один пакет без подписки и скрытых доплат." items={["Все четыре HR-взгляда", "Работа с выбранными вакансиями"]} action={<PrimaryAction href="/pricing">Посмотреть условия</PrimaryAction>} />
+          </div>
+        </section>
+
+        <section className="ui-block">
+          <SectionLabel>Форма</SectionLabel>
+          <FormCard label="Вход в ToxicHR" title="С возвращением" description="Почта и пароль. Без анкет и лишних шагов.">
+            <form className="ds-auth-form"><input aria-label="Пример почты" placeholder="you@example.com" /><PrimaryAction type="button">Продолжить</PrimaryAction></form>
+          </FormCard>
         </section>
 
         <CommandRail primary={<span>Исправить резюме →</span>} hint="Только на основании подтверждённого опыта" secondary={<SecondaryAction href="/vacancy">Другая вакансия</SecondaryAction>} />

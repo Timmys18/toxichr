@@ -143,3 +143,29 @@ export function PersonaCard({ name, role, tag, image, quote, focus, lenses, desc
     </div>
   </article>;
 }
+
+export function OfferCard({ label, badge, price, priceNote, description, items, action, highlighted = false }: { label: ReactNode; badge?: ReactNode; price: ReactNode; priceNote: ReactNode; description?: ReactNode; items: ReactNode[]; action: ReactNode; highlighted?: boolean }) {
+  return <article className={cn("ds-offer-card", highlighted && "ds-offer-card-highlighted")}>
+    <div className="ds-offer-card-head">
+      <div className="ds-offer-card-label"><SectionLabel>{label}</SectionLabel>{badge ? <span>{badge}</span> : null}</div>
+      <div className="ds-offer-card-price"><b>{price}</b><span>{priceNote}</span></div>
+    </div>
+    {description ? <p className="ds-offer-card-description">{description}</p> : null}
+    <ul>{items.map((item, index) => <li key={index}><span aria-hidden>{highlighted ? "+" : "✓"}</span>{item}</li>)}</ul>
+    <div className="ds-offer-card-action">{action}</div>
+  </article>;
+}
+
+export function InfoNote({ title, children, className }: { title: ReactNode; children: ReactNode; className?: string }) {
+  return <aside className={cn("ds-info-note", className)}><b>{title}</b><p>{children}</p></aside>;
+}
+
+export function FormCard({ label, title, description, children, footer, className }: { label: ReactNode; title: ReactNode; description: ReactNode; children: ReactNode; footer?: ReactNode; className?: string }) {
+  return <section className={cn("ds-form-card", className)}>
+    <SectionLabel>{label}</SectionLabel>
+    <h1>{title}</h1>
+    <LeadText>{description}</LeadText>
+    {children}
+    {footer ? <footer>{footer}</footer> : null}
+  </section>;
+}

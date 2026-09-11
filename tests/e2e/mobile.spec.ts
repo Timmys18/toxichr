@@ -42,6 +42,22 @@ test("HR-состав не вылезает за экран и возвраща�
   await expect(page.getByRole("img", { name: "Лера, Бигтех" })).toBeVisible();
 });
 
+test("цены и auth используют единый mobile-контур без переполнения", async ({ page }) => {
+  await page.goto("/pricing");
+  await expect(page.getByRole("heading", { name: /Понять проблему/ })).toBeVisible();
+  await expect(page.getByText("199 ₽", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    await page.evaluate(() => window.innerWidth + 1),
+  );
+
+  await page.goto("/auth");
+  await page.getByRole("button", { name: "Зарегистрироваться" }).click();
+  await expect(page.getByText(/Согласен с/)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    await page.evaluate(() => window.innerWidth + 1),
+  );
+});
+
 test("мобильная вакансия объясняет минимум текста и сохраняет черновик", async ({ page }) => {
   await page.goto("/vacancy");
 

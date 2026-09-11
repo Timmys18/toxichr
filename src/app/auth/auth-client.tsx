@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { track } from "@/lib/analytics";
+import { FormCard, PageContainer, PrimaryAction } from "@/components/ui/system";
 
 type Mode = "login" | "register";
 
@@ -76,19 +77,15 @@ export function AuthClient() {
   }
 
   return (
-    <div className="authwrap">
-      <div className="auth">
-        <div className="k thr-mono">
-          {analysisId ? "Сохраним разбор?" : "Вход в ToxicHR"}
-        </div>
-        <h2>{mode === "login" ? "С возвращением" : "Пара секунд — и готово"}</h2>
-        <p>
-          {analysisId
-            ? "Аккаунт привяжет разбор к тебе — появятся история и динамика правок."
-            : "Почта и пароль. Без анкет и лишних шагов."}
-        </p>
-
-        <form onSubmit={submit}>
+    <div className="ds-auth-page">
+      <PageContainer>
+        <FormCard
+          label={analysisId ? "Сохраним разбор?" : "Вход в ToxicHR"}
+          title={mode === "login" ? "С возвращением" : "Пара секунд — и готово"}
+          description={analysisId ? "Аккаунт привяжет разбор к тебе — появятся история и динамика правок." : "Почта и пароль. Без анкет и лишних шагов."}
+          footer={<>Резюме приватно. Публичной ссылки нет, пока сам не создашь. <Link href="/">На главную</Link></>}
+        >
+          <form className="ds-auth-form" onSubmit={submit}>
           {mode === "register" ? (
             <input
               type="text"
@@ -107,7 +104,7 @@ export function AuthClient() {
             autoComplete="email"
           />
           {mode === "register" ? (
-            <label className="consent">
+            <label className="ds-consent-field">
               <input
                 type="checkbox"
                 checked={consent}
@@ -131,20 +128,20 @@ export function AuthClient() {
             }
           />
           {error ? (
-            <p className="err" role="alert">
+            <p className="ds-form-error" role="alert">
               {error}
             </p>
           ) : null}
-          <button
+          <PrimaryAction
             type="submit"
-            className="thr-btn thr-btn-tox sub"
+            className="ds-auth-submit"
             disabled={busy || (mode === "register" && !consent)}
           >
             {busy ? "Секунду…" : mode === "login" ? "Войти" : "Создать аккаунт"}
-          </button>
-        </form>
+          </PrimaryAction>
+          </form>
 
-        <div className="switch">
+        <div className="ds-auth-switch">
           {mode === "login" ? (
             <>
               Нет аккаунта?{" "}
@@ -161,116 +158,8 @@ export function AuthClient() {
             </>
           )}
         </div>
-
-        <div className="fine">
-          Резюме приватно. Публичной ссылки нет, пока сам не создашь.{" "}
-          <Link href="/">На главную</Link>
-        </div>
-      </div>
-
-      <style jsx>{`
-        .authwrap {
-          min-height: calc(100vh - 68px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px 20px;
-        }
-        .auth {
-          width: 400px;
-          max-width: 100%;
-          border: 1px solid var(--hair2);
-          border-radius: 24px;
-          background: linear-gradient(180deg, var(--metal-1), var(--metal-0));
-          padding: 36px;
-          animation: thr-fade 0.6s var(--ease);
-        }
-        .k {
-          font-size: 10.5px;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: var(--tox);
-        }
-        .auth h2 {
-          font-weight: 700;
-          font-size: 26px;
-          letter-spacing: -0.03em;
-          margin-top: 12px;
-        }
-        .auth p {
-          font-size: 14px;
-          color: var(--dim);
-          margin-top: 10px;
-          line-height: 1.55;
-        }
-        form {
-          margin-top: 22px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        input {
-          width: 100%;
-          background: var(--metal-2);
-          border: 1px solid var(--hair2);
-          border-radius: 14px;
-          height: 52px;
-          padding: 0 18px;
-          color: var(--fg);
-          font-family: inherit;
-          font-size: 15px;
-          outline: none;
-          transition: 0.2s;
-        }
-        input:focus {
-          border-color: var(--tox);
-        }
-        input::placeholder {
-          color: var(--faint);
-        }
-        .consent { display: flex; align-items: flex-start; gap: 10px; color: var(--dim); font-size: 11.5px; line-height: 1.45; cursor: pointer; }
-        .consent input { width: 17px; height: 17px; min-width: 17px; margin-top: 1px; accent-color: var(--tox); }
-        .consent :global(a) { color: var(--tox); text-underline-offset: 3px; }
-        .err {
-          color: var(--crit);
-          font-size: 13px;
-          margin: 2px 0 0;
-        }
-        .sub {
-          width: 100%;
-          height: 52px;
-          justify-content: center;
-          margin-top: 4px;
-          font-size: 15px;
-        }
-        .switch {
-          margin-top: 18px;
-          font-size: 13.5px;
-          color: var(--dim);
-          text-align: center;
-        }
-        .switch button {
-          background: none;
-          border: none;
-          color: var(--tox);
-          font-family: inherit;
-          font-size: 13.5px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-        .fine {
-          margin-top: 20px;
-          font-size: 11.5px;
-          color: var(--faint);
-          line-height: 1.5;
-          text-align: center;
-        }
-        .fine :global(a) {
-          color: var(--dim);
-          text-decoration: underline;
-          text-underline-offset: 2px;
-        }
-      `}</style>
+        </FormCard>
+      </PageContainer>
     </div>
   );
 }
