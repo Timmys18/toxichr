@@ -6,6 +6,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { track } from "@/lib/analytics";
 import { FormCard, PageContainer, PrimaryAction } from "@/components/ui/system";
+import { requestErrorMessage } from "@/lib/user-facing-errors";
 
 type Mode = "login" | "register";
 
@@ -63,15 +64,18 @@ export function AuthClient() {
       }
 
       if (analysisId) {
-        await fetch(`/api/analyses/${analysisId}/claim`, {
+        const claimResponse = await fetch(`/api/analyses/${analysisId}/claim`, {
           method: "POST",
-        }).catch(() => null);
+        });
+        if (!claimResponse.ok) {
+          throw new Error("Не удалось привязать разбор к аккаунту. Попробуй ещё раз — сам разбор сохранён.");
+        }
       }
 
       router.push(nextUrl);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Что-то пошло не так");
+      setError(requestErrorMessage(err, "Не удалось продолжить. Данные формы и разбор сохранены — попробуй ещё раз."));
       setBusy(false);
     }
   }
