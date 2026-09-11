@@ -515,3 +515,10 @@
 - Итоговый SHA Sprint 4: `35bb0d54c98153859c9faf78a35fb9acbf9c2318`.
 - Единственный GitHub Actions `34648225012`, `suite=full`: build, lint, typecheck, safety, persona, vacancy, monetization и e2e зелёные; 8/8 jobs выполнены без пропусков.
 - Sprint 4 отмечен COMPLETE. Активирован Sprint 5 — Real Beta Calibration; продуктовый scope не расширяется.
+
+## Sprint 5 — матрица beta-калибровки, 12.09.2026
+
+- Подготовлены 15 обезличенных пар резюме и вакансий: junior, senior IC, middle management, executive, technical, non-technical, массовые и редкие профессии.
+- Каждый кейс содержит ожидаемую профессию и уровень, явные подтверждённые факты и хотя бы одно намеренно отсутствующее требование для проверки `unknown` vs `gap`.
+- Живой runner проверяет Professional Core, grounding, vacancy interpretation и match; на двух контрастных профессиях сравнивает четыре голоса при общей профессиональной основе.
+- Результат сохраняется после каждого кейса и классифицирует дефекты терминами Sprint 5.
