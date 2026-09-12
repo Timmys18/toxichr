@@ -1,7 +1,7 @@
 # ToxicHR — Release Plan до закрытой беты
 
 > Статус: **ACTIVE**
-> Текущий спринт: **Sprint 6 — Release Hardening**
+> Текущий спринт: **Sprint 5 — Real Beta Calibration**
 > Правило: не добавлять новые продуктовые направления, пока основной путь не проходит Definition of Done ниже.
 
 ## Цель релиза
@@ -287,7 +287,7 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 5 — Real Beta Calibration
 
-> Статус: **COMPLETE · 12.09.2026**
+> Статус: **ACTIVE · калибровка не принята**
 
 ## Цель
 
@@ -335,26 +335,28 @@ Sprint считается закрытым только если вручную 
 
 Нет повторяющейся системной ошибки на нескольких разных профессиях, а четыре HR сохраняют разные голоса при одинаковой профессиональной основе.
 
-### Готовность к финальной приёмке · 12.09.2026
+### Предварительный технический результат · 12.09.2026
 
-- Живая матрица из 15 обезличенных пар закрыла junior, senior IC, middle management, executive, technical, non-technical, массовые и редкие профессии: 15/15 без ошибок и неклассифицированных замечаний.
+- Живой сценарий записал последний результат для 15 специально составленных обезличенных пар разных сегментов; финальные записи не содержат ошибок или автоматически обнаруженных issues. Это не независимая реальная beta-выборка.
 - На одинаковой Professional Core отдельно сохранены четыре различимых голоса для senior backend и операционного директора; факты и оценка между персонами не меняются.
 - Повторявшийся дефект Match Core устранён без ослабления grounding: модель выбирает существующие evidence ID, а точные цитаты восстанавливаются из Professional Core.
-- Generic rewrite и vacancy-aware rewrite проверены на junior, senior technical и руководителе. Все применённые изменения связаны с исходной строкой и явно подтверждённым ответом; повторяющий ответ корректно оставляет generic rewrite без изменений.
-- Safety, persona, vacancy, lint и typecheck зелёные. До закрытия Sprint остаётся один GitHub Actions `suite=full` на итоговом SHA.
+- Generic rewrite и vacancy-aware rewrite автоматически проверены на трёх синтетических кейсах с заранее составленными ответами. Формальный grounding пройден, редакторская пригодность человеком ещё не оценена.
+- Safety, persona, vacancy, lint и typecheck зелёные. Один GitHub Actions `suite=full` уже выполнен; повторять его для документационных поправок не нужно.
 
-### Закрытие Sprint 5 · 12.09.2026
+### Технический checkpoint Sprint 5 · 12.09.2026
 
 - Итоговый SHA: `cb565e7e51083dced8a993b486071b77e00646ff`.
 - Единственный GitHub Actions `suite=full`: https://github.com/Timmys18/toxichr/actions/runs/34652375721
 - Режим `workflow_dispatch`; build, lint, typecheck, safety, persona, vacancy, monetization и e2e завершились `success`, 8/8 jobs без пропусков.
-- Sprint 5 закрыт; активирован Sprint 6 без расширения его scope.
+- Зелёный CI не закрывает AI-калибровку. Факты, ограничения и оставшиеся проверки: [отчёт Sprint 5](SPRINT-5-CALIBRATION.md). Sprint 5 остаётся ACTIVE.
 
 ---
 
 # Sprint 6 — Release Hardening
 
-> Статус: **ACTIVE · 12.09.2026**
+> Статус: **PLANNED · не начат как этап**
+
+Отдельное состояние отменённой оплаты `canceled` уже внесено и сохранено в Git; это предварительная точечная работа, а не начало или приёмка Sprint 6.
 
 ## Цель
 
@@ -431,5 +433,5 @@ Sprint считается закрытым только если вручную 
 - Sprint 2 — COMPLETE
 - Sprint 3 — COMPLETE
 - Sprint 4 — COMPLETE
-- Sprint 5 — COMPLETE
-- Sprint 6 — **ACTIVE**
+- Sprint 5 — **ACTIVE**
+- Sprint 6 — PLANNED
