@@ -1,3 +1,5 @@
+import { recordCalibrationAiCall } from "@/lib/ai/calibration-audit";
+
 /**
  * AI Gateway — боевой режим: OpenAI (ChatGPT).
  * Anthropic — запасной вариант. Без ключа анализ не притворяется «живым».
@@ -274,11 +276,16 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
     reasoningEffort: request.reasoningEffort,
   };
 
-  if (provider === "openai") {
-    return callOpenAi(request.system, request.user, options);
+  try {
+    const response = provider === "openai"
+      ? await callOpenAi(request.system, request.user, options)
+      : await callAnthropic(request.system, request.user, options);
+    recordCalibrationAiCall({ stage: request.stage, provider: response.provider, model: response.model, status: "success" });
+    return response;
+  } catch (error) {
+    recordCalibrationAiCall({ stage: request.stage, provider, model: request.model ?? "default", status: "error" });
+    throw error;
   }
-
-  return callAnthropic(request.system, request.user, options);
 }
 
 /**

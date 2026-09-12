@@ -1,12 +1,16 @@
 import "dotenv/config";
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import { aiLiveEnabled } from "../../src/lib/ai/gateway";
+import { withCalibrationAiCalls } from "../../src/lib/ai/calibration-audit";
 import { runAnalysisPipeline } from "../../src/lib/ai/pipeline";
 import type { ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
 import type { PersonaId } from "../../src/lib/personas";
 import { assessMatch, assessVacancy } from "../../src/lib/vacancy";
+import { MATCH_ASSESSMENT_VERSION, VACANCY_ASSESSMENT_VERSION } from "../../src/lib/vacancy";
+import { PROFESSIONAL_CORE_VERSION } from "../../src/lib/ai/prompts/professional-core";
 
 type CalibrationCase = {
   id: string;
@@ -30,6 +34,11 @@ type CalibrationResult = {
   vacancyTitle?: string;
   decision?: string;
   statusCounts?: Record<string, number>;
+  professionalSummary?: string;
+  vacancySummary?: string;
+  matchItems?: Array<{ requirement: string; priority: string; status: string; explanation: string; evidenceIds: string[] }>;
+  provider?: string;
+  aiCalls?: number;
   voiceSamples?: Partial<Record<PersonaId, string>>;
   issues: string[];
   error?: string;
@@ -38,6 +47,7 @@ type CalibrationResult = {
 const artifact = (name: string) => resolve(process.cwd(), "tests", "artifacts", "ai", name);
 const cases = JSON.parse(readFileSync(artifact("beta-calibration-cases.json"), "utf8")) as CalibrationCase[];
 const output = artifact("beta-calibration-results.json");
+const journal = artifact("beta-calibration-run-journal.jsonl");
 const personas = ["tamara", "lera", "gleb", "vadik"] as const;
 const voiceCases = new Set(["senior-backend", "operations-executive"]);
 
@@ -75,7 +85,7 @@ function persist(results: CalibrationResult[]) {
 }
 
 test.skip(process.env.RUN_LIVE_AI_ACCEPTANCE !== "1" || !aiLiveEnabled(), "Живая beta-калибровка запускается только явно.");
-test("15 профессий: professional core, vacancy, match и различимость голосов", async () => {
+test("15–30 профессий: professional core, vacancy, match и различимость голосов", async () => {
   test.setTimeout(45 * 60_000);
   expect(cases.length).toBeGreaterThanOrEqual(15);
   expect(cases.length).toBeLessThanOrEqual(30);
@@ -84,6 +94,7 @@ test("15 профессий: professional core, vacancy, match и различи
     ? new Map<string, CalibrationResult>((JSON.parse(readFileSync(output, "utf8")) as { cases: CalibrationResult[] }).cases.map((item) => [item.id, item]))
     : new Map<string, CalibrationResult>();
   const results: CalibrationResult[] = [];
+  const runId = randomUUID();
 
   for (const [index, item] of cases.entries()) {
     const completed = previous.get(item.id);
@@ -104,14 +115,17 @@ test("15 профессий: professional core, vacancy, match и различи
       issues: [],
     };
     results.push(current);
+    const audited = await withCalibrationAiCalls(async () => {
     try {
       const analysis = await runAnalysisPipeline({ resumeText: item.resume, personaId: persona });
+      current.provider = analysis.provider;
       const report = analysis.report;
       const professional = report.professionalAssessment as ProfessionalAssessment | undefined;
       current.actualProfession = report.candidateProfile.primaryRole;
       current.actualLevel = report.candidateProfile.inferredLevel;
       current.score = report.score.total;
       current.verdict = report.verdict.comment;
+      current.professionalSummary = professional?.professionalAssessment.overallImpression;
 
       if (!professionMatches(current.actualProfession, item.expectedProfession)) {
         current.issues.push("плохой профессиональный вывод: ожидаемая профессия не распознана явно");
@@ -127,7 +141,15 @@ test("15 профессий: professional core, vacancy, match и различи
       const vacancy = await assessVacancy(item.vacancy);
       const match = await assessMatch(vacancy, professional);
       current.vacancyTitle = vacancy.title;
+      current.vacancySummary = vacancy.roleReality;
       current.decision = match.decision.code;
+      current.matchItems = match.matches.map((entry) => ({
+        requirement: vacancy.requirements.find((requirement) => requirement.id === entry.requirementId)?.text ?? entry.requirementId,
+        priority: vacancy.requirements.find((requirement) => requirement.id === entry.requirementId)?.priority ?? "unknown",
+        status: entry.status,
+        explanation: entry.explanation,
+        evidenceIds: entry.resumeEvidenceIds,
+      }));
       current.statusCounts = Object.fromEntries(
         ["strong_match", "partial_match", "hidden_match", "unknown", "gap"].map((status) => [status, match.matches.filter((entry) => entry.status === status).length]),
       );
@@ -152,6 +174,20 @@ test("15 профессий: professional core, vacancy, match и различи
       current.error = error instanceof Error ? error.message : String(error);
       current.issues.push("технический сбой калибровки");
     }
+    });
+    current.aiCalls = audited.calls.length;
+    const requiredStages = ["extract", "vacancy", "vacancy_match"];
+    if (!current.error && requiredStages.some((stage) => !audited.calls.some((call) => call.stage === stage && call.provider === "openai" && call.status === "success"))) {
+      current.error = "Не подтверждён живой AI на всех обязательных этапах";
+      current.issues.push("технический сбой калибровки");
+    }
+    appendFileSync(journal, `${JSON.stringify({
+      runId, caseId: item.id, at: new Date().toISOString(),
+      rulesVersion: `${PROFESSIONAL_CORE_VERSION}+${VACANCY_ASSESSMENT_VERSION}+${MATCH_ASSESSMENT_VERSION}`,
+      provider: current.provider ?? "none", status: current.error ? "error" : "success",
+      score: current.score ?? null, issueCount: current.issues.length,
+      calls: audited.calls,
+    })}\n`, "utf8");
     persist(results);
   }
 
