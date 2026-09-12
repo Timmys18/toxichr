@@ -141,7 +141,7 @@ export function isGroundedImprovementText(
 ): boolean {
   const clean = candidate.replace(/\s+/g, " ").trim();
   if (clean.length < 3) return false;
-  return sources.some(
+  return [...sources, sources.join(" ")].some(
     (source) =>
       isOrderedSubsequence(groundingTokens(clean), groundingTokens(source)),
   );
@@ -335,9 +335,14 @@ export async function buildImprovedResume(input: {
   const answerMap = new Map(
     input.answers.map((answer) => [answer.problemId, answer.answer.trim()]),
   );
-  const problems = input.report.topProblems.filter((problem) =>
-    isUsefulImprovementAnswer(answerMap.get(problem.id) ?? ""),
-  );
+  const openingSentence = input.resumeText.match(/^[^.!?]+[.!?]/u)?.[0].trim() ?? "";
+  const primaryRole = input.report.candidateProfile.primaryRole.toLocaleLowerCase("ru");
+  const problems = input.report.topProblems.filter((problem) => {
+    const quote = problem.quote.trim();
+    const isRoleHeading = quote === openingSentence && quote.length <= 80
+      && quote.toLocaleLowerCase("ru").includes(primaryRole);
+    return !isRoleHeading && isUsefulImprovementAnswer(answerMap.get(problem.id) ?? "");
+  });
   const usefulAnswers = input.answers.flatMap((answer) => {
     const fact = usefulImprovementFact(answer.answer);
     return fact ? [{ ...answer, answer: fact }] : [];

@@ -107,11 +107,12 @@ function theatreFromAssessment(assessment: ProfessionalAssessment, fallback: The
 
 function fallbackDraft(base: AnalysisReport, assessment: ProfessionalAssessment, personaId: PersonaId): PersonaDraft {
   const evidence = [...assessment.findings, ...assessment.strengths].slice(0, 3);
-  const personaLine: Record<PersonaId, string> = {
-    tamara: "Статус в заголовке есть. Теперь тексту нужен сопоставимый профессиональный вес.",
-    lera: "Роль считывается. Осталось сделать так, чтобы за первые секунды считалась именно ваша ценность.",
-    gleb: "Формулировка состоялась. Причинная связь пока просит уточняющий вопрос.",
-    vadik: "Опыт есть. Теперь коротко: что сделал ты и что после этого изменилось?",
+  const { overallImpression, strongestProfessionalSignal, mainResumeProblem } = assessment.professionalAssessment;
+  const personaComment: Record<PersonaId, string> = {
+    tamara: `Профессиональный вес здесь задаёт не должность, а содержание: ${strongestProfessionalSignal} ${overallImpression} Где граница ответственности пока не читается: ${mainResumeProblem}`,
+    lera: `За первые секунды должно считываться главное: ${strongestProfessionalSignal} ${mainResumeProblem} ${overallImpression}`,
+    gleb: `Исходный сигнал: ${strongestProfessionalSignal} Следующий проверочный вопрос к тексту: ${mainResumeProblem} Общий вывод: ${overallImpression}`,
+    vadik: `По делу видно вот что: ${strongestProfessionalSignal} А теперь без должностного тумана — ${mainResumeProblem} ${overallImpression}`,
   };
   const title: Record<PersonaId, string> = {
     tamara: "Опыт есть. Управленческий контур пока в приложении",
@@ -120,10 +121,10 @@ function fallbackDraft(base: AnalysisReport, assessment: ProfessionalAssessment,
     vadik: "Запуски вижу. Теперь кто что сделал?",
   };
   return {
-    verdict: { title: title[personaId], comment: `${assessment.professionalAssessment.overallImpression} ${personaLine[personaId]}` },
+    verdict: { title: title[personaId], comment: personaComment[personaId].slice(0, 900) },
     contentBlocks: [
       ...evidence.map((item) => ({ type: item.id.startsWith("S") ? "strength" as const : "finding" as const, findingIds: [item.id], content: "whyItMatters" in item ? `${item.interpretation} ${item.whyItMatters}` : item.interpretation })),
-      { type: "summary", findingIds: [], content: personaLine[personaId] },
+      { type: "summary", findingIds: [], content: personaComment[personaId] },
     ],
     priorities: (assessment.findings.length ? assessment.findings : evidence).slice(0, 3).map((item) => ({
       findingIds: [item.id],

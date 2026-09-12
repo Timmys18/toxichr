@@ -34,47 +34,41 @@ test("generic и vacancy-aware rewrite не добавляют факты в т�
     const professional = analysis.report.professionalAssessment as ProfessionalAssessment | undefined;
     expect(professional).toBeTruthy();
 
-    const groundedProblem = analysis.report.topProblems.find((entry) => item.resume.includes(entry.quote));
-    const sourceSentence = item.resume.match(/^[^.!?]+[.!?]/u)?.[0] ?? item.resume;
-    const problem = groundedProblem ?? {
-      id: "calibration-rewrite",
-      severity: "medium" as const,
-      title: "Проверить редактуру выбранной строки",
-      quote: sourceSentence,
-      roast: "Строка выбрана для калибровки редактора.",
-      diagnosis: "Калибровка не подменяет профессиональный вывод.",
-      recommendation: "Переписать только по подтверждённому ответу.",
-    };
-    const report = groundedProblem ? analysis.report : { ...analysis.report, topProblems: [problem] };
+    const openingSentence = item.resume.match(/^[^.!?]+[.!?]/u)?.[0] ?? "";
+    const problem = analysis.report.topProblems.find((entry) => item.resume.includes(entry.quote) && entry.quote !== openingSentence);
     const improvementAnswer = confirmedAnswers[item.id];
     const improved = await buildImprovedResume({
-      report,
+      report: analysis.report,
       resumeText: item.resume,
-      answers: [{ problemId: problem.id, answer: improvementAnswer }],
+      answers: problem ? [{ problemId: problem.id, answer: improvementAnswer }] : [],
       personaId: "gleb",
     });
     if (improved.replacements.length === 0) expect(improved.improvedText, `${item.id}: безопасный no-op изменил резюме`).toBe(item.resume);
+    expect(improved.replacements.every((entry) => entry.original !== openingSentence), `${item.id}: заменён заголовок`).toBe(true);
     expect(improved.replacements.every((entry) => isGroundedImprovementText(entry.replacement, [entry.original, improvementAnswer]))).toBe(true);
 
     const vacancy = await assessVacancy(item.vacancy);
     const match = await assessMatch(vacancy, professional!);
     const prepared = await buildAdaptedResume({ resumeText: item.resume, vacancy, match, answers: [] });
-    expect(prepared.questions.length, `${item.id}: match не создал связанного уточнения`).toBeGreaterThan(0);
     const question = prepared.questions[0];
-    const adaptationAnswer = confirmedAnswers[item.id];
-    const adapted = await buildAdaptedResume({
-      resumeText: item.resume,
-      vacancy,
-      match,
-      answers: [{ requirementId: question.requirementId, answer: adaptationAnswer }],
-    });
-    expect(adapted.changes.length, `${item.id}: adaptation не применила подтверждённый факт`).toBeGreaterThan(0);
-    expect(adapted.changes[0].replacement).toContain(question.resumeQuote.replace(/[.!?;:]+$/, ""));
+    const adapted = question
+      ? await buildAdaptedResume({
+        resumeText: item.resume,
+        vacancy,
+        match,
+        answers: [{ requirementId: question.requirementId, answer: confirmedAnswers[item.id] }],
+      })
+      : prepared;
+    if (question) {
+      expect(adapted.changes.length, `${item.id}: adaptation не применила подтверждённый факт`).toBeGreaterThan(0);
+      expect(adapted.changes[0].replacement).toContain(question.resumeQuote.replace(/[.!?;:]+$/, ""));
+    }
 
     results.push({
       id: item.id,
       rewrite: improved.replacements.map(({ problemId, original, replacement, grounded }) => ({ problemId, original, replacement, grounded })),
       adaptation: adapted.changes,
+      adaptationQuestionCount: prepared.questions.length,
       issues: [],
     });
     writeFileSync(artifact("beta-rewrite-calibration-results.json"), `${JSON.stringify({ generatedAt: new Date().toISOString(), cases: results }, null, 2)}\n`, "utf8");

@@ -7,6 +7,8 @@ import {
   selectSafeReplacement,
 } from "../../src/lib/improvement";
 import type { Problem } from "../../src/lib/ai/schemas";
+import { runHeuristicAnalysis } from "../../src/lib/ai/heuristics";
+import { buildImprovedResume } from "../../src/lib/improvement";
 import {
   parseVacancyAiResponse,
   sanitizeVacancyRequirement,
@@ -22,6 +24,26 @@ const PROBLEM: Problem = {
   recommendation: "Добавить только подтверждённые факты.",
   suggestedRewrite: "Внедрил Kubernetes и удвоил выручку.",
 };
+
+test("rewrite не превращает заголовок профессии в строку достижения", async () => {
+  const before = process.env.AI_PROVIDER;
+  process.env.AI_PROVIDER = "mock";
+  try {
+    const resumeText = "UX-исследователь, стажёр. Провела интервью и передала выводы команде.";
+    const report = runHeuristicAnalysis(resumeText, "gleb");
+    report.candidateProfile.primaryRole = "UX-исследователь";
+    report.topProblems = [{ ...PROBLEM, id: "title", quote: "UX-исследователь, стажёр." }];
+    const result = await buildImprovedResume({
+      report, resumeText, personaId: "gleb",
+      answers: [{ problemId: "title", answer: "Лично провела восемь интервью с пользователями." }],
+    });
+    expect(result.improvedText).toBe(resumeText);
+    expect(result.replacements).toEqual([]);
+  } finally {
+    if (before === undefined) delete process.env.AI_PROVIDER;
+    else process.env.AI_PROVIDER = before;
+  }
+});
 
 test("AI-редактура не добавляет выдуманные факты без цифр", () => {
   const answer =
