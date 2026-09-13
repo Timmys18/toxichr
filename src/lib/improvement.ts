@@ -26,22 +26,29 @@ export type ImprovementReplacement = {
 
 export const IMPROVEMENT_RULES_VERSION = "improvement@2.2";
 
-function editableProblems(report: AnalysisReport): Problem[] {
+function editableProblems(report: AnalysisReport, resumeText?: string): Problem[] {
   const role = report.candidateProfile.primaryRole.toLocaleLowerCase("ru");
   const isHeading = (quote: string) => quote.trim().length <= 80 && quote.toLocaleLowerCase("ru").includes(role);
   const problems = report.topProblems.filter((item) => !isHeading(item.quote));
   // A strong resume may have no defect: offer a factual clarification on an
   // existing strength, without inventing a weakness or replacing its heading.
-  return [...problems.slice(0, 4), ...report.strengths.filter((item) => item.quote && !isHeading(item.quote) && !problems.some((problem) => problem.quote === item.quote)).slice(0, 3).map((item) => ({
+  const fragments = [...problems.slice(0, 4), ...report.strengths.filter((item) => item.quote && !isHeading(item.quote) && !problems.some((problem) => problem.quote === item.quote)).slice(0, 3).map((item) => ({
     id: `clarify-${item.id}`, title: "Уточнить личный вклад в этом результате", quote: item.quote!, severity: "low" as const,
     roast: item.comment, diagnosis: "Сохраните этот факт. Дополняйте его только если есть конкретное уточнение.", recommendation: "Уточните личное действие и его результат.",
   }))];
+  if (fragments.length || !resumeText) return fragments;
+  return (resumeText.match(/[^.!?\n]+[.!?]?/gu) ?? []).map((quote) => quote.trim())
+    .filter((quote) => quote.length >= 20 && quote.length <= 500 && !isHeading(quote)
+      && /(?:^|\s)[а-яё]*(?:ил|ила|или|ал|ала|али|ёл|ела|ели)(?=\s|[,.;:])/iu.test(quote))
+    .slice(0, 3).map((quote, index) => ({ id: `clarify-source-${index}`, title: "Уточнить описание работы", quote, severity: "low" as const,
+      roast: "В исходном тексте есть описание работы.", diagnosis: "Можно уточнить этот фрагмент, если есть дополнительные факты.", recommendation: "Назовите конкретное личное действие." }));
 }
 
 export function buildImprovementQuestions(
   report: AnalysisReport,
+  resumeText?: string,
 ): ImprovementQuestion[] {
-  return editableProblems(report).slice(0, 7).map((problem) => ({
+  return editableProblems(report, resumeText).slice(0, 7).map((problem) => ({
     problemId: problem.id,
     title: problem.title,
     quote: problem.quote,
@@ -355,7 +362,7 @@ export async function buildImprovedResume(input: {
   );
   const openingSentence = input.resumeText.match(/^[^.!?]+[.!?]/u)?.[0].trim() ?? "";
   const primaryRole = input.report.candidateProfile.primaryRole.toLocaleLowerCase("ru");
-  const problems = editableProblems(input.report).filter((problem) => {
+  const problems = editableProblems(input.report, input.resumeText).filter((problem) => {
     const quote = problem.quote.trim();
     const isRoleHeading = quote === openingSentence && quote.length <= 80
       && quote.toLocaleLowerCase("ru").includes(primaryRole);
@@ -415,6 +422,6 @@ export async function buildImprovedResume(input: {
     improvedText,
     replacements,
     afterScore: Math.min(100, input.report.score.total + positiveDelta),
-    clarificationQuestions: replacements.length ? [] : buildImprovementQuestions(input.report),
+    clarificationQuestions: replacements.length ? [] : buildImprovementQuestions(input.report, input.resumeText),
   };
 }

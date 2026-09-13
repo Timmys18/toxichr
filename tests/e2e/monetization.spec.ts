@@ -151,6 +151,12 @@ test("платный match закрыт сервером, а самостоят�
 
   const questions = await request.get(`/api/improvements/${analysisId}`);
   const questionData = await questions.json();
+  const clarification = await request.post(`/api/improvements/${analysisId}`, {
+    data: { answers: [{ problemId: questionData.questions[0].problemId, answer: "Не помню" }] },
+  });
+  expect(clarification.status()).toBe(422);
+  expect((await clarification.json()).questions[0].quote).toBe(questionData.questions[0].quote);
+  expect(await prisma.packageUsage.count({ where: { packageId: testPackage.id, kind: "IMPROVEMENT" } })).toBe(0);
   const rewrite = await request.post(`/api/improvements/${analysisId}`, {
     data: { answers: [{ problemId: questionData.questions[0].problemId, answer: "Провела 8 интервью и проверила две гипотезы." }] },
   });

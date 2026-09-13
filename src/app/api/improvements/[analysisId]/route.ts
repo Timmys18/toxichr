@@ -78,7 +78,7 @@ export async function GET(
 
     return NextResponse.json({
       analysisId,
-      questions: buildImprovementQuestions(report),
+      questions: buildImprovementQuestions(report, analysis.resumeVersion.resume.sanitizedText ?? ""),
       beforeScore: report.score.total,
       originalText,
       improvement: saved
@@ -174,6 +174,8 @@ export async function POST(
       personaId: (analysis.persona?.code ?? "lera") as PersonaId,
     });
     if (result.replacements.length === 0) {
+      await releasePackageAction(reservationId);
+      reservationId = null;
       return NextResponse.json(
         { error: result.clarificationQuestions[0]?.question ?? "В каком конкретном фрагменте можно уточнить ваше личное действие и результат? Пока резюме оставлено без изменений.", questions: result.clarificationQuestions },
         { status: 422 },

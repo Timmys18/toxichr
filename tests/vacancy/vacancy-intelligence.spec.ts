@@ -61,6 +61,7 @@ test("извлечение не теряет Kafka, а match не пропуск
   expect(cleanAssessment(raw, source)).toBeNull();
   raw.requirements.push({ ...raw.requirements[0], id: "VR03", text: "Опыт работы с Kafka" });
   expect(cleanAssessment(raw, source)?.requirements).toHaveLength(3);
+  expect(cleanAssessment({ ...raw, requirements: raw.requirements.map((item) => ({ ...item, sourceQuote: `«${source}»` })) }, source)?.requirements).toHaveLength(3);
   expect(validateMatchAssessment({ ...matchAssessment, matches: matchAssessment.matches.slice(0, 2) }, vacancyAssessment, resumeAssessment)).toBeNull();
 });
 

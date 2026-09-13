@@ -36,7 +36,7 @@ test("generic и vacancy-aware rewrite: конкретный фрагмент, �
       try {
         const analysis = await runAnalysisPipeline({ resumeText: item.resume, personaId: "gleb" });
         const professional = analysis.report.professionalAssessment as ProfessionalAssessment;
-        const questions = buildImprovementQuestions(analysis.report);
+        const questions = buildImprovementQuestions(analysis.report, item.resume);
         const confirmation = confirmations[item.id];
         const question = questions.find((entry) => confirmation.topic.test(entry.quote));
         current.questions = questions;

@@ -73,7 +73,7 @@ export const VACANCY_PERSONA_JSON_SCHEMA: Record<string, unknown> = { type: "obj
 
 function fingerprint(value: string) { return createHash("sha256").update(value.trim().replace(/\s+/g, " ")).digest("hex").slice(0, 16); }
 function normalize(value: string) { return value.toLowerCase().replace(/[«»“”„]/g, '"').replace(/\s+/g, " ").trim(); }
-function isGroundedQuote(quote: string, source: string) { const needle = normalize(quote); return needle.length >= 6 && normalize(source).includes(needle); }
+function isGroundedQuote(quote: string, source: string) { const needle = normalize(quote.trim().replace(/^[«“„"]([\s\S]*)[»”"]$/u, "$1")); return needle.length >= 6 && normalize(source).includes(needle); }
 function parseJson(content: string): unknown | null { try { return JSON.parse(content); } catch { return null; } }
 
 const TEST_AI_ERROR_MARKER = "[[TOXICHR_TEST_AI_ERROR]]";
@@ -100,7 +100,10 @@ export function cleanAssessment(raw: unknown, vacancyText: string): StructuredVa
     return null;
   }
   // A lost citation must fail extraction, not silently delete a requirement.
-  if (parsed.data.requirements.some((item) => !isGroundedQuote(item.sourceQuote, vacancyText))) return null;
+  if (parsed.data.requirements.some((item) => !isGroundedQuote(item.sourceQuote, vacancyText))) {
+    console.error("[vacancy-ai] stage=vacancy validation=ungrounded_requirement");
+    return null;
+  }
   const groundedRequirements = parsed.data.requirements
     .map((item, index) => ({ ...item, id: `VR${String(index + 1).padStart(2, "0")}` }));
   const namedRequirements = explicitNamedRequirements(vacancyText);
