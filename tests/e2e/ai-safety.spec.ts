@@ -116,6 +116,7 @@ test("числа остаются привязаны к своему локал�
     quote: "Руководил 5 проектами.",
   };
   const answer = "Команда из 10 человек.";
+  expect(selectSafeReplacement(problem, answer, answer)).toBe("Руководил 5 проектами. Команда из 10 человек.");
   const swapped = "Руководил 10 проектами, команда из 5 человек.";
 
   expect(isGroundedImprovementText(swapped, [problem.quote, answer])).toBe(

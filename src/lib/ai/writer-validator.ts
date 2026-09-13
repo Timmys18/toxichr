@@ -174,6 +174,8 @@ export function validatePersonaDraft(
   const errors: string[] = [];
   const allText = [draft.verdict.title, draft.verdict.comment, ...draft.contentBlocks.map((b) => b.content), ...draft.priorities.map((p) => p.action), ...draft.shareLines].join("\n");
   errors.push(...validateUserFacingLanguage(allText));
+  if (options.enforceVoice && /^резюме\s+(?:\S+\s+){0,2}(?:показывает|подтверждает|демонстрирует)/iu.test(draft.verdict.comment)) errors.push("вместо оптики персоны повторена общая оценка; начните с конкретной детали editorialFocus");
+  if (options.enforceVoice && options.personaId === "lera" && !/рекрутер|позиционир|специализац|перв.{0,12}(?:экран|строк)|заголов|отлич/iu.test(draft.verdict.comment)) errors.push("Лера должна выбрать заметный сигнал для рекрутера; общий вопрос о личном вкладе не раскрывает её оптику");
   if ([draft.verdict.title, draft.verdict.comment].some((value) => /^\s*\.{3,}\s*$/.test(value))) errors.push("оставлена служебная заглушка вместо текста");
   for (const block of draft.contentBlocks) {
     if (block.type !== "summary" && block.findingIds.length === 0) errors.push("содержательный блок без findingId");

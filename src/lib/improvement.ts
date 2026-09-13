@@ -24,14 +24,28 @@ export type ImprovementReplacement = {
   grounded: boolean;
 };
 
+export const IMPROVEMENT_RULES_VERSION = "improvement@2.2";
+
+function editableProblems(report: AnalysisReport): Problem[] {
+  const role = report.candidateProfile.primaryRole.toLocaleLowerCase("ru");
+  const isHeading = (quote: string) => quote.trim().length <= 80 && quote.toLocaleLowerCase("ru").includes(role);
+  const problems = report.topProblems.filter((item) => !isHeading(item.quote));
+  // A strong resume may have no defect: offer a factual clarification on an
+  // existing strength, without inventing a weakness or replacing its heading.
+  return [...problems.slice(0, 4), ...report.strengths.filter((item) => item.quote && !isHeading(item.quote) && !problems.some((problem) => problem.quote === item.quote)).slice(0, 3).map((item) => ({
+    id: `clarify-${item.id}`, title: "Уточнить личный вклад в этом результате", quote: item.quote!, severity: "low" as const,
+    roast: item.comment, diagnosis: "Сохраните этот факт. Дополняйте его только если есть конкретное уточнение.", recommendation: "Уточните личное действие и его результат.",
+  }))];
+}
+
 export function buildImprovementQuestions(
   report: AnalysisReport,
 ): ImprovementQuestion[] {
-  return report.topProblems.slice(0, 7).map((problem) => ({
+  return editableProblems(report).slice(0, 7).map((problem) => ({
     problemId: problem.id,
     title: problem.title,
     quote: problem.quote,
-    question: `Что в реальности стояло за формулировкой «${problem.quote}»?`,
+    question: `В строке «${problem.quote}» какое конкретное действие было вашим и что оно изменило? Назовите уточнение, которого ещё нет в этой строке. Если уточнения нет, оставим её без изменений.`,
     prompts: [
       "Что именно сделал лично ты?",
       "Какой был масштаб: команда, бюджет, срок или объём?",
@@ -223,6 +237,7 @@ function fallbackReplacement(problem: Problem, answer: string): string {
   const clean = usefulImprovementFact(answer);
   if (!clean) return problem.quote;
   const quote = problem.quote.replace(/\s+/g, " ").trim();
+  if (isOrderedSubsequence(groundingTokens(clean), groundingTokens(quote))) return quote;
   if (isOrderedSubsequence(contentTokens(quote), contentTokens(clean))) {
     return clean;
   }
@@ -239,7 +254,10 @@ export function selectSafeReplacement(
   const usefulAnswer = usefulImprovementFact(answer) ?? "";
   const candidate = aiCandidate?.replace(/\s+/g, " ").trim();
   if (!candidate) return fallback;
-  return isGroundedImprovementText(candidate, [problem.quote, usefulAnswer])
+  const scopeWords = /(?:^|\s)(?:не|без|совместно|командой|частично|только)(?=\s|[.,;!?]|$)/giu;
+  const preservesScope = [problem.quote, usefulAnswer].every((source) => (source.match(scopeWords) ?? []).every((word) => candidate.toLowerCase().includes(word.trim().toLowerCase())));
+  const preservesNumbers = numbers(problem.quote).every((number) => numbers(candidate).includes(number));
+  return candidate !== problem.quote && preservesScope && preservesNumbers && isGroundedImprovementText(candidate, [problem.quote, usefulAnswer])
     ? candidate
     : fallback;
 }
@@ -295,7 +313,7 @@ async function aiReplacements(input: {
   answers: ImprovementAnswer[];
   resumeText: string;
 }): Promise<Record<string, string>> {
-  if (!aiLiveEnabled()) return {};
+  if (!aiLiveEnabled() || input.problems.length === 0) return {};
 
   const response = await runAi({
     stage: "anti_generic",
@@ -337,11 +355,11 @@ export async function buildImprovedResume(input: {
   );
   const openingSentence = input.resumeText.match(/^[^.!?]+[.!?]/u)?.[0].trim() ?? "";
   const primaryRole = input.report.candidateProfile.primaryRole.toLocaleLowerCase("ru");
-  const problems = input.report.topProblems.filter((problem) => {
+  const problems = editableProblems(input.report).filter((problem) => {
     const quote = problem.quote.trim();
     const isRoleHeading = quote === openingSentence && quote.length <= 80
       && quote.toLocaleLowerCase("ru").includes(primaryRole);
-    return !isRoleHeading && isUsefulImprovementAnswer(answerMap.get(problem.id) ?? "");
+    return !isRoleHeading && input.resumeText.includes(quote) && isUsefulImprovementAnswer(answerMap.get(problem.id) ?? "");
   });
   const usefulAnswers = input.answers.flatMap((answer) => {
     const fact = usefulImprovementFact(answer.answer);
@@ -373,7 +391,7 @@ export async function buildImprovedResume(input: {
   let currentHeuristic = baselineHeuristic;
 
   for (const replacement of candidates) {
-    if (replacement.original && improvedText.includes(replacement.original)) {
+    if (replacement.grounded && replacement.replacement !== replacement.original && replacement.original && improvedText.includes(replacement.original)) {
       const proposedText = improvedText.replace(
         replacement.original,
         replacement.replacement,
@@ -382,7 +400,9 @@ export async function buildImprovedResume(input: {
         proposedText,
         input.personaId,
       ).score.total;
-      if (proposedScore >= currentHeuristic) {
+      // Confirmed editorial changes are not rejected merely because the old
+      // keyword heuristic prefers the original wording.
+      if (proposedText !== improvedText) {
         improvedText = proposedText;
         currentHeuristic = proposedScore;
         replacements.push(replacement);
@@ -395,5 +415,6 @@ export async function buildImprovedResume(input: {
     improvedText,
     replacements,
     afterScore: Math.min(100, input.report.score.total + positiveDelta),
+    clarificationQuestions: replacements.length ? [] : buildImprovementQuestions(input.report),
   };
 }

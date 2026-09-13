@@ -10,6 +10,7 @@ import { PERSONA_BIBLES, PERSONA_BIBLE_VERSION } from "@/lib/ai/prompts/persona-
 import { WRITER_CORE_PROMPT, WRITER_CORE_VERSION } from "@/lib/ai/prompts/writer-core";
 import { PROFESSIONAL_CORE_VERSION } from "@/lib/ai/prompts/professional-core";
 import { editorPrompt, EDITOR_CORE_VERSION } from "@/lib/ai/prompts/editor-core";
+import { personaFocus } from "@/lib/ai/persona-focus";
 import {
   buildSharePrivacyContext,
   PERSONA_DRAFT_JSON_SCHEMA,
@@ -106,29 +107,32 @@ function theatreFromAssessment(assessment: ProfessionalAssessment, fallback: The
 }
 
 function fallbackDraft(base: AnalysisReport, assessment: ProfessionalAssessment, personaId: PersonaId): PersonaDraft {
-  const evidence = [...assessment.findings, ...assessment.strengths].slice(0, 3);
-  const { overallImpression, strongestProfessionalSignal, mainResumeProblem } = assessment.professionalAssessment;
+  const focus = personaFocus(assessment, personaId);
+  const evidence = focus.evidence;
+  const quote = evidence[0]?.sourceQuote ?? base.topProblems[0]?.quote ?? "";
+  const secondQuote = evidence[1]?.sourceQuote ?? quote;
   const personaComment: Record<PersonaId, string> = {
-    tamara: `Профессиональный вес здесь задаёт не должность, а содержание: ${strongestProfessionalSignal} ${overallImpression} Где граница ответственности пока не читается: ${mainResumeProblem}`,
-    lera: `За первые секунды должно считываться главное: ${strongestProfessionalSignal} ${mainResumeProblem} ${overallImpression}`,
-    gleb: `Исходный сигнал: ${strongestProfessionalSignal} Следующий проверочный вопрос к тексту: ${mainResumeProblem} Общий вывод: ${overallImpression}`,
-    vadik: `По делу видно вот что: ${strongestProfessionalSignal} А теперь без должностного тумана — ${mainResumeProblem} ${overallImpression}`,
+    tamara: `«${quote}» — вот фрагмент, по которому стоит обсуждать вес роли. Название должности не выдаёт доверенность на все решения. ${focus.question}`,
+    lera: `«${quote}» — здесь есть материал для первого экрана. Я бы вынесла эту строку рядом с названием роли: рекрутеру нужна причина открыть опыт дальше. Пусть специализация читается раньше списка обязанностей.`,
+    gleb: `Рассмотрим утверждение «${quote}». ${focus.question} Если связь уже проверена, сохраните способ проверки рядом с результатом. Само соседство двух событий в резюме ещё не объясняет причинность.`,
+    vadik: `«${quote}» — эту работу и разбираем. ${focus.question} Оставь действие рядом с его практической пользой: собрание глаголов само по себе ничего не запускает.`,
   };
   const title: Record<PersonaId, string> = {
-    tamara: "Опыт есть. Управленческий контур пока в приложении",
-    lera: "Сильный опыт, две строки в режиме инкогнито",
-    gleb: "Утверждения есть. Причинность выборочная",
-    vadik: "Запуски вижу. Теперь кто что сделал?",
+    tamara: "Должность и полномочия: сверим границы",
+    lera: "Что рекрутер увидит первым?",
+    gleb: "Как решение связано с результатом?",
+    vadik: "Что здесь сделано лично?",
   };
   return {
     verdict: { title: title[personaId], comment: personaComment[personaId].slice(0, 900) },
     contentBlocks: [
-      ...evidence.map((item) => ({ type: item.id.startsWith("S") ? "strength" as const : "finding" as const, findingIds: [item.id], content: "whyItMatters" in item ? `${item.interpretation} ${item.whyItMatters}` : item.interpretation })),
+      { type: "observation", findingIds: evidence.map((item) => item.id), content: personaComment[personaId] },
+      { type: "question", findingIds: evidence.slice(1).map((item) => item.id).length ? [evidence[1].id] : evidence.map((item) => item.id), content: `К фрагменту «${secondQuote}»: ${focus.question}` },
       { type: "summary", findingIds: [], content: personaComment[personaId] },
     ],
     priorities: (assessment.findings.length ? assessment.findings : evidence).slice(0, 3).map((item) => ({
       findingIds: [item.id],
-      action: "Перепишите этот фрагмент так, чтобы профессиональный смысл и реальный контекст читались без догадок.",
+      action: `${focus.question} Уточните только подтверждённое в этой строке.`,
     })),
     shareLines: ["Резюме становится сильнее, когда громкость формулировки совпадает с её содержанием."],
   };
@@ -250,8 +254,9 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
 
   emit({ type: "stage", stage: "persona", status: "start" });
   const writerStartedAt = Date.now();
-  const writerInput = JSON.stringify({ assessment, uiLanguage: "ru" });
   const evidenceIds = new Set([...assessment.findings.map((item) => item.id), ...assessment.strengths.map((item) => item.id)]);
+  const editorialFocus = personaFocus(assessment, input.personaId);
+  const writerInput = JSON.stringify({ assessment, editorialFocus, allowedFindingIds: [...evidenceIds], uiLanguage: "ru" });
   const privacy = buildSharePrivacyContext(input.resumeText, [assessment.candidateContext.primaryProfession, assessment.candidateContext.industry]);
   let retryCount = 0;
   let editorUsed = false;
@@ -286,7 +291,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
     try {
       editor = await runAi({
         stage: "persona", system: `${writerSystem(input.personaId)}\n\n${editorPrompt(validation.errors)} (${EDITOR_CORE_VERSION})`,
-        user: JSON.stringify({ previous: jsonObject(writer.content), assessment }), jsonSchemaName: "persona_review_repair_v2",
+        user: JSON.stringify({ previous: jsonObject(writer.content), assessment, editorialFocus, allowedFindingIds: [...evidenceIds] }), jsonSchemaName: "persona_review_repair_v2",
         jsonSchema: PERSONA_DRAFT_JSON_SCHEMA, temperature: 0.2, maxTokens: 3000, timeoutMs: 35_000, reasoningEffort: "minimal",
         model: process.env.OPENAI_EDITOR_MODEL ?? "gpt-5-nano",
       });
@@ -313,6 +318,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
       },
       { name: writer ? "persona-writer" : "persona-writer-fallback", model: writer?.model ?? "heuristic-fallback", latencyMs: writerLatency, tokensIn: writer?.tokensIn ?? 0, tokensOut: writer?.tokensOut ?? 0 },
       ...(editor ? [{ name: "persona-editor", model: editor.model, latencyMs: 0, tokensIn: editor.tokensIn, tokensOut: editor.tokensOut }] : []),
+      ...(!validation.ok ? [{ name: "persona-output-fallback", model: "grounded-persona-focus", latencyMs: 0, tokensIn: 0, tokensOut: 0 }] : []),
     ],
     retryCount: retryCount + analystRetries,
     editorUsed,

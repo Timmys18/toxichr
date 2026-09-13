@@ -15,7 +15,7 @@ import {
 const artifact = (name: string) => resolve(process.cwd(), "tests", "artifacts", "ai", name);
 const json = <T>(name: string): T => JSON.parse(readFileSync(artifact(name), "utf8")) as T;
 
-test("одно профессиональное заключение даёт четыре различимых голоса", () => {
+test("исторические голоса сохраняют grounding; общие выводы Леры и Глеба отклоняются новым gate", () => {
   const resume = readFileSync(artifact("management-resume.txt"), "utf8");
   const assessment = json<ReturnType<typeof parseGroundedAssessment>["assessment"]>("management-assessment.json");
   const grounded = parseGroundedAssessment(assessment, resume);
@@ -31,7 +31,12 @@ test("одно профессиональное заключение даёт ч
       privacy: buildSharePrivacyContext(resume),
       enforceVoice: true,
     });
-    expect(validation.errors, personaId).toEqual([]);
+    // Keep the historical AI artifact unchanged: its generic Gleb opening is
+    // now a regression example, not a current quality acceptance.
+    expect(validation.errors, personaId).toEqual(personaId === "gleb"
+      ? ["вместо оптики персоны повторена общая оценка; начните с конкретной детали editorialFocus"]
+      : personaId === "lera" ? ["Лера должна выбрать заметный сигнал для рекрутера; общий вопрос о личном вкладе не раскрывает её оптику"]
+      : []);
     const metrics = scorePersonaQuality(results[personaId], ids, personaId);
     expect(metrics, `${personaId}: метрики должны совпадать с сохранённым acceptance-артефактом`).toEqual(expectedMetrics[personaId]);
     expect(metrics.grounding, personaId).toBe("pass");

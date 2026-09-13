@@ -12,6 +12,7 @@ import {
   vacancyFingerprint,
   writeVacancyPersona,
   writeVacancyWriter,
+  cleanAssessment,
 } from "../../src/lib/vacancy";
 import type { ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
 import { vacancyResultUrl } from "../../src/lib/navigation";
@@ -50,6 +51,28 @@ const resumeAssessment: ProfessionalAssessment = {
   strengths: [{ id: "S01", sourceQuote: "Запустил новый сервис для клиентов.", interpretation: "Есть прямой факт запуска продукта." }],
   questionsCreatedByResume: [], uncertainties: [], claimsNotAllowed: [],
 };
+
+test("извлечение не теряет Kafka, а match не пропускает requirementId", () => {
+  const source = "Требуются Go, Kafka и Kubernetes.";
+  const raw = { ...vacancyAssessment, vacancyFingerprint: vacancyFingerprint(source), requirements: [
+    { ...vacancyAssessment.requirements[0], id: "VR01", text: "Опыт работы с Go", sourceQuote: source },
+    { ...vacancyAssessment.requirements[0], id: "VR02", text: "Опыт работы с Kubernetes", sourceQuote: source },
+  ] };
+  expect(cleanAssessment(raw, source)).toBeNull();
+  raw.requirements.push({ ...raw.requirements[0], id: "VR03", text: "Опыт работы с Kafka" });
+  expect(cleanAssessment(raw, source)?.requirements).toHaveLength(3);
+  expect(validateMatchAssessment({ ...matchAssessment, matches: matchAssessment.matches.slice(0, 2) }, vacancyAssessment, resumeAssessment)).toBeNull();
+});
+
+test("косвенная финансовая метрика не подтверждает P&L", () => {
+  const pnlVacancy = { ...vacancyAssessment, requirements: [{ ...vacancyAssessment.requirements[0], text: "Отвечать за P&L" }] };
+  const pnlMatch = { ...matchAssessment, matches: [{ ...matchAssessment.matches[0], status: "hidden_match", requirementId: "VR01" }], whyInviteRequirementIds: ["VR01"], preApplyFixes: [], unknownRequirementIds: [] };
+  expect(validateMatchAssessment(pnlMatch, pnlVacancy, resumeAssessment)).toBeNull();
+  const financialMetric = { ...resumeAssessment, strengths: [{ ...resumeAssessment.strengths[0], sourceQuote: "Финансовый результат проекта вырос на 10%." }] };
+  expect(validateMatchAssessment(pnlMatch, pnlVacancy, financialMetric)).toBeNull();
+  const unknown = { ...pnlMatch, matches: [{ ...pnlMatch.matches[0], status: "unknown", resumeEvidenceIds: [], resumeQuotes: [], explanation: "Резюме этого не показывает." }], whyInviteRequirementIds: [], unknownRequirementIds: ["VR01"] };
+  expect(validateMatchAssessment(unknown, pnlVacancy, resumeAssessment)?.matches[0].status).toBe("unknown");
+});
 
 test("структурированная оценка вакансии и match используют только связные идентификаторы", () => {
   expect(StructuredVacancyAssessmentSchema.safeParse(vacancyAssessment).success).toBe(true);

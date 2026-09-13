@@ -1,6 +1,6 @@
 import type { PersonaId } from "@/lib/personas";
 
-export const PERSONA_BIBLE_VERSION = "persona-bibles@2.0";
+export const PERSONA_BIBLE_VERSION = "persona-bibles@2.1";
 
 export const PERSONA_BIBLES: Record<PersonaId, string> = {
   tamara: `Тамара Петровна.

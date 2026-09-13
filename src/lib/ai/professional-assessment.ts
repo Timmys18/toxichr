@@ -98,20 +98,11 @@ function normalizeQuote(value: string): string {
 }
 
 function groundedSourceQuote(quote: string, resumeText: string): string | null {
-  const needle = normalizeQuote(quote);
+  const needle = normalizeQuote(quote.trim().replace(/^[«“„"]([\s\S]*)[»”"]$/u, "$1"));
   if (needle.length < 8) return null;
-  const lines = resumeText.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length >= 8);
-  const exactLine = lines.find((line) => normalizeQuote(line).includes(needle));
-  if (exactLine) return exactLine;
-  const words = new Set(needle.match(/[a-zа-яё0-9-]{4,}/giu) ?? []);
-  let best: { line: string; coverage: number } | null = null;
-  for (const line of lines) {
-    const lineWords = new Set(normalizeQuote(line).match(/[a-zа-яё0-9-]{4,}/giu) ?? []);
-    const common = [...words].filter((word) => lineWords.has(word)).length;
-    const coverage = words.size ? common / words.size : 0;
-    if (!best || coverage > best.coverage) best = { line, coverage };
-  }
-  return best && words.size >= 4 && best.coverage >= 0.72 ? best.line : null;
+  // Keep the actual span, never the containing line (which may be the entire CV).
+  const pattern = needle.split(/\s+/u).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/"/g, '[«»“”„"]').replace(/[её]/g, "[её]")).join("\\s+");
+  return resumeText.match(new RegExp(pattern, "iu"))?.[0] ?? null;
 }
 
 export function parseGroundedAssessment(input: unknown, resumeText: string): { assessment: ProfessionalAssessment | null; errors: string[] } {

@@ -175,7 +175,7 @@ export async function POST(
     });
     if (result.replacements.length === 0) {
       return NextResponse.json(
-        { error: "Пока фактов недостаточно, чтобы сделать текст сильнее. Добавь личное действие, масштаб или проверяемый результат хотя бы в один ответ." },
+        { error: result.clarificationQuestions[0]?.question ?? "В каком конкретном фрагменте можно уточнить ваше личное действие и результат? Пока резюме оставлено без изменений.", questions: result.clarificationQuestions },
         { status: 422 },
       );
     }
