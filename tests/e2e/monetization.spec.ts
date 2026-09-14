@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { prisma } from "@/lib/prisma";
+import { createPackageCheckout, refreshPendingPackagePayment } from "@/lib/package";
+import { deleteAccountData } from "@/lib/account-deletion";
 
 const RESUME = `Анна Петрова
 Product Manager
@@ -17,6 +19,79 @@ const VACANCY = `Senior Product Manager
 Нужно проводить исследования пользователей и продуктовые эксперименты.
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
+
+test("повтор checkout идемпотентен, а возврат подтверждает платёж без webhook", async ({ request }) => {
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const { resumeId } = await resumeResponse.json();
+  const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const { analysisId } = await analysisResponse.json();
+  const externalId = `test-provider-${analysisId}`;
+  const originalFetch = globalThis.fetch;
+  const previousShop = process.env.YOOKASSA_SHOP_ID;
+  const previousSecret = process.env.YOOKASSA_SECRET_KEY;
+  const previousPaywall = process.env.BETA_PAYWALL_ENABLED;
+  const keys: string[] = [];
+  const returnUrls: string[] = [];
+  let providerStatus: "pending" | "succeeded" = "pending";
+  process.env.YOOKASSA_SHOP_ID = "test-shop";
+  process.env.YOOKASSA_SECRET_KEY = "test-secret";
+  process.env.BETA_PAYWALL_ENABLED = "true";
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    expect(url).toContain("https://api.yookassa.ru/v3/payments");
+    if (init?.method === "POST") {
+      keys.push(String(new Headers(init.headers).get("Idempotence-Key")));
+      returnUrls.push((JSON.parse(String(init.body)) as { confirmation: { return_url: string } }).confirmation.return_url);
+      return Response.json({ id: externalId, status: "pending", confirmation: { confirmation_url: "https://checkout.example/pay" } });
+    }
+    return Response.json({ id: externalId, status: providerStatus, paid: providerStatus === "succeeded" });
+  };
+  try {
+    const first = await createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" });
+    const repeated = await createPackageCheckout({ analysisId, returnUrl: "https://app.example/vacancy" });
+    expect(first).toMatchObject({ access: false, checkoutUrl: "https://checkout.example/pay" });
+    expect(repeated).toMatchObject(first);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBe(keys[1]);
+    expect(returnUrls).toEqual(["https://app.example/revenge", "https://app.example/revenge"]);
+    expect(await prisma.payment.count({ where: { analysisId, provider: "yookassa" } })).toBe(1);
+    providerStatus = "succeeded";
+    await refreshPendingPackagePayment(analysisId);
+    await refreshPendingPackagePayment(analysisId);
+    expect(await prisma.payment.findFirst({ where: { analysisId }, select: { status: true } })).toMatchObject({ status: "PAID" });
+    expect(await prisma.toxicHrPackage.count({ where: { resumeId } })).toBe(1);
+    const payment = await prisma.payment.findFirstOrThrow({ where: { analysisId, provider: "yookassa" } });
+    expect(await prisma.productEvent.count({ where: { eventName: "package_purchased", properties: { path: "$.paymentId", equals: payment.id } } })).toBe(1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousShop === undefined) delete process.env.YOOKASSA_SHOP_ID; else process.env.YOOKASSA_SHOP_ID = previousShop;
+    if (previousSecret === undefined) delete process.env.YOOKASSA_SECRET_KEY; else process.env.YOOKASSA_SECRET_KEY = previousSecret;
+    if (previousPaywall === undefined) delete process.env.BETA_PAYWALL_ENABLED; else process.env.BETA_PAYWALL_ENABLED = previousPaywall;
+  }
+});
+
+test("удаление аккаунта очищает скрытую карточку и производные данные", async () => {
+  const user = await prisma.user.create({ data: { email: `privacy-${crypto.randomUUID()}@example.test` } });
+  const resume = await prisma.resume.create({ data: { userId: user.id, status: "READY", sanitizedText: "Личный текст" } });
+  const version = await prisma.resumeVersion.create({ data: { resumeId: resume.id, structuredContent: { personal: "Личный текст" } } });
+  const analysis = await prisma.analysis.create({ data: { userId: user.id, resumeVersionId: version.id, status: "COMPLETED", reportPayload: { personal: "Личный текст" }, scorePayload: { score: 1 } } });
+  const vacancy = await prisma.vacancy.create({ data: { userId: user.id, sourceText: "Личная вакансия" } });
+  const share = await prisma.publicShare.create({ data: { userId: user.id, analysisId: analysis.id, slug: `privacy-${crypto.randomUUID()}`, active: false, publicPayload: { quote: "Личный текст" }, title: "Личный текст", description: "Личный текст" } });
+  await prisma.resumeAdaptation.create({ data: { userId: user.id, analysisId: analysis.id, vacancyId: vacancy.id, answers: { personal: "Личный текст" } } });
+  await prisma.analysisFeedback.create({ data: { analysisId: analysis.id, verdict: "useful", note: "Личный текст" } });
+  await prisma.candidateProfile.create({ data: { resumeVersionId: version.id, primaryRole: "Личный текст" } });
+  await prisma.productEvent.create({ data: { userId: user.id, eventName: "test", properties: { personal: "Личный текст" } } });
+
+  await deleteAccountData(user.id);
+
+  expect(await prisma.publicShare.findUniqueOrThrow({ where: { id: share.id } })).toMatchObject({ active: false, publicPayload: { redacted: true }, title: null, description: null });
+  expect(await prisma.resumeAdaptation.count({ where: { userId: user.id } })).toBe(0);
+  expect(await prisma.analysisFeedback.count({ where: { analysisId: analysis.id } })).toBe(0);
+  expect(await prisma.candidateProfile.count({ where: { resumeVersionId: version.id } })).toBe(0);
+  expect(await prisma.productEvent.count({ where: { userId: user.id } })).toBe(0);
+  expect(await prisma.resume.findUniqueOrThrow({ where: { id: resume.id } })).toMatchObject({ sanitizedText: null, status: "DELETED" });
+  expect(await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).toMatchObject({ passwordHash: null, displayName: "удалён" });
+});
 
 test("доступ различает pending, failed, canceled и paid при возврате после оплаты", async ({ request }) => {
   const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });

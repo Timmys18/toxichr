@@ -3,9 +3,10 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { trackServer } from "@/lib/analytics-server";
 import { ImprovementAccessError, loadImprovementContext } from "@/lib/improvement-server";
-import { createPackageCheckout, isBetaPaywallEnabled } from "@/lib/package";
+import { createPackageCheckout, isBetaPaywallEnabled, isYooKassaConfigured } from "@/lib/package";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { appBaseUrl } from "@/lib/public-share";
 
 const BodySchema = z.object({
   analysisId: z.string().min(1),
@@ -36,7 +37,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Не удалось проверить данные для оплаты." }, { status: 500 });
   }
 
-  const origin = new URL(request.url).origin;
+  const origin = appBaseUrl();
+  if (isBetaPaywallEnabled() && isYooKassaConfigured() && new URL(origin).protocol !== "https:") {
+    return NextResponse.json({ error: "Оплата временно не настроена: нужен защищённый адрес сайта." }, { status: 503 });
+  }
   const returnUrl = parsed.data.vacancyId
     ? `${origin}/vacancy?analysisId=${encodeURIComponent(parsed.data.analysisId)}&vacancyId=${encodeURIComponent(parsed.data.vacancyId)}&payment=return`
     : `${origin}/revenge?analysisId=${encodeURIComponent(parsed.data.analysisId)}&payment=return`;

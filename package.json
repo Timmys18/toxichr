@@ -17,6 +17,7 @@
     "test:e2e:report": "playwright show-report",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "backup:critical": "node scripts/backup-critical.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

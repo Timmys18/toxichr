@@ -22,15 +22,23 @@ Copy from `.env.example`. Never commit `.env`.
 
 Цена: **199 ₽ за платное действие**: готовая новая версия резюме или match с одной вакансией. Полный разбор и самостоятельный разбор вакансии остаются бесплатными.
 
-Before switching `BETA_PAYWALL_ENABLED=true`:
+Before opening paid access to beta traffic:
 
 1. Add production YooKassa credentials.
 2. Configure YooKassa notification URL: `https://<production-host>/api/payments/yookassa/webhook` for successful/canceled payment events.
-3. Make one real low-risk production payment through `/revenge`.
+3. On a restricted production smoke account, enable the paywall and make one real 199 ₽ payment through `/revenge`; no live charge has been performed by automated tests.
 4. Убедитесь, что `Payment.status=PAID`, а для текущего резюме появилась запись `ToxicHrPackage`; отдельные старые доступы больше не выдают новые права.
 5. Confirm return from YooKassa opens the same analysis and the user can build the corrected version.
 6. Confirm DOCX and print are inaccessible without the grant and available after payment.
 7. Only then set `BETA_PAYWALL_ENABLED=true` for public traffic.
+
+The configured `NEXT_PUBLIC_APP_URL` must be the actual public HTTPS origin: payment return URLs never use the incoming Host header. Repeating checkout for one pending payment reuses its YooKassa idempotency key. The return screen checks YooKassa directly if the webhook is delayed; both paths grant access only after provider confirmation.
+
+## Backups and restore readiness
+
+Critical local data is the SQLite database and `.data/uploads`. On the production host, create a private, encrypted backup destination outside the project, then run `npm run backup:critical -- /absolute/secure/backup-directory`. The command uses SQLite online backup, copies uploads and writes a SHA-256 manifest. Do not publish or commit the resulting directory. Schedule it with the host's scheduler, retain copies off-host, and regularly rehearse restoration to an isolated environment: verify manifest hashes, restore `database.sqlite` to the configured `DATABASE_URL` path and `uploads/` to `.data/uploads`, then check `/api/health` and a saved account. A backup script is not proof that production backups are configured or restorable.
+
+The current repository contains no production deployment configuration or credentials. Production payment, backup schedule, deployment and post-deploy desktop/mobile smoke must be evidenced separately before Sprint 6 can be marked complete.
 
 The webhook never grants access from the incoming payload alone: the server re-reads the payment from YooKassa before granting access.
 

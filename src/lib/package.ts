@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import type { PackageUsageKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -345,28 +344,67 @@ export async function createPackageCheckout({ analysisId, userId, returnUrl }: {
   if (await findPackage(context)) return { access: true as const, checkoutUrl: null };
   if (!isYooKassaConfigured()) throw new Error("Оплата временно не настроена.");
 
-  const payment = await prisma.payment.create({
-    data: { userId: userId ?? context.userId, analysisId, provider: "yookassa", productCode: TOXICHR_PACKAGE_PRODUCT_CODE, amount: PACKAGE_PRICE_MINOR, currency: "RUB", status: "PENDING" },
+  // Повтор checkout продолжает ту же попытку и использует тот же ключ YooKassa.
+  // Это также восстанавливает связь, если провайдер ответил, а запись externalId сорвалась.
+  let recentPending = await prisma.payment.findFirst({
+    where: {
+      analysisId,
+      provider: "yookassa",
+      productCode: TOXICHR_PACKAGE_PRODUCT_CODE,
+      status: "PENDING",
+    },
+    orderBy: { createdAt: "desc" },
   });
-  try {
-    const yoo = await yooRequest<YooPayment>("/payments", {
-      method: "POST",
-      headers: { "Idempotence-Key": randomUUID() },
-      body: JSON.stringify({
-        amount: { value: TOXICHR_PACKAGE_PRICE_RUB.toFixed(2), currency: "RUB" },
-        capture: true,
-        confirmation: { type: "redirect", return_url: returnUrl },
-        description: `ToxicHR · пакет · ${analysisId.slice(0, 8)}`,
-        metadata: { localPaymentId: payment.id, analysisId, productCode: TOXICHR_PACKAGE_PRODUCT_CODE },
-      }),
-    });
-    if (!yoo.confirmation?.confirmation_url) throw new Error("ЮKassa не вернула ссылку на оплату.");
-    await prisma.payment.update({ where: { id: payment.id }, data: { externalId: yoo.id } });
-    return { access: false as const, checkoutUrl: yoo.confirmation.confirmation_url };
-  } catch (error) {
-    await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
-    throw error;
+  if (recentPending?.externalId) {
+    const providerPayment = await yooRequest<YooPayment>(`/payments/${encodeURIComponent(recentPending.externalId)}`);
+    if (providerPayment.status === "succeeded" && providerPayment.paid !== false) {
+      await syncYooKassaPayment(recentPending.externalId);
+      return { access: true as const, checkoutUrl: null };
+    }
+    if (providerPayment.status === "canceled") {
+      await syncYooKassaPayment(recentPending.externalId);
+      recentPending = null;
+    } else if (!recentPending.returnUrl || recentPending.createdAt.getTime() < Date.now() - 23 * 60 * 60_000) {
+      if (providerPayment.confirmation?.confirmation_url) {
+        return { access: false as const, checkoutUrl: providerPayment.confirmation.confirmation_url };
+      }
+      throw new Error("Прежняя оплата ещё обрабатывается. Проверь её статус позднее.");
+    }
+  } else if (recentPending && !recentPending.returnUrl) {
+    throw new Error("Прежняя оплата ещё обрабатывается. Проверь её статус позднее.");
   }
+  if (recentPending && recentPending.createdAt.getTime() < Date.now() - 23 * 60 * 60_000) {
+    throw new Error("Прежняя оплата ещё обрабатывается. Проверь её статус позднее.");
+  }
+  const payment = recentPending ?? await prisma.payment.create({
+    data: { userId: userId ?? context.userId, analysisId, provider: "yookassa", productCode: TOXICHR_PACKAGE_PRODUCT_CODE, amount: PACKAGE_PRICE_MINOR, currency: "RUB", status: "PENDING", returnUrl },
+  });
+  // Неизвестный исход сетевого запроса не становится FAILED: повтор с тем же
+  // ключом обязан вернуть исходную попытку без второй оплаты.
+  const yoo = await yooRequest<YooPayment>("/payments", {
+    method: "POST",
+    headers: { "Idempotence-Key": payment.id },
+    body: JSON.stringify({
+      amount: { value: TOXICHR_PACKAGE_PRICE_RUB.toFixed(2), currency: "RUB" },
+      capture: true,
+      confirmation: { type: "redirect", return_url: payment.returnUrl ?? returnUrl },
+      description: `ToxicHR · пакет · ${analysisId.slice(0, 8)}`,
+      metadata: { localPaymentId: payment.id, analysisId, productCode: TOXICHR_PACKAGE_PRODUCT_CODE },
+    }),
+  });
+  if (!yoo.confirmation?.confirmation_url) throw new Error("ЮKassa не вернула ссылку на оплату.");
+  await prisma.payment.update({ where: { id: payment.id }, data: { externalId: yoo.id } });
+  return { access: false as const, checkoutUrl: yoo.confirmation.confirmation_url };
+}
+
+export async function refreshPendingPackagePayment(analysisId: string, currentUserId?: string | null) {
+  await packageContext(analysisId, currentUserId);
+  const payment = await prisma.payment.findFirst({
+    where: { analysisId, provider: "yookassa", productCode: TOXICHR_PACKAGE_PRODUCT_CODE, status: "PENDING", externalId: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { externalId: true },
+  });
+  if (payment?.externalId) await syncYooKassaPayment(payment.externalId);
 }
 
 export async function syncYooKassaPayment(externalId: string) {
@@ -376,10 +414,12 @@ export async function syncYooKassaPayment(externalId: string) {
     where: { externalId: yoo.id },
     include: { analysis: { include: { resumeVersion: { select: { resumeId: true } } } } },
   });
-  if (!payment) return { handled: false as const, status: yoo.status, productCode: null };
+  if (!payment) return { handled: false as const, status: yoo.status, productCode: null, changed: false };
   if (yoo.status === "succeeded" && yoo.paid !== false) {
+    let changed = false;
     await prisma.$transaction(async (tx) => {
-      await tx.payment.update({ where: { id: payment.id }, data: { status: "PAID", paidAt: new Date() } });
+      const updated = await tx.payment.updateMany({ where: { id: payment.id, status: { not: "PAID" } }, data: { status: "PAID", paidAt: new Date() } });
+      changed = updated.count > 0;
       if (payment.productCode === TOXICHR_PACKAGE_PRODUCT_CODE && payment.analysis?.resumeVersion) {
         await tx.toxicHrPackage.upsert({
           where: { resumeId: payment.analysis.resumeVersion.resumeId },
@@ -387,12 +427,22 @@ export async function syncYooKassaPayment(externalId: string) {
           update: { userId: payment.userId ?? undefined, paymentId: payment.id, source: "payment" },
         });
       }
+      if (changed) {
+        await tx.productEvent.create({ data: { eventName: "payment_succeeded", properties: { paymentId: payment.id, provider: "yookassa" } } });
+        if (payment.productCode === TOXICHR_PACKAGE_PRODUCT_CODE) {
+          await tx.productEvent.create({ data: { eventName: "package_purchased", properties: { paymentId: payment.id, provider: "yookassa" } } });
+        }
+      }
     });
-    return { handled: true as const, status: "PAID" as const, productCode: payment.productCode };
+    return { handled: true as const, status: "PAID" as const, productCode: payment.productCode, changed };
   }
   if (yoo.status === "canceled") {
-    await prisma.payment.update({ where: { id: payment.id }, data: { status: "CANCELED" } });
-    return { handled: true as const, status: "CANCELED" as const, productCode: payment.productCode };
+    const changed = await prisma.$transaction(async (tx) => {
+      const updated = await tx.payment.updateMany({ where: { id: payment.id, status: { in: ["PENDING", "FAILED"] } }, data: { status: "CANCELED" } });
+      if (updated.count) await tx.productEvent.create({ data: { eventName: "payment_failed", properties: { paymentId: payment.id, provider: "yookassa", reason: "canceled" } } });
+      return updated.count > 0;
+    });
+    return { handled: true as const, status: payment.status === "PAID" ? "PAID" as const : "CANCELED" as const, productCode: payment.productCode, changed };
   }
-  return { handled: true as const, status: "PENDING" as const, productCode: payment.productCode };
+  return { handled: true as const, status: payment.status === "PAID" ? "PAID" as const : "PENDING" as const, productCode: payment.productCode, changed: false };
 }

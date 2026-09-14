@@ -69,8 +69,8 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     paymentStatus: "none",
   });
 
-  const refreshAccess = useCallback(async () => {
-    const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`, {
+  const refreshAccess = useCallback(async (refreshPayment = false) => {
+    const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}${refreshPayment ? "&refresh=1" : ""}`, {
       cache: "no-store",
     });
     const data = await response.json();
@@ -202,7 +202,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     async function poll() {
       while (!cancelled && attempt < 6) {
         attempt += 1;
-        const current = await refreshAccess().catch(() => null);
+        const current = await refreshAccess(true).catch(() => null);
         if (current?.hasPackage) {
           setPaywallOpen(false);
           setPaymentNotice("Оплата подтверждена. Можно продолжать с сохранёнными ответами.");

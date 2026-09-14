@@ -107,7 +107,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     let timer: number | undefined;
     let attempt = 0;
     const refresh = async () => {
-      const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`, { cache: "no-store" });
+      const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}${returnedFromPayment ? "&refresh=1" : ""}`, { cache: "no-store" });
       const data = response.ok ? await response.json() as PackageState : null;
       if (cancelled || !data) return;
       setPackageState(data);
