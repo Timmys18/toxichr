@@ -332,6 +332,7 @@ async function yooRequest<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { Authorization: authHeader(), "Content-Type": "application/json", ...(init?.headers ?? {}) },
     cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data && typeof data === "object" && "description" in data ? String(data.description) : `ЮKassa вернула ${response.status}`);
@@ -376,8 +377,11 @@ export async function createPackageCheckout({ analysisId, userId, returnUrl }: {
   if (recentPending && recentPending.createdAt.getTime() < Date.now() - 23 * 60 * 60_000) {
     throw new Error("Прежняя оплата ещё обрабатывается. Проверь её статус позднее.");
   }
-  const payment = recentPending ?? await prisma.payment.create({
-    data: { userId: userId ?? context.userId, analysisId, provider: "yookassa", productCode: TOXICHR_PACKAGE_PRODUCT_CODE, amount: PACKAGE_PRICE_MINOR, currency: "RUB", status: "PENDING", returnUrl },
+  const checkoutKey = `package:${analysisId}`;
+  const payment = recentPending ?? await prisma.payment.upsert({
+    where: { checkoutKey },
+    create: { checkoutKey, userId: userId ?? context.userId, analysisId, provider: "yookassa", productCode: TOXICHR_PACKAGE_PRODUCT_CODE, amount: PACKAGE_PRICE_MINOR, currency: "RUB", status: "PENDING", returnUrl },
+    update: {},
   });
   // Неизвестный исход сетевого запроса не становится FAILED: повтор с тем же
   // ключом обязан вернуть исходную попытку без второй оплаты.
@@ -438,7 +442,7 @@ export async function syncYooKassaPayment(externalId: string) {
   }
   if (yoo.status === "canceled") {
     const changed = await prisma.$transaction(async (tx) => {
-      const updated = await tx.payment.updateMany({ where: { id: payment.id, status: { in: ["PENDING", "FAILED"] } }, data: { status: "CANCELED" } });
+      const updated = await tx.payment.updateMany({ where: { id: payment.id, status: { in: ["PENDING", "FAILED"] } }, data: { status: "CANCELED", checkoutKey: null } });
       if (updated.count) await tx.productEvent.create({ data: { eventName: "payment_failed", properties: { paymentId: payment.id, provider: "yookassa", reason: "canceled" } } });
       return updated.count > 0;
     });

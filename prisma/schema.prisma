@@ -309,6 +309,7 @@ model Payment {
   analysis    Analysis?     @relation(fields: [analysisId], references: [id])
   provider    String        @default("manual")
   externalId  String?       @unique
+  checkoutKey String?       @unique
   returnUrl   String?
   productCode String
   amount      Int

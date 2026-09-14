@@ -368,7 +368,7 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 6 — Release Hardening
 
-> Статус: **ACTIVE · начат после закрытия Sprint 5, scope без расширения**
+> Статус: **LOCAL COMPLETE · PRE-RELEASE BLOCKED**. Production Definition of Done не принят.
 
 Отдельное состояние отменённой оплаты `canceled` уже внесено и сохранено в Git; это предварительная точечная работа, а не начало или приёмка Sprint 6.
 По отдельному запросу добавлен безопасный журнал калибровочных AI-запусков: ID кейса и запуска, версия правил, провайдер/модель, статус и балл анализа без сохранения текста резюме. Это также не активирует Sprint 6 целиком.
@@ -407,8 +407,14 @@ Sprint считается закрытым только если вручную 
 
 - Checkout повторно использует незавершённую попытку и стабильный ключ идемпотентности; возврат сверяет платёж у YooKassa даже при задержке webhook. События покупки фиксируются однократно при переходе статуса.
 - Удаление аккаунта очищает также ранее отключённые публичные карточки, адаптации, отзывы, профиль и привязанные события. Добавлена команда резервной копии SQLite и локальных загрузок; эксплуатационная инструкция — в `LAUNCH.md`.
-- Локальная типизация, lint, production build и точечные monetization-проверки пройдены. Реальные YooKassa/деплой/backup restore/production smoke не подтверждены; Sprint 6 остаётся ACTIVE. `suite=full` и live AI не запускались по указанию Product Owner.
+- Локальная типизация, lint, production build и точечные monetization-проверки пройдены. Реальные YooKassa/деплой/backup restore/production smoke не подтверждены; на этом этапе Sprint 6 оставался ACTIVE. `suite=full` и live AI не запускались по указанию Product Owner.
 - Подготовлен переносимый single-VM Docker Compose/Caddy шаблон для РФ-хостинга; app доступен только через HTTPS proxy, IP лимитера закреплён proxy-заголовком. На 14.09 provider/хост/домен ещё не выбраны, реквизитов YooKassa в окружении нет; контейнер локально не собирался, так как Docker daemon недоступен.
+
+### Локальная часть закрыта · 14.09.2026
+
+- Конкурентные checkout используют одну активную запись БД и ключ YooKassa; сетевой сбой оставляет `pending` для безопасного retry, отмена не выдаёт пакет и освобождает новую попытку. Возврат сверяет статус без webhook; недоступный провайдер не превращается в ложный `404`.
+- Адресные проверки: 9/9 monetization/privacy/backup, 12/12 safety, 1/1 AI-failure. `npm run lint`, `npm run typecheck`, production build успешны; Compose config проверен. Подготовка пустого SQLite-файла и локальная backup-копия проверены чтением БД и файла загрузки. Ни реального платежа, ни нового live AI, ни `suite=full` не было.
+- Product Owner перенёс production deploy, реальные YooKassa, backup/restore на бою и desktop/mobile production smoke на финальный предрелизный этап. Они остаются **pre-release blockers**, а не считаются выполненными. Единые критерии и go/no-go: [PRE-RELEASE-CHECKLIST.md](PRE-RELEASE-CHECKLIST.md). Новый Sprint не начинается.
 
 ---
 
@@ -456,4 +462,4 @@ Sprint считается закрытым только если вручную 
 - Sprint 3 — COMPLETE
 - Sprint 4 — COMPLETE
 - Sprint 5 — COMPLETE по критериям 14.09.2026; новый `suite=full` не запускался по указанию Product Owner
-- Sprint 6 — **ACTIVE**
+- Sprint 6 — **LOCAL COMPLETE · PRE-RELEASE BLOCKED**; полное закрытие только после финального checklist

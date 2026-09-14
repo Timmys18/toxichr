@@ -1,8 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { prisma } from "@/lib/prisma";
-import { createPackageCheckout, refreshPendingPackagePayment } from "@/lib/package";
+import { createPackageCheckout, refreshPendingPackagePayment, syncYooKassaPayment } from "@/lib/package";
 import { deleteAccountData } from "@/lib/account-deletion";
 import { clientIp } from "@/lib/rate-limit";
+import { execFileSync } from "node:child_process";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import Database from "better-sqlite3";
 
 const RESUME = `Анна Петрова
 Product Manager
@@ -26,6 +31,41 @@ test("лимитер предпочитает IP, установленный rev
     headers: { "X-Forwarded-For": "198.51.100.5", "X-Real-IP": "203.0.113.8" },
   });
   expect(clientIp(request)).toBe("203.0.113.8");
+});
+
+test("локальный backup содержит читаемую SQLite и файл загрузки", async () => {
+  const source = await mkdtemp(path.join(tmpdir(), "toxichr-backup-source-"));
+  const destination = await mkdtemp(path.join(tmpdir(), "toxichr-backup-destination-"));
+  try {
+    const dataDir = path.join(source, ".data");
+    await mkdir(path.join(dataDir, "uploads"), { recursive: true });
+    execFileSync(process.execPath, [path.join(process.cwd(), "scripts", "ensure-sqlite-file.mjs")], {
+      cwd: source,
+      env: { ...process.env, DATABASE_URL: "file:./.data/test.db" },
+    });
+    const db = new Database(path.join(dataDir, "test.db"));
+    db.exec("CREATE TABLE proof (value TEXT NOT NULL); INSERT INTO proof (value) VALUES ('saved');");
+    db.close();
+    await writeFile(path.join(dataDir, "uploads", "resume.txt"), "private fixture");
+    execFileSync(process.execPath, [path.join(process.cwd(), "scripts", "backup-critical.mjs"), destination], {
+      cwd: source,
+      env: { ...process.env, DATABASE_URL: "file:./.data/test.db", STORAGE_DRIVER: "local" },
+    });
+    const [name] = await readdir(destination);
+    const backupDir = path.join(destination, name);
+    const manifest = JSON.parse(await readFile(path.join(backupDir, "manifest.json"), "utf8")) as { files: Record<string, string> };
+    expect(Object.keys(manifest.files).sort()).toEqual(["database.sqlite", "uploads/resume.txt"]);
+    const restored = new Database(path.join(backupDir, "database.sqlite"), { readonly: true });
+    try {
+      expect(restored.prepare("SELECT value FROM proof").get()).toEqual({ value: "saved" });
+    } finally {
+      restored.close();
+    }
+    expect(await readFile(path.join(backupDir, "uploads", "resume.txt"), "utf8")).toBe("private fixture");
+  } finally {
+    await rm(source, { recursive: true, force: true });
+    await rm(destination, { recursive: true, force: true });
+  }
 });
 
 test("повтор checkout идемпотентен, а возврат подтверждает платёж без webhook", async ({ request }) => {
@@ -55,13 +95,17 @@ test("повтор checkout идемпотентен, а возврат подт
     return Response.json({ id: externalId, status: providerStatus, paid: providerStatus === "succeeded" });
   };
   try {
-    const first = await createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" });
+    const [first, concurrent] = await Promise.all([
+      createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" }),
+      createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" }),
+    ]);
     const repeated = await createPackageCheckout({ analysisId, returnUrl: "https://app.example/vacancy" });
     expect(first).toMatchObject({ access: false, checkoutUrl: "https://checkout.example/pay" });
+    expect(concurrent).toMatchObject(first);
     expect(repeated).toMatchObject(first);
-    expect(keys).toHaveLength(2);
-    expect(keys[0]).toBe(keys[1]);
-    expect(returnUrls).toEqual(["https://app.example/revenge", "https://app.example/revenge"]);
+    expect(keys).toHaveLength(3);
+    expect(new Set(keys).size).toBe(1);
+    expect(returnUrls).toEqual(["https://app.example/revenge", "https://app.example/revenge", "https://app.example/revenge"]);
     expect(await prisma.payment.count({ where: { analysisId, provider: "yookassa" } })).toBe(1);
     providerStatus = "succeeded";
     await refreshPendingPackagePayment(analysisId);
@@ -78,7 +122,79 @@ test("повтор checkout идемпотентен, а возврат подт
   }
 });
 
-test("удаление аккаунта очищает скрытую карточку и производные данные", async () => {
+test("сетевой сбой checkout сохраняет pending и повторяет тот же ключ", async ({ request }) => {
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const { resumeId } = await resumeResponse.json();
+  const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const { analysisId } = await analysisResponse.json();
+  const originalFetch = globalThis.fetch;
+  const oldShop = process.env.YOOKASSA_SHOP_ID;
+  const oldSecret = process.env.YOOKASSA_SECRET_KEY;
+  const oldPaywall = process.env.BETA_PAYWALL_ENABLED;
+  const keys: string[] = [];
+  process.env.YOOKASSA_SHOP_ID = "test-shop";
+  process.env.YOOKASSA_SECRET_KEY = "test-secret";
+  process.env.BETA_PAYWALL_ENABLED = "true";
+  globalThis.fetch = async (_input, init) => {
+    keys.push(String(new Headers(init?.headers).get("Idempotence-Key")));
+    if (keys.length === 1) throw new Error("network interrupted");
+    return Response.json({ id: `retry-${analysisId}`, status: "pending", confirmation: { confirmation_url: "https://checkout.example/retry" } });
+  };
+  try {
+    await expect(createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" })).rejects.toThrow("network interrupted");
+    expect(await prisma.payment.findFirstOrThrow({ where: { analysisId } })).toMatchObject({ status: "PENDING", externalId: null });
+    const retry = await createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" });
+    expect(retry).toMatchObject({ access: false, checkoutUrl: "https://checkout.example/retry" });
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBe(keys[1]);
+    expect(await prisma.payment.count({ where: { analysisId } })).toBe(1);
+    expect(await prisma.toxicHrPackage.count({ where: { resumeId } })).toBe(0);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldShop === undefined) delete process.env.YOOKASSA_SHOP_ID; else process.env.YOOKASSA_SHOP_ID = oldShop;
+    if (oldSecret === undefined) delete process.env.YOOKASSA_SECRET_KEY; else process.env.YOOKASSA_SECRET_KEY = oldSecret;
+    if (oldPaywall === undefined) delete process.env.BETA_PAYWALL_ENABLED; else process.env.BETA_PAYWALL_ENABLED = oldPaywall;
+  }
+});
+
+test("отмена YooKassa не выдаёт пакет и освобождает checkout для новой попытки", async ({ request }) => {
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const { resumeId } = await resumeResponse.json();
+  const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const { analysisId } = await analysisResponse.json();
+  const payment = await prisma.payment.create({
+    data: { analysisId, provider: "yookassa", externalId: `canceled-${analysisId}`, checkoutKey: `package:${analysisId}`, returnUrl: "https://app.example/revenge", productCode: "toxichr_package", amount: 19_900, currency: "RUB" },
+  });
+  const originalFetch = globalThis.fetch;
+  const oldShop = process.env.YOOKASSA_SHOP_ID;
+  const oldSecret = process.env.YOOKASSA_SECRET_KEY;
+  const oldPaywall = process.env.BETA_PAYWALL_ENABLED;
+  process.env.YOOKASSA_SHOP_ID = "test-shop";
+  process.env.YOOKASSA_SECRET_KEY = "test-secret";
+  process.env.BETA_PAYWALL_ENABLED = "true";
+  globalThis.fetch = async (input, init) => init?.method === "POST"
+    ? Response.json({ id: `new-${analysisId}`, status: "pending", confirmation: { confirmation_url: "https://checkout.example/new" } })
+    : Response.json({ id: String(input).includes(payment.externalId!) ? payment.externalId : `new-${analysisId}`, status: "canceled" });
+  try {
+    await syncYooKassaPayment(payment.externalId!);
+    await syncYooKassaPayment(payment.externalId!);
+    expect(await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).toMatchObject({ status: "CANCELED", checkoutKey: null });
+    expect(await prisma.toxicHrPackage.count({ where: { resumeId } })).toBe(0);
+    expect(await prisma.productEvent.count({ where: { eventName: "payment_failed", properties: { path: "$.paymentId", equals: payment.id } } })).toBe(1);
+    const access = await request.get(`/api/payments/access?analysisId=${analysisId}`);
+    expect(await access.json()).toMatchObject({ hasPackage: false, paymentStatus: "canceled" });
+    const retry = await createPackageCheckout({ analysisId, returnUrl: "https://app.example/revenge" });
+    expect(retry).toMatchObject({ access: false, checkoutUrl: "https://checkout.example/new" });
+    expect(await prisma.payment.count({ where: { analysisId } })).toBe(2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (oldShop === undefined) delete process.env.YOOKASSA_SHOP_ID; else process.env.YOOKASSA_SHOP_ID = oldShop;
+    if (oldSecret === undefined) delete process.env.YOOKASSA_SECRET_KEY; else process.env.YOOKASSA_SECRET_KEY = oldSecret;
+    if (oldPaywall === undefined) delete process.env.BETA_PAYWALL_ENABLED; else process.env.BETA_PAYWALL_ENABLED = oldPaywall;
+  }
+});
+
+test("удаление аккаунта очищает скрытую карточку и производные данные", async ({ request }) => {
   const user = await prisma.user.create({ data: { email: `privacy-${crypto.randomUUID()}@example.test` } });
   const resume = await prisma.resume.create({ data: { userId: user.id, status: "READY", sanitizedText: "Личный текст" } });
   const version = await prisma.resumeVersion.create({ data: { resumeId: resume.id, structuredContent: { personal: "Личный текст" } } });
@@ -93,12 +209,20 @@ test("удаление аккаунта очищает скрытую карто
   await deleteAccountData(user.id);
 
   expect(await prisma.publicShare.findUniqueOrThrow({ where: { id: share.id } })).toMatchObject({ active: false, publicPayload: { redacted: true }, title: null, description: null });
+  expect((await request.get(`/api/public-shares/${share.slug}`)).status()).toBe(404);
   expect(await prisma.resumeAdaptation.count({ where: { userId: user.id } })).toBe(0);
   expect(await prisma.analysisFeedback.count({ where: { analysisId: analysis.id } })).toBe(0);
   expect(await prisma.candidateProfile.count({ where: { resumeVersionId: version.id } })).toBe(0);
   expect(await prisma.productEvent.count({ where: { userId: user.id } })).toBe(0);
   expect(await prisma.resume.findUniqueOrThrow({ where: { id: resume.id } })).toMatchObject({ sanitizedText: null, status: "DELETED" });
   expect(await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).toMatchObject({ passwordHash: null, displayName: "удалён" });
+});
+
+test("регистрация без согласия не создаёт аккаунт", async ({ request }) => {
+  const email = `no-consent-${crypto.randomUUID()}@example.test`;
+  const response = await request.post("/api/auth/register", { data: { email, password: "safe-password-123", consent: false } });
+  expect(response.status()).toBe(400);
+  expect(await prisma.user.count({ where: { email } })).toBe(0);
 });
 
 test("доступ различает pending, failed, canceled и paid при возврате после оплаты", async ({ request }) => {
@@ -125,6 +249,18 @@ test("доступ различает pending, failed, canceled и paid при �
   await prisma.toxicHrPackage.create({ data: { resumeId, paymentId: payment.id, source: "test" } });
   const paid = await request.get(`/api/payments/access?analysisId=${analysisId}`);
   expect(await paid.json()).toMatchObject({ hasPackage: true, paymentStatus: "paid" });
+});
+
+test("недоступный YooKassa сохраняет pending без ложного 404", async ({ request }) => {
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const { resumeId } = await resumeResponse.json();
+  const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const { analysisId } = await analysisResponse.json();
+  await prisma.payment.create({ data: { analysisId, provider: "yookassa", externalId: `pending-${analysisId}`, productCode: "toxichr_package", amount: 19_900, currency: "RUB" } });
+  const response = await request.get(`/api/payments/access?analysisId=${analysisId}&refresh=1`);
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toMatchObject({ hasPackage: false, paymentStatus: "pending", verificationDelayed: true });
+  expect(await prisma.toxicHrPackage.count({ where: { resumeId } })).toBe(0);
 });
 
 for (const entryPoint of ["access", "checkout"] as const) {

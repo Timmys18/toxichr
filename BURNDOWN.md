@@ -600,6 +600,9 @@
 - Локально зелёные lint, typecheck и тест изоляции метаданных журнала. Тяжёлый `suite=full` до завершения Sprint 5 не запускался.
 ## Sprint 6 — release hardening, 14.09.2026
 
+- Локальная часть Sprint 6 завершена без production: атомарная активная попытка checkout, безопасный retry при сетевом сбое, отмена без доступа, сверка покупки без webhook и честный pending при недоступном провайдере.
+- На отдельной пустой test-БД зелёные 9 адресных monetization/privacy/backup сценариев, 12 safety, 1 AI-failure; lint, typecheck и production build успешны. Опасный `db push --accept-data-loss` не выполнялся: Prisma остановила команду, после чего использована новая тестовая БД.
+- Финальный pre-release checklist зафиксирован в `docs/PRE-RELEASE-CHECKLIST.md`. Production, реальные YooKassa, боевой restore/smoke и go/no-go остаются блокерами; нового Sprint в плане нет.
 - В следующем заходе подготовлен переносимый шаблон production для одного VM на Yandex Cloud или Selectel: Docker Compose, Caddy/TLS, постоянные data/backup volumes и приватный env-файл вне Git. Проверен синтаксис Compose; Docker daemon на локальной машине недоступен.
 - Прокси выставляет доверенный IP для rate limiter; добавлена локальная регрессия. В текущем окружении нет YooKassa shop ID/secret, доступа к облачному хосту и выбранного домена. Sprint 6 остаётся открытым до реального деплоя и оплаты.
 - Проверен scope из `docs/RELEASE-PLAN.md`; Sprint 5 закрыт по решению Product Owner, Sprint 6 ACTIVE.

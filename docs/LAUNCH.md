@@ -2,6 +2,8 @@
 
 Production readiness before public beta traffic.
 
+Единый список критериев финального решения: [PRE-RELEASE-CHECKLIST.md](PRE-RELEASE-CHECKLIST.md). Этот файл — техническая инструкция, не доказательство прохождения пунктов.
+
 ## Required env
 
 | Variable | Notes |
@@ -50,7 +52,7 @@ Set `PUBLIC_HOST`, `TOXICHR_ENV_FILE`, `TOXICHR_DATA_DIR` and `TOXICHR_BACKUP_DI
 
 ```sh
 docker compose -f deploy/compose.yml build app
-docker compose -f deploy/compose.yml run --rm app npm run db:push
+docker compose -f deploy/compose.yml run --rm app sh -c 'node scripts/ensure-sqlite-file.mjs && npm run db:push'
 docker compose -f deploy/compose.yml up -d
 docker compose -f deploy/compose.yml ps
 docker compose -f deploy/compose.yml exec -T app npm run backup:critical -- /backups
