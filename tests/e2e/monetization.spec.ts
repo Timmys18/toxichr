@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { prisma } from "@/lib/prisma";
 import { createPackageCheckout, refreshPendingPackagePayment } from "@/lib/package";
 import { deleteAccountData } from "@/lib/account-deletion";
+import { clientIp } from "@/lib/rate-limit";
 
 const RESUME = `Анна Петрова
 Product Manager
@@ -19,6 +20,13 @@ const VACANCY = `Senior Product Manager
 Нужно проводить исследования пользователей и продуктовые эксперименты.
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
+
+test("лимитер предпочитает IP, установленный reverse proxy", () => {
+  const request = new Request("https://app.example/api/analyses", {
+    headers: { "X-Forwarded-For": "198.51.100.5", "X-Real-IP": "203.0.113.8" },
+  });
+  expect(clientIp(request)).toBe("203.0.113.8");
+});
 
 test("повтор checkout идемпотентен, а возврат подтверждает платёж без webhook", async ({ request }) => {
   const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });

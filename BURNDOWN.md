@@ -600,6 +600,8 @@
 - Локально зелёные lint, typecheck и тест изоляции метаданных журнала. Тяжёлый `suite=full` до завершения Sprint 5 не запускался.
 ## Sprint 6 — release hardening, 14.09.2026
 
+- В следующем заходе подготовлен переносимый шаблон production для одного VM на Yandex Cloud или Selectel: Docker Compose, Caddy/TLS, постоянные data/backup volumes и приватный env-файл вне Git. Проверен синтаксис Compose; Docker daemon на локальной машине недоступен.
+- Прокси выставляет доверенный IP для rate limiter; добавлена локальная регрессия. В текущем окружении нет YooKassa shop ID/secret, доступа к облачному хосту и выбранного домена. Sprint 6 остаётся открытым до реального деплоя и оплаты.
 - Проверен scope из `docs/RELEASE-PLAN.md`; Sprint 5 закрыт по решению Product Owner, Sprint 6 ACTIVE.
 - Исправлены повтор checkout, доверенный адрес возврата, сверка оплаты без webhook и однократная аналитика покупки. Локально добавлена резервная копия SQLite + uploads с контрольными суммами.
 - Расширено удаление пользовательских данных на скрытые публичные карточки и остаточные результаты. Production credentials, deployment target, backup schedule и реальный YooKassa smoke в репозитории отсутствуют; финальный пользовательский DoD пока не доказан.

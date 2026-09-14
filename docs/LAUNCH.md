@@ -20,7 +20,7 @@ Copy from `.env.example`. Never commit `.env`.
 
 ## Commercial beta
 
-Цена: **199 ₽ за платное действие**: готовая новая версия резюме или match с одной вакансией. Полный разбор и самостоятельный разбор вакансии остаются бесплатными.
+Цена: **199 ₽ за пакет ToxicHR** с лимитами, зафиксированными в Release Plan. Полный разбор и самостоятельный разбор вакансии остаются бесплатными.
 
 Before opening paid access to beta traffic:
 
@@ -38,7 +38,25 @@ The configured `NEXT_PUBLIC_APP_URL` must be the actual public HTTPS origin: pay
 
 Critical local data is the SQLite database and `.data/uploads`. On the production host, create a private, encrypted backup destination outside the project, then run `npm run backup:critical -- /absolute/secure/backup-directory`. The command uses SQLite online backup, copies uploads and writes a SHA-256 manifest. Do not publish or commit the resulting directory. Schedule it with the host's scheduler, retain copies off-host, and regularly rehearse restoration to an isolated environment: verify manifest hashes, restore `database.sqlite` to the configured `DATABASE_URL` path and `uploads/` to `.data/uploads`, then check `/api/health` and a saved account. A backup script is not proof that production backups are configured or restorable.
 
-The current repository contains no production deployment configuration or credentials. Production payment, backup schedule, deployment and post-deploy desktop/mobile smoke must be evidenced separately before Sprint 6 can be marked complete.
+The repository now includes a single-VM Docker Compose/Caddy deployment template in `deploy/`. It is not a completed deployment: production host, domain, secret injection, off-host backup schedule, real payment and post-deploy desktop/mobile smoke must be evidenced separately before Sprint 6 can be marked complete.
+
+## Single-VM production runbook (Yandex Cloud or Selectel)
+
+Use one persistent Linux VM for the current SQLite, local-upload and in-process rate-limit architecture. The public domain must point to that VM, with ports 80/443 open. Keep the app port private; `deploy/compose.yml` exposes only Caddy. The proxy overwrites `X-Real-IP`, which the app uses for rate limiting.
+
+On the selected host, place the checkout under `/opt/toxichr`, a private environment file outside Git (for example `/etc/toxichr/app.env`), and persistent writable directories for app data and backups. The app process runs as UID 1000. The environment file needs `NEXT_PUBLIC_APP_URL=https://<domain>`, `DATABASE_URL=file:./.data/toxichr.db`, a generated `AUTH_SECRET`, live `AI_PROVIDER`/API key, `OPS_EMAILS`, `BETA_PAYWALL_ENABLED=false` initially, and production `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY`. Restrict the file to the deploying operator. Never print or commit these values.
+
+Set `PUBLIC_HOST`, `TOXICHR_ENV_FILE`, `TOXICHR_DATA_DIR` and `TOXICHR_BACKUP_DIR` in the deployment shell. The two directories must be absolute host paths; backup storage should be encrypted and copied off-host. From the repository root:
+
+```sh
+docker compose -f deploy/compose.yml build app
+docker compose -f deploy/compose.yml run --rm app npm run db:push
+docker compose -f deploy/compose.yml up -d
+docker compose -f deploy/compose.yml ps
+docker compose -f deploy/compose.yml exec -T app npm run backup:critical -- /backups
+```
+
+Check `https://<domain>/api/health` before any traffic. On a restricted smoke account, enable the paywall, make one real payment, verify the return route, package grant, purchased result and later cabinet history. Check canceled/failed/pending messaging without treating those states as paid. Verify backup manifest and rehearse restore on an isolated host; then schedule encrypted, off-host backups. Run desktop/mobile smoke against the deployed URL and capture evidence. Only then open the closed beta.
 
 The webhook never grants access from the incoming payload alone: the server re-reads the payment from YooKassa before granting access.
 
