@@ -101,3 +101,28 @@ test("валидатор не пропускает необязательный 
   const validation = validatePersonaDraft(unsafe, ids, { personaId: "tamara", enforceVoice: true });
   expect(validation.errors).toContain("необязательный английский жаргон в русском тексте");
 });
+
+test("без выявленных проблем Лера не требует выдуманный масштаб и не обращается к себе", () => {
+  const draft = structuredClone(json<Record<PersonaId, PersonaDraft>>("management-personas.json").lera);
+  draft.verdict.comment = "Лера, выбери яркий сигнал для рекрутера: пусто по масштабу, сколько процедур в смену?";
+  const ids = new Set(draft.contentBlocks.flatMap((block) => block.findingIds));
+  const validation = validatePersonaDraft(draft, ids, { personaId: "lera", enforceVoice: true, hasFindings: false });
+  expect(validation.errors).toContain("претензия к масштабу не основана на выявленной проблеме резюме");
+  expect(validation.errors).toContain("персона обращается к себе вместо кандидата");
+});
+
+test("замечание не о метриках не разрешает требовать новую цифру", () => {
+  const draft = structuredClone(json<Record<PersonaId, PersonaDraft>>("management-personas.json").lera);
+  draft.verdict.comment = "Рекрутеру нужно видеть конкретную полезную цифру рядом с названием роли.";
+  const ids = new Set(draft.contentBlocks.flatMap((block) => block.findingIds));
+  const validation = validatePersonaDraft(draft, ids, { personaId: "lera", enforceVoice: true, hasFindings: true, metricIssueGrounded: false });
+  expect(validation.errors).toContain("требование чисел не основано на выявленной проблеме резюме");
+});
+
+test("персона не обращается в мужском роде при женских формах исходного резюме", () => {
+  const draft = structuredClone(json<Record<PersonaId, PersonaDraft>>("management-personas.json").vadik);
+  draft.verdict.comment = "Ты выполнил закрытие отчётности, но личный вклад в тексте надо показать точнее.";
+  const ids = new Set(draft.contentBlocks.flatMap((block) => block.findingIds));
+  expect(validatePersonaDraft(draft, ids, { personaId: "vadik", avoidMasculineSecondPerson: true }).errors)
+    .toContain("мужская форма обращения противоречит грамматике исходного резюме");
+});

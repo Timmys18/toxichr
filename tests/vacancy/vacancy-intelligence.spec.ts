@@ -65,6 +65,21 @@ test("извлечение не теряет Kafka, а match не пропуск
   expect(validateMatchAssessment({ ...matchAssessment, matches: matchAssessment.matches.slice(0, 2) }, vacancyAssessment, resumeAssessment)).toBeNull();
 });
 
+test("извлечение сохраняет каждую явно перечисленную обязанность", () => {
+  const source = "Нужно брать кровь, вести журнал температур и контролировать укладки. Требуется сертификат.";
+  const raw = { ...vacancyAssessment, vacancyFingerprint: vacancyFingerprint(source), requirements: [
+    { ...vacancyAssessment.requirements[0], id: "VR01", text: "Брать кровь", sourceQuote: "брать кровь" },
+    { ...vacancyAssessment.requirements[0], id: "VR02", text: "Сертификат", sourceQuote: "Требуется сертификат" },
+  ] };
+  expect(cleanAssessment(raw, source)).toBeNull();
+  const complete = { ...raw, requirements: [
+    ...raw.requirements,
+    { ...raw.requirements[0], id: "VR03", text: "Вести журнал температур", sourceQuote: "вести журнал температур" },
+    { ...raw.requirements[0], id: "VR04", text: "Контролировать укладки", sourceQuote: "контролировать укладки" },
+  ] };
+  expect(cleanAssessment(complete, source)?.requirements).toHaveLength(4);
+});
+
 test("косвенная финансовая метрика не подтверждает P&L", () => {
   const pnlVacancy = { ...vacancyAssessment, requirements: [{ ...vacancyAssessment.requirements[0], text: "Отвечать за P&L" }] };
   const pnlMatch = { ...matchAssessment, matches: [{ ...matchAssessment.matches[0], status: "hidden_match", requirementId: "VR01" }], whyInviteRequirementIds: ["VR01"], preApplyFixes: [], unknownRequirementIds: [] };
@@ -73,6 +88,23 @@ test("косвенная финансовая метрика не подтвер
   expect(validateMatchAssessment(pnlMatch, pnlVacancy, financialMetric)).toBeNull();
   const unknown = { ...pnlMatch, matches: [{ ...pnlMatch.matches[0], status: "unknown", resumeEvidenceIds: [], resumeQuotes: [], explanation: "Резюме этого не показывает." }], whyInviteRequirementIds: [], unknownRequirementIds: ["VR01"] };
   expect(validateMatchAssessment(unknown, pnlVacancy, resumeAssessment)?.matches[0].status).toBe("unknown");
+});
+
+test("unknown не привязывает соседний факт как подтверждение требования", () => {
+  const wrong = { ...matchAssessment, matches: matchAssessment.matches.map((item) => item.requirementId === "VR03"
+    ? { ...item, resumeEvidenceIds: ["S01"], resumeQuotes: ["Запустил новый сервис для клиентов."] }
+    : item) };
+  expect(validateMatchAssessment(wrong, vacancyAssessment, resumeAssessment)).toBeNull();
+  expect(validateMatchAssessment(matchAssessment, vacancyAssessment, resumeAssessment)?.matches[2].status).toBe("unknown");
+});
+
+test("отсутствие допуска к МРТ не становится gap для КТ", () => {
+  const medicalResume = { ...resumeAssessment, strengths: [{ ...resumeAssessment.strengths[0], sourceQuote: "Самостоятельного допуска к ремонту МРТ нет." }] };
+  const item = { ...matchAssessment.matches[0], status: "gap" as const, resumeEvidenceIds: ["S01"], resumeQuotes: ["Самостоятельного допуска к ремонту МРТ нет."], explanation: "Нет подтверждённого допуска." };
+  const medicalMatch = { ...matchAssessment, decision: { ...matchAssessment.decision, code: "skip" as const }, matches: [item], whyInviteRequirementIds: [], whyRejectRequirementIds: ["VR01"], unknownRequirementIds: [], preApplyFixes: [] };
+  const requirement = { ...vacancyAssessment.requirements[0], text: "Самостоятельно ремонтировать КТ", sourceQuote: "Самостоятельно ремонтировать КТ" };
+  expect(validateMatchAssessment(medicalMatch, { ...vacancyAssessment, requirements: [requirement] }, medicalResume)).toBeNull();
+  expect(validateMatchAssessment(medicalMatch, { ...vacancyAssessment, requirements: [{ ...requirement, text: "Самостоятельно ремонтировать МРТ" }] }, medicalResume)?.matches[0].status).toBe("gap");
 });
 
 test("структурированная оценка вакансии и match используют только связные идентификаторы", () => {
@@ -119,7 +151,7 @@ test("skip возможен только при критичном разрыв�
   const onlyUnknown = {
     ...matchAssessment,
     decision: { ...matchAssessment.decision, code: "skip" as const },
-    matches: matchAssessment.matches.map((item) => ({ ...item, status: "unknown" as const })),
+    matches: matchAssessment.matches.map((item) => ({ ...item, status: "unknown" as const, resumeEvidenceIds: [], resumeQuotes: [] })),
   };
   expect(validateMatchAssessment(onlyUnknown, vacancyAssessment, resumeAssessment)).toBeNull();
 

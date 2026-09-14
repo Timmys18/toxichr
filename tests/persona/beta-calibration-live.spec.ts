@@ -58,8 +58,13 @@ const output = artifact(selectedIds ? "beta-calibration-targeted-results.json" :
 const journal = artifact("beta-calibration-run-journal.jsonl");
 const personas = ["tamara", "lera", "gleb", "vadik"] as const;
 const voiceCases = new Set(["senior-backend", "operations-executive"]);
-const runId = randomUUID();
-const provenance = calibrationProvenance();
+const resumedRun = process.env.CALIBRATION_RESUME === "1"
+  ? JSON.parse(readFileSync(output, "utf8")) as { runId: string; sourceSha: string; codeWorktreeDirty: boolean; cases: CalibrationResult[] }
+  : null;
+const runId = resumedRun?.runId ?? randomUUID();
+const provenance = resumedRun
+  ? { sourceSha: resumedRun.sourceSha, codeWorktreeDirty: resumedRun.codeWorktreeDirty }
+  : calibrationProvenance();
 
 function normalized(value: string) {
   return value.toLowerCase().replace(/ё/g, "е").replace(/[^a-zа-я0-9]+/g, " ").trim();
@@ -99,12 +104,12 @@ function persist(results: CalibrationResult[]) {
 
 test.skip(process.env.RUN_LIVE_AI_ACCEPTANCE !== "1" || !aiLiveEnabled(), "Живая beta-калибровка запускается только явно.");
 test("15–30 профессий: professional core, vacancy, match и различимость голосов", async () => {
-  test.setTimeout(45 * 60_000);
+  test.setTimeout(3 * 60 * 60_000);
   expect(cases.length).toBeGreaterThanOrEqual(15);
   expect(cases.length).toBeLessThanOrEqual(30);
   const resume = process.env.CALIBRATION_RESUME === "1";
   const previous = resume
-    ? new Map<string, CalibrationResult>((JSON.parse(readFileSync(output, "utf8")) as { cases: CalibrationResult[] }).cases.map((item) => [item.id, item]))
+    ? new Map<string, CalibrationResult>((resumedRun?.cases ?? []).map((item) => [item.id, item]))
     : new Map<string, CalibrationResult>();
   const results: CalibrationResult[] = [];
 

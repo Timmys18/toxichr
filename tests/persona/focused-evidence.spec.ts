@@ -40,3 +40,35 @@ test("уточнение и четыре профессиональные опт
     else process.env.AI_PROVIDER = before;
   }
 });
+
+test("rewrite не предлагает редактировать должность, отрицание или чужое действие", async () => {
+  const before = process.env.AI_PROVIDER;
+  process.env.AI_PROVIDER = "mock";
+  try {
+    const source = "Главный бухгалтер компании, штат семь человек. Проекты по МСФО вела внешняя консультационная команда. Организовала закрытие РСБУ для трёх юридических лиц.";
+    const { report } = await runAnalysisPipeline({ resumeText: source, personaId: "tamara" });
+    const updated = { ...report, candidateProfile: { ...report.candidateProfile, primaryRole: "Главный бухгалтер" }, topProblems: [], strengths: [
+      { id: "s1", title: "Должность", quote: "Главный бухгалтер компании, штат семь человек.", comment: "Роль." },
+      { id: "s2", title: "Чужая работа", quote: "Проекты по МСФО вела внешняя консультационная команда.", comment: "Ограничение." },
+      { id: "s3", title: "Личная работа", quote: "Организовала закрытие РСБУ для трёх юридических лиц.", comment: "Подтверждённая задача." },
+    ] };
+    const questions = buildImprovementQuestions(updated, source);
+    expect(questions.map((item) => item.quote)).toEqual(["Организовала закрытие РСБУ для трёх юридических лиц."]);
+    expect(questions[0].question).toContain("какой конкретный итог");
+    const chef = { ...updated, candidateProfile: { ...updated.candidateProfile, primaryRole: "Шеф-повар" }, strengths: [
+      { id: "s4", title: "Ограничение", quote: "Открытие ресторана с нуля не вёл.", comment: "Честная граница." },
+      { id: "s5", title: "Действие", quote: "Обновил сезонное меню и стандартизировал карты приготовления.", comment: "Личная работа." },
+    ] };
+    expect(buildImprovementQuestions(chef).map((item) => item.quote)).toEqual(["Обновил сезонное меню и стандартизировал карты приготовления."]);
+    const construction = { ...updated, strengths: [
+      { id: "s6", title: "Граница полномочий", quote: "Бюджет проекта контролировал совместно с финансовым контролёром, договоры не подписывал.", comment: "Честная граница." },
+      { id: "s8", title: "Не участвовал", quote: "В согласовании договоров не участвовал.", comment: "Честная граница." },
+      { id: "s9", title: "Не отвечал", quote: "За P&L подразделения не отвечал.", comment: "Честная граница." },
+      { id: "s7", title: "Решение", quote: "Перенёс критические работы между очередями и сократил отставание с девяти до трёх недель.", comment: "Подтверждённый результат." },
+    ] };
+    expect(buildImprovementQuestions(construction).map((item) => item.quote)).toEqual(["Перенёс критические работы между очередями и сократил отставание с девяти до трёх недель."]);
+  } finally {
+    if (before === undefined) delete process.env.AI_PROVIDER;
+    else process.env.AI_PROVIDER = before;
+  }
+});

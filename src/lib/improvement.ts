@@ -24,22 +24,31 @@ export type ImprovementReplacement = {
   grounded: boolean;
 };
 
-export const IMPROVEMENT_RULES_VERSION = "improvement@2.2";
+export const IMPROVEMENT_RULES_VERSION = "improvement@2.4";
+
+function isEditableQuote(quote: string, role: string): boolean {
+  const text = quote.trim();
+  if (text.length < 18) return false;
+  const hasAction = /(?:^|\s)[а-яё]*(?:ил|ила|или|ал|ала|али|ёл|ела|ели)(?=\s|[,.;:])/iu.test(text);
+  const hasOutcome = /сниз|вырос|сократ|точност|доля|время|\d+\s*%/iu.test(text);
+  if (text.toLocaleLowerCase("ru").includes(role) && !hasAction && !hasOutcome) return false;
+  if (/(?:^|[\s,;])не\s+(?:был[аои]?|[а-яё]+(?:ил|ила|или|ал|ала|али|ёл|ела|ели))(?=[\s,.!?;:]|$)/iu.test(text)) return false;
+  if (/(?:в[её]л[аи]?|утверждал[аи]?|подписывал[аи]?)\s+(?:руководитель|бухгалтер|юридический отдел|внешняя(?: консультационная)? команда|консультационная команда)/iu.test(text)) return false;
+  return hasAction || hasOutcome;
+}
 
 function editableProblems(report: AnalysisReport, resumeText?: string): Problem[] {
   const role = report.candidateProfile.primaryRole.toLocaleLowerCase("ru");
-  const isHeading = (quote: string) => quote.trim().length <= 80 && quote.toLocaleLowerCase("ru").includes(role);
-  const problems = report.topProblems.filter((item) => !isHeading(item.quote));
+  const problems = report.topProblems.filter((item) => isEditableQuote(item.quote, role));
   // A strong resume may have no defect: offer a factual clarification on an
   // existing strength, without inventing a weakness or replacing its heading.
-  const fragments = [...problems.slice(0, 4), ...report.strengths.filter((item) => item.quote && !isHeading(item.quote) && !problems.some((problem) => problem.quote === item.quote)).slice(0, 3).map((item) => ({
+  const fragments = [...problems.slice(0, 4), ...report.strengths.filter((item) => item.quote && isEditableQuote(item.quote, role) && !problems.some((problem) => problem.quote === item.quote)).slice(0, 3).map((item) => ({
     id: `clarify-${item.id}`, title: "Уточнить личный вклад в этом результате", quote: item.quote!, severity: "low" as const,
     roast: item.comment, diagnosis: "Сохраните этот факт. Дополняйте его только если есть конкретное уточнение.", recommendation: "Уточните личное действие и его результат.",
   }))];
   if (fragments.length || !resumeText) return fragments;
   return (resumeText.match(/[^.!?\n]+[.!?]?/gu) ?? []).map((quote) => quote.trim())
-    .filter((quote) => quote.length >= 20 && quote.length <= 500 && !isHeading(quote)
-      && /(?:^|\s)[а-яё]*(?:ил|ила|или|ал|ала|али|ёл|ела|ели)(?=\s|[,.;:])/iu.test(quote))
+    .filter((quote) => quote.length <= 500 && isEditableQuote(quote, role))
     .slice(0, 3).map((quote, index) => ({ id: `clarify-source-${index}`, title: "Уточнить описание работы", quote, severity: "low" as const,
       roast: "В исходном тексте есть описание работы.", diagnosis: "Можно уточнить этот фрагмент, если есть дополнительные факты.", recommendation: "Назовите конкретное личное действие." }));
 }
@@ -52,12 +61,12 @@ export function buildImprovementQuestions(
     problemId: problem.id,
     title: problem.title,
     quote: problem.quote,
-    question: `В строке «${problem.quote}» какое конкретное действие было вашим и что оно изменило? Назовите уточнение, которого ещё нет в этой строке. Если уточнения нет, оставим её без изменений.`,
-    prompts: [
-      "Что именно сделал лично ты?",
-      "Какой был масштаб: команда, бюджет, срок или объём?",
-      "Что изменилось в результате? Если цифры неизвестны — так и напиши.",
-    ],
+    question: /сниз|сократ|вырос|улучш|точност|\d+\s*%/iu.test(problem.quote)
+      ? `К фрагменту «${problem.quote}»: какое именно ваше действие связано с указанным результатом и чем эта связь подтверждается? Если это общий итог команды, так и уточните; без подтверждения строку не меняем.`
+      : `К фрагменту «${problem.quote}»: какой конкретный итог вашей работы здесь можно подтвердить? Если отдельного итога нет, оставим исходную строку без изменений.`,
+    prompts: /сниз|сократ|вырос|улучш|точност|\d+\s*%/iu.test(problem.quote)
+      ? ["Какое действие было лично вашим?", "Это личный или командный результат?", "Чем подтверждена связь действия и результата?"]
+      : ["Какой итог этой задачи можно подтвердить?", "Что было лично вашей зоной ответственности?", "Если уточнения нет, оставьте строку без изменений."],
   }));
 }
 

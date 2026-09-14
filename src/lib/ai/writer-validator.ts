@@ -166,7 +166,7 @@ export function scorePersonaQuality(draft: PersonaDraft, findingIds: Set<string>
 export function validatePersonaDraft(
   input: unknown,
   findingIds: Set<string>,
-  options: { personaId?: PersonaId; privacy?: SharePrivacyContext; enforceVoice?: boolean } = {},
+  options: { personaId?: PersonaId; privacy?: SharePrivacyContext; enforceVoice?: boolean; hasFindings?: boolean; metricIssueGrounded?: boolean; avoidMasculineSecondPerson?: boolean } = {},
 ): { ok: boolean; draft?: PersonaDraft; errors: string[]; quality?: PersonaQualityMetrics } {
   const parsed = PersonaDraftSchema.safeParse(input);
   if (!parsed.success) return { ok: false, errors: ["неверная структура JSON"] };
@@ -174,6 +174,12 @@ export function validatePersonaDraft(
   const errors: string[] = [];
   const allText = [draft.verdict.title, draft.verdict.comment, ...draft.contentBlocks.map((b) => b.content), ...draft.priorities.map((p) => p.action), ...draft.shareLines].join("\n");
   errors.push(...validateUserFacingLanguage(allText));
+  if (options.avoidMasculineSecondPerson && /(?:^|\s)ты\s+[а-яё]+(?:ил|ал|ял|ёл)(?=[\s,.!?;:]|$)/iu.test(allText)) errors.push("мужская форма обращения противоречит грамматике исходного резюме");
+  if (options.metricIssueGrounded === false || options.hasFindings === false) {
+    if (/(?:нужн\w*|не хватает|добав\w*|укаж\w*|видеть).{0,55}(?:цифр\w*|метрик\w*|числ\w*)|без цифр/iu.test(draft.verdict.comment)) errors.push("требование чисел не основано на выявленной проблеме резюме");
+    if (/пусто по масштабу|сколько процедур|добав\w*.{0,35}(?:масштаб|конкретик)/iu.test(draft.verdict.comment)) errors.push("претензия к масштабу не основана на выявленной проблеме резюме");
+  }
+  if (options.enforceVoice && options.personaId === "lera" && /(?:^|\s)Лера\s*[,!]/u.test(draft.verdict.comment)) errors.push("персона обращается к себе вместо кандидата");
   if (options.enforceVoice && /^резюме\s+(?:\S+\s+){0,2}(?:показывает|подтверждает|демонстрирует)/iu.test(draft.verdict.comment)) errors.push("вместо оптики персоны повторена общая оценка; начните с конкретной детали editorialFocus");
   if (options.enforceVoice && options.personaId === "lera" && !/рекрутер|позиционир|специализац|перв.{0,12}(?:экран|строк)|заголов|отлич/iu.test(draft.verdict.comment)) errors.push("Лера должна выбрать заметный сигнал для рекрутера; общий вопрос о личном вкладе не раскрывает её оптику");
   if ([draft.verdict.title, draft.verdict.comment].some((value) => /^\s*\.{3,}\s*$/.test(value))) errors.push("оставлена служебная заглушка вместо текста");

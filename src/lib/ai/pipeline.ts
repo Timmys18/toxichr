@@ -42,6 +42,10 @@ function jsonObject(content: string): unknown {
   try { return JSON.parse(content); } catch { return null; }
 }
 
+function resumeTextVerbCount(source: string, pattern: RegExp): number {
+  return source.match(pattern)?.length ?? 0;
+}
+
 function filterShareLines(input: unknown, privacy: ReturnType<typeof buildSharePrivacyContext>, personaId: PersonaId): unknown {
   const parsed = PersonaDraftSchema.safeParse(input);
   if (!parsed.success) return input;
@@ -111,11 +115,20 @@ function fallbackDraft(base: AnalysisReport, assessment: ProfessionalAssessment,
   const evidence = focus.evidence;
   const quote = evidence[0]?.sourceQuote ?? base.topProblems[0]?.quote ?? "";
   const secondQuote = evidence[1]?.sourceQuote ?? quote;
+  const focusItem = evidence[0];
+  const isFinding = focusItem ? assessment.findings.some((item) => item.id === focusItem.id) : false;
+  const interpretation = focusItem?.interpretation ?? "В этой строке есть профессиональный факт, который стоит точнее показать.";
   const personaComment: Record<PersonaId, string> = {
-    tamara: `«${quote}» — вот фрагмент, по которому стоит обсуждать вес роли. Название должности не выдаёт доверенность на все решения. ${focus.question}`,
-    lera: `«${quote}» — здесь есть материал для первого экрана. Я бы вынесла эту строку рядом с названием роли: рекрутеру нужна причина открыть опыт дальше. Пусть специализация читается раньше списка обязанностей.`,
-    gleb: `Рассмотрим утверждение «${quote}». ${focus.question} Если связь уже проверена, сохраните способ проверки рядом с результатом. Само соседство двух событий в резюме ещё не объясняет причинность.`,
-    vadik: `«${quote}» — эту работу и разбираем. ${focus.question} Оставь действие рядом с его практической пользой: собрание глаголов само по себе ничего не запускает.`,
+    tamara: isFinding
+      ? `«${quote}» — здесь важна граница роли: ${interpretation} ${focus.question}`
+      : `«${quote}» подтверждает вес этой роли: ${interpretation} Не приписываю полномочия сверх написанного; покажите рядом именно вашу зону решения.`,
+    lera: `Для первого экрана резюме выбрала бы «${quote}»: ${interpretation} Рекрутер должен сразу увидеть эту специализацию, а не искать её среди обязанностей.`,
+    gleb: isFinding
+      ? `В строке «${quote}» есть вопрос к причинной связи: ${interpretation} Уточните механизм именно этого результата, если он вам известен; новую цифру не придумывайте.`
+      : `«${quote}» уже даёт связку действия и результата: ${interpretation} Для проверки причинности можно уточнить способ измерения, но сам подтверждённый результат не нужно обесценивать.`,
+    vadik: isFinding
+      ? `«${quote}» — тут хочу понять личное действие: ${interpretation} ${focus.question}`
+      : `«${quote}» — это уже дело, а не список качеств: ${interpretation} Вынеси собственное действие вперёд, чтобы практическая польза читалась сразу.`,
   };
   const title: Record<PersonaId, string> = {
     tamara: "Должность и полномочия: сверим границы",
@@ -255,8 +268,12 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   emit({ type: "stage", stage: "persona", status: "start" });
   const writerStartedAt = Date.now();
   const evidenceIds = new Set([...assessment.findings.map((item) => item.id), ...assessment.strengths.map((item) => item.id)]);
+  const metricIssueGrounded = assessment.findings.some((item) => /цифр|числ|метрик|количеств|объ[её]м|масштаб/iu.test(`${item.interpretation} ${item.whyItMatters}`));
+  const feminineVerbs = resumeTextVerbCount(input.resumeText, /[а-яё]+(?:ила|ала|яла|ела)(?=[\s,.!?;:]|$)/giu);
+  const masculineVerbs = resumeTextVerbCount(input.resumeText, /[а-яё]+(?:ил|ал|ял|ёл)(?=[\s,.!?;:]|$)/giu);
+  const avoidMasculineSecondPerson = feminineVerbs >= 2 && masculineVerbs === 0;
   const editorialFocus = personaFocus(assessment, input.personaId);
-  const writerInput = JSON.stringify({ assessment, editorialFocus, allowedFindingIds: [...evidenceIds], uiLanguage: "ru" });
+  const writerInput = JSON.stringify({ assessment, editorialFocus, allowedFindingIds: [...evidenceIds], uiLanguage: "ru", noUnsupportedCriticism: !metricIssueGrounded ? "В замечаниях нет доказанной проблемы с числовыми результатами. Не требуй добавить цифру или масштаб; можно предложить переставить уже названный факт либо задать узкий вопрос без оценки недостатка." : undefined });
   const privacy = buildSharePrivacyContext(input.resumeText, [assessment.candidateContext.primaryProfession, assessment.candidateContext.industry]);
   let retryCount = 0;
   let editorUsed = false;
@@ -282,7 +299,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
     }
   }
   let validation = writer
-    ? validatePersonaDraft(filterShareLines(jsonObject(writer.content), privacy, input.personaId), evidenceIds, { personaId: input.personaId, privacy, enforceVoice: true })
+    ? validatePersonaDraft(filterShareLines(jsonObject(writer.content), privacy, input.personaId), evidenceIds, { personaId: input.personaId, privacy, enforceVoice: true, hasFindings: assessment.findings.length > 0, metricIssueGrounded, avoidMasculineSecondPerson })
     : { ok: false, errors: ["писатель недоступен"] };
   if (writer && !validation.ok) {
     console.warn("[pipeline] persona draft rejected by quality gate", validation.errors);
@@ -296,7 +313,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
         model: process.env.OPENAI_EDITOR_MODEL ?? "gpt-5-nano",
       });
       writerCost += editor.costUsd;
-      validation = validatePersonaDraft(filterShareLines(jsonObject(editor.content), privacy, input.personaId), evidenceIds, { personaId: input.personaId, privacy, enforceVoice: true });
+      validation = validatePersonaDraft(filterShareLines(jsonObject(editor.content), privacy, input.personaId), evidenceIds, { personaId: input.personaId, privacy, enforceVoice: true, hasFindings: assessment.findings.length > 0, metricIssueGrounded, avoidMasculineSecondPerson });
       if (!validation.ok) console.warn("[pipeline] edited persona draft still rejected", validation.errors);
     } catch (error) {
       if (error instanceof AiConfigError) throw error;
