@@ -27,6 +27,8 @@ export function AuthClient() {
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forgot, setForgot] = useState(false);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,6 +80,14 @@ export function AuthClient() {
       setError(requestErrorMessage(err, "Не удалось продолжить. Данные формы и разбор сохранены — попробуй ещё раз."));
       setBusy(false);
     }
+  }
+
+  async function requestReset() {
+    setResetMessage(null); setError(null);
+    const response = await fetch("/api/auth/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const data = await response.json();
+    if (!response.ok) { setError(data.error); return; }
+    setResetMessage(data.resetToken ? `Ссылка для восстановления готова для локальной проверки: /auth?reset=${data.resetToken}` : data.message);
   }
 
   return (
@@ -143,6 +153,8 @@ export function AuthClient() {
           >
             {busy ? "Секунду…" : mode === "login" ? "Войти" : "Создать аккаунт"}
           </PrimaryAction>
+          {mode === "login" ? <button type="button" className="ds-inline-link" onClick={() => { setForgot(true); void requestReset(); }}>Забыли пароль?</button> : null}
+          {forgot ? <p className="ds-form-note">Укажи email выше, чтобы запросить новую ссылку. {resetMessage}</p> : null}
           </form>
 
         <div className="ds-auth-switch">

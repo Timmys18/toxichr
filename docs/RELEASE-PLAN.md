@@ -368,7 +368,9 @@ Sprint считается закрытым только если вручную 
 
 # Sprint 6 — Release Hardening
 
-> Статус: **LOCAL COMPLETE · PRE-RELEASE BLOCKED**. Production Definition of Done не принят.
+> Статус: **AUDIT FIXES · PRE-RELEASE BLOCKED**. Production Definition of Done не принят.
+
+15.09: четыре основных дефекта аудита исправлены адресно. Восстановление пароля, поддержка/условия/раннее согласие и production-приёмка открыты. [Отчёт и ограничения](AUDIT-FIXES-2026-09-15.md). Полный acceptance не запускался по указанию пользователя.
 
 Отдельное состояние отменённой оплаты `canceled` уже внесено и сохранено в Git; это предварительная точечная работа, а не начало или приёмка Sprint 6.
 По отдельному запросу добавлен безопасный журнал калибровочных AI-запусков: ID кейса и запуска, версия правил, провайдер/модель, статус и балл анализа без сохранения текста резюме. Это также не активирует Sprint 6 целиком.
@@ -462,4 +464,4 @@ Sprint считается закрытым только если вручную 
 - Sprint 3 — COMPLETE
 - Sprint 4 — COMPLETE
 - Sprint 5 — COMPLETE по критериям 14.09.2026; новый `suite=full` не запускался по указанию Product Owner
-- Sprint 6 — **LOCAL COMPLETE · PRE-RELEASE BLOCKED**; полное закрытие только после финального checklist
+- Sprint 6 — **AUDIT FIXES · PRE-RELEASE BLOCKED**; полное закрытие только после финального checklist

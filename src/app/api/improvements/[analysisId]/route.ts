@@ -304,26 +304,19 @@ export async function PATCH(
     const afterScore = Math.max(0, Math.min(100, report.score.total + edited - baseline));
     const replacements = improvement.replacements ?? [];
 
-    await prisma.$transaction([
-      prisma.resumeVersion.update({
-        where: { id: improvement.resumeVersionId },
-        data: {
-          structuredContent: {
-            text: parsed.data.improvedText,
-            replacements,
-            editedManually: true,
-          } as Prisma.InputJsonValue,
-        },
-      }),
-      prisma.resumeImprovement.update({
-        where: { analysisId },
-        data: {
-          improvedText: parsed.data.improvedText,
-          afterScore,
-          status: "ready",
-        },
-      }),
-    ]);
+    await prisma.$transaction(async (tx) => {
+      const latest = await tx.resumeVersion.aggregate({ where: { resumeId: analysis.resumeVersion.resumeId }, _max: { versionNumber: true } });
+      const version = await tx.resumeVersion.create({ data: {
+        resumeId: analysis.resumeVersion.resumeId,
+        parentVersionId: improvement.resumeVersionId,
+        versionNumber: (latest._max.versionNumber ?? 1) + 1,
+        source: "improvement",
+        structuredContent: { text: parsed.data.improvedText, replacements, editedManually: true } as Prisma.InputJsonValue,
+      } });
+      await tx.resumeImprovement.update({ where: { analysisId }, data: {
+        resumeVersionId: version.id, improvedText: parsed.data.improvedText, afterScore, status: "ready",
+      } });
+    });
 
     await trackServer("resume_editor_saved", {
       analysisId,

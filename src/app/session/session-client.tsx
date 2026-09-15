@@ -17,7 +17,7 @@ type StreamEvent =
   | { type: "finding"; stage: string; message: string }
   | { type: "roast"; delta: string }
   | { type: "completed"; analysisId: string }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string; purchaseAnalysisId?: string };
 
 type Phase = "analyzing" | "verdict" | "error";
 type Props = { resumeId?: string; personaId?: PersonaId; viewId?: string };
@@ -44,6 +44,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeId ?? null);
+  const [purchaseAnalysisId, setPurchaseAnalysisId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
       else if (event.type === "error") {
         settled = true;
         window.clearTimeout(watch);
+        setPurchaseAnalysisId(event.purchaseAnalysisId ?? null);
         setError(event.message);
         setPhase("error");
       }
@@ -234,7 +236,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         ) : null}
 
         {phase === "error" ? (
-          <EmptyState className="errbox" action={<div><PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></div>}>{error}</EmptyState>
+          <EmptyState className="errbox" action={<div>{purchaseAnalysisId ? <PrimaryAction href={`/revenge?analysisId=${encodeURIComponent(purchaseAnalysisId)}`}>Открыть пакет ToxicHR · 199 ₽</PrimaryAction> : null}<PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></div>}>{error}</EmptyState>
         ) : null}
 
         {phase === "verdict" && report ? (
@@ -263,6 +265,12 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareErr, setShareErr] = useState<string | null>(null);
+  const [hasPackage, setHasPackage] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (analysisId) void fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}`).then((r) => r.ok ? r.json() : null).then((data) => { if (!cancelled && data) setHasPackage(Boolean(data.hasPackage)); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [analysisId]);
   const [hasPendingVacancy, setHasPendingVacancy] = useState(false);
 
   useEffect(() => {
@@ -323,18 +331,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
     <div className="verdict">
       <VerdictBlock className="diag" label="Заключение" title={r.verdict.title} summary={r.verdict.comment} />
 
-      {analysisId ? (
-        <Link
-          href={`/revenge?analysisId=${analysisId}`}
-          className="conversion-band"
-          onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}
-        >
-          <span className="eyebrow thr-mono">Главный следующий шаг</span>
-          <b>Исправить резюме · пакет ToxicHR 199 ₽</b>
-          <span>{problemCount === 1 ? "Разберём одно слабое место" : `Разберём слабые места: ${problemCount}`}, зададим вопросы по фактам и соберём новую версию.</span>
-          <strong>Начать исправление →</strong>
-        </Link>
-      ) : null}
+
 
       {r.hrReview?.deepDive ? (
         <EditorialSection className="review" title={`Разбор от ${hrName}`}>{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</EditorialSection>
@@ -348,6 +345,19 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
 
       {r.hrReview?.hiringTake ? <SurfacePanel className="hiring" label="Возьмут или нет">{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</SurfacePanel> : null}
 
+      {analysisId ? (
+        <Link
+          href={`/revenge?analysisId=${analysisId}`}
+          className="conversion-band"
+          onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}
+        >
+          <span className="eyebrow thr-mono">Главный следующий шаг</span>
+          <b>{hasPackage === true ? "Продолжить работу с резюме · пакет открыт" : hasPackage === false ? "Исправить резюме · пакет ToxicHR 199 ₽" : "Исправить резюме"}</b>
+          <span>{problemCount === 1 ? "Разберём одно слабое место" : `Разберём слабые места: ${problemCount}`}, зададим вопросы по фактам и соберём новую версию.</span>
+          <strong>Начать исправление →</strong>
+        </Link>
+      ) : null}
+
       <div className="sec-h next-h"><h3>Ещё можно</h3></div>
       <div className="next-actions">
         <Link
@@ -357,7 +367,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
         >
           <span className="nk thr-mono">Под конкретный отклик</span>
           <b>{hasPendingVacancy ? "Сопоставить с вакансией" : "Разобрать вакансию"}</b>
-          <span>{hasPendingVacancy ? "Текст на месте — повторно вставлять ничего не нужно." : "Понять, что уже доказано, а где опыта не видно."}</span>
+          <span>{hasPendingVacancy ? "Текст на месте — повторно вставлять ничего не нужно." : "Узнать, каким требованиям соответствует резюме и чего в нём не хватает."}</span>
         </Link>
       </div>
 

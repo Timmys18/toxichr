@@ -55,6 +55,7 @@ export async function POST(_request: Request, { params }: Params) {
       personaId,
       undefined,
       adaptation.resumeVersionId,
+      session?.user?.id,
     );
     const recheck = await prisma.analysis.findUnique({ where: { id: analysisId }, select: { reportPayload: true } });
     const professional = ProfessionalAssessmentSchema.safeParse((recheck?.reportPayload as { professionalAssessment?: unknown } | null)?.professionalAssessment);

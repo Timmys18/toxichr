@@ -22,6 +22,7 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
   const [showPaste, setShowPaste] = useState(false);
   const [pastedText, setPastedText] = useState("");
   const [draftRestored, setDraftRestored] = useState(false);
+  const [consent, setConsent] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
   }, []);
 
   const upload = useCallback(async (file: File) => {
+    if (!consent) return setError("Подтверди согласие на обработку резюме.");
     const okType =
       file.type === "application/pdf" ||
       file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
@@ -74,9 +76,10 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       setError(requestErrorMessage(reason, "Не удалось загрузить файл. Попробуй ещё раз."));
       setBusy(false);
     }
-  }, [router, sel]);
+  }, [consent, router, sel]);
 
   const pasteResume = useCallback(async () => {
+    if (!consent) { setError("Подтверди согласие на обработку резюме."); return; }
     if (pastedText.trim().length < 80) return;
     setBusy(true);
     setError(null);
@@ -97,7 +100,7 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       setError(requestErrorMessage(reason, "Не удалось отправить текст. Черновик сохранён — попробуй ещё раз."));
       setBusy(false);
     }
-  }, [pastedText, router, sel]);
+  }, [consent, pastedText, router, sel]);
 
   const pastedLength = pastedText.trim().length;
   const missingPasteChars = Math.max(0, 80 - pastedLength);
@@ -107,7 +110,7 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       <div className={styles.grid}>
         <div className={styles.intro}>
           <h1>Токсичный <em>HR</em></h1>
-          <p>Загрузи резюме. Выбери своего HR.</p>
+          <p>Получи бесплатный разбор: что мешает откликам и как улучшить резюме. Выбери своего HR — регистрация не нужна.</p>
         </div>
 
         <div className={styles.personaPanel}>
@@ -138,6 +141,10 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
             if (file) void upload(file);
           }}
         >
+          <label className={styles.consent}>
+            <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
+            <span>Согласен на обработку резюме для работы сервиса. <a href="/privacy" target="_blank">Условия</a></span>
+          </label>
           <button type="button" className={styles.fileAction} onClick={() => fileRef.current?.click()} disabled={busy}>
             <FileText size={26} strokeWidth={1.7} aria-hidden />
             <span>

@@ -14,7 +14,7 @@ export const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
 export class AnalysisInputError extends Error {
   status: number;
-  constructor(message: string, status = 400) {
+  constructor(message: string, status = 400, public purchaseAnalysisId?: string) {
     super(message);
     this.name = "AnalysisInputError";
     this.status = status;
@@ -32,6 +32,7 @@ async function createFreePersonaAnalysis(
   resumeVersionId: string,
   resumeId: string,
   personaId: string,
+  userId: string | null,
 ) {
   return prisma.$transaction(async (tx) => {
     const existing = await tx.analysis.findMany({
@@ -39,7 +40,7 @@ async function createFreePersonaAnalysis(
         resumeVersion: { resumeId },
         status: { in: ["RUNNING", "COMPLETED"] },
       },
-      select: { personaId: true },
+      select: { id: true, personaId: true, status: true },
     });
     const usedPersonaIds = new Set(
       existing.map((item) => item.personaId).filter((value): value is string => Boolean(value)),
@@ -50,6 +51,7 @@ async function createFreePersonaAnalysis(
       throw new AnalysisInputError(
         "Бесплатный лимит исчерпан: первый разбор и один дополнительный HR-взгляд уже доступны. Остальные голоса открывает пакет ToxicHR.",
         403,
+        existing.find((item) => item.status === "COMPLETED")?.id,
       );
     }
 
@@ -57,6 +59,7 @@ async function createFreePersonaAnalysis(
       data: {
         resumeVersionId,
         personaId,
+        userId,
         status: "RUNNING",
       },
     });
@@ -68,14 +71,18 @@ const REUSABLE_ANALYSIS_WINDOW_MS = 15 * 60 * 1000;
 export async function findReusableAnalysis(
   resumeId: string,
   personaId: PersonaId,
+  currentUserId?: string | null,
 ): Promise<{ id: string; status: "RUNNING" | "COMPLETED" } | null> {
+  const resume = await assertResumeAccess(resumeId, currentUserId);
+  const latest = await prisma.resumeVersion.findFirst({ where: { resumeId: resume.id }, orderBy: { versionNumber: "desc" }, select: { id: true } });
+  if (!latest) return null;
   return prisma.analysis.findFirst({
     where: {
       status: { in: ["RUNNING", "COMPLETED"] },
       createdAt: {
         gte: new Date(Date.now() - REUSABLE_ANALYSIS_WINDOW_MS),
       },
-      resumeVersion: { resumeId },
+      resumeVersionId: latest.id,
       persona: { code: personaId },
     },
     orderBy: { createdAt: "desc" },
@@ -105,7 +112,9 @@ export async function createAndRunAnalysis(
   personaId: PersonaId,
   onEvent?: (event: PipelineEvent) => void,
   targetResumeVersionId?: string,
+  currentUserId?: string | null,
 ): Promise<{ analysisId: string }> {
+  await assertResumeAccess(resumeId, currentUserId);
   const resume = await prisma.resume.findUnique({
     where: { id: resumeId },
     include: {
@@ -130,7 +139,7 @@ export async function createAndRunAnalysis(
     });
   }
 
-  const analysis = await createFreePersonaAnalysis(version.id, resumeId, persona.id);
+  const analysis = await createFreePersonaAnalysis(version.id, resumeId, persona.id, resume.userId ?? currentUserId ?? null);
 
   await trackServer("analysis_started", { analysisId: analysis.id, personaId });
 
@@ -191,4 +200,11 @@ export async function createAndRunAnalysis(
     });
     throw error;
   }
+}
+
+export async function assertResumeAccess(resumeId: string, currentUserId?: string | null) {
+  const resume = await prisma.resume.findUnique({ where: { id: resumeId }, select: { id: true, userId: true, deletedAt: true } });
+  if (!resume || resume.deletedAt) throw new AnalysisInputError("Резюме не найдено.", 404);
+  if (resume.userId && resume.userId !== currentUserId) throw new AnalysisInputError("Нет доступа.", 403);
+  return resume;
 }
