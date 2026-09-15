@@ -412,3 +412,79 @@ test("платный match закрыт сервером, а самостоят�
   expect(exhausted.status()).toBe(403);
   expect(await exhausted.json()).toMatchObject({ limitReached: true, paymentRequired: false });
 });
+
+
+test("аудит: владельцы, повторный анализ и история версий", async ({ playwright, page }) => {
+  const contexts = [];
+  for (let i = 0; i < 2; i++) {
+    const context = await playwright.request.newContext({ baseURL: "http://127.0.0.1:3102" });
+    contexts.push(context);
+    const email = `audit-${Date.now()}-${i}@example.test`;
+    expect((await context.post("/api/auth/register", { data: { email, password: "audit-password-123", consent: true } })).ok()).toBeTruthy();
+    const { csrfToken } = await (await context.get("/api/auth/csrf")).json();
+    await context.post("/api/auth/callback/credentials", { form: { csrfToken, email, password: "audit-password-123", callbackUrl: "/me" } });
+  }
+  const [owner, other] = contexts;
+  try {
+    const session = await (await owner.get("/api/auth/session")).json();
+    expect(session.user.id).toBeTruthy();
+    const { resumeId } = await (await owner.post("/api/resumes/text", { data: { text: RESUME } })).json();
+    expect((await prisma.resume.findUniqueOrThrow({ where: { id: resumeId } })).userId).toBe(session.user.id);
+    expect((await other.post("/api/analyses", { data: { resumeId, personaId: "lera" } })).status()).toBe(403);
+    const deniedStream = await other.post("/api/analyses/stream", { data: { resumeId, personaId: "lera" } });
+    expect(await deniedStream.text()).toContain("Нет доступа.");
+    expect(await prisma.analysis.count({ where: { resumeVersion: { resumeId } } })).toBe(0);
+    const response = await owner.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+    expect(response.ok()).toBeTruthy();
+    const { analysisId } = await response.json();
+    expect((await prisma.analysis.findUniqueOrThrow({ where: { id: analysisId } })).userId).toBe(session.user.id);
+    const cachedDenied = await other.post("/api/analyses/stream", { data: { resumeId, personaId: "lera" } });
+    expect(await cachedDenied.text()).not.toContain(analysisId);
+    await prisma.toxicHrPackage.create({ data: { resumeId, userId: session.user.id, source: "test" } });
+    const first = await (await owner.post("/api/vacancies/review", { data: { text: VACANCY, analysisId } })).json();
+    const second = await (await owner.post("/api/vacancies/review", { data: { text: VACANCY + " Дополнительно: SQL и аналитика.", analysisId, vacancyId: first.vacancyId } })).json();
+    expect(second.vacancyId).toBeTruthy();
+    expect(second.vacancyId).not.toBe(first.vacancyId);
+    expect((await prisma.vacancy.findUniqueOrThrow({ where: { id: first.vacancyId } })).sourceText).toBe(VACANCY);
+    const questions = await (await owner.get(`/api/improvements/${analysisId}`)).json();
+    expect((await owner.post(`/api/improvements/${analysisId}`, { data: { answers: [{ problemId: questions.questions[0].problemId, answer: "Провела 8 интервью и проверила две гипотезы." }] } })).ok()).toBeTruthy();
+    const recheck = await owner.post(`/api/improvements/${analysisId}/recheck`);
+    expect(recheck.ok()).toBeTruthy();
+    const improved = await recheck.json();
+    const saved = await prisma.resumeImprovement.findUniqueOrThrow({ where: { analysisId } });
+    const improvedAnalysis = await prisma.analysis.findUniqueOrThrow({ where: { id: improved.analysisId } });
+    expect(improvedAnalysis.resumeVersionId).toBe(saved.resumeVersionId);
+    expect(improved.analysisId).not.toBe(analysisId);
+    expect(await (await owner.post(`/api/improvements/${analysisId}/recheck`)).json()).toEqual(improved);
+    const originalVersionId = improvedAnalysis.resumeVersionId;
+    expect((await owner.patch(`/api/improvements/${analysisId}`, { data: { improvedText: saved.improvedText + "\nНавыки: SQL." } })).ok()).toBeTruthy();
+    const edited = await (await owner.post(`/api/improvements/${analysisId}/recheck`)).json();
+    expect(edited.analysisId).not.toBe(improved.analysisId);
+    expect((await prisma.analysis.findUniqueOrThrow({ where: { id: improved.analysisId } })).resumeVersionId).toBe(originalVersionId);
+    await page.context().addCookies((await owner.storageState()).cookies);
+    for (const width of [1280, 834, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await expect(page.getByText("Получи бесплатный разбор:", { exact: false })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
+      await page.screenshot({ path: `tests/artifacts/audit/home-${width}.png`, fullPage: true });
+    }
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/session?view=${analysisId}`);
+      await expect(page.getByText("Продолжить работу с резюме · пакет открыт")).toBeVisible();
+      await page.screenshot({ path: `tests/artifacts/audit/result-${width}.png`, fullPage: true });
+      await page.goto(`/revenge?analysisId=${analysisId}`);
+      await expect(page.getByRole("button", { name: "Проверить под вакансию →" })).toBeVisible();
+      await page.screenshot({ path: `tests/artifacts/audit/improvement-${width}.png`, fullPage: true });
+      await page.goto(`/vacancy?analysisId=${analysisId}&vacancyId=${first.vacancyId}`);
+      await expect(page.getByRole("button", { name: "Сравнить с другой вакансией" })).toBeVisible();
+      await expect(page.getByText("улучшений осталось", { exact: true })).toBeVisible();
+      await expect(page.getByText("адаптаций осталось", { exact: true })).toBeVisible();
+      await page.screenshot({ path: `tests/artifacts/audit/vacancy-${width}.png`, fullPage: true });
+      await page.getByRole("button", { name: "Сравнить с другой вакансией" }).click();
+      await expect(page.getByRole("textbox", { name: "Текст вакансии" })).toHaveValue("");
+      expect(page.url()).not.toContain("vacancyId=");
+    }
+  } finally { for (const context of contexts) await context.dispose(); }
+});

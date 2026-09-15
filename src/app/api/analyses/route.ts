@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { jsonError, readJson } from "@/lib/api";
+import { auth } from "@/lib/auth";
 import type { PersonaId } from "@/lib/personas";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { analysisErrorMessage } from "@/lib/user-facing-errors";
@@ -32,7 +33,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { analysisId } = await createAndRunAnalysis(resumeId, personaId);
+    const session = await auth();
+    const { analysisId } = await createAndRunAnalysis(resumeId, personaId, undefined, undefined, session?.user?.id);
     return NextResponse.json({ analysisId });
   } catch (error) {
     console.error(error);

@@ -1,3 +1,4 @@
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { jsonError } from "@/lib/api";
 import { extractTextFromBuffer } from "@/lib/documents/extract-text";
@@ -66,8 +67,10 @@ export async function POST(request: Request) {
   const storageKey = await saveUpload(buffer, file.name);
   const { sanitizedText } = redactPii(extracted.text);
 
+  const session = await auth();
   const resume = await prisma.resume.create({
     data: {
+      userId: session?.user?.id ?? null,
       originalFilename: file.name,
       mimeType: file.type || "application/octet-stream",
       size: file.size,

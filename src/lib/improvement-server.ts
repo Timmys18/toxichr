@@ -27,7 +27,7 @@ export async function loadImprovementContext(
   if (!analysis || analysis.status !== "COMPLETED" || !analysis.reportPayload) {
     throw new ImprovementAccessError("Разбор не найден.", 404);
   }
-  if (analysis.userId && analysis.userId !== currentUserId) {
+  if (analysis.resumeVersion.resume.deletedAt || (analysis.userId && analysis.userId !== currentUserId) || (analysis.resumeVersion.resume.userId && analysis.resumeVersion.resume.userId !== currentUserId)) {
     throw new ImprovementAccessError("Нет доступа.", 403);
   }
 

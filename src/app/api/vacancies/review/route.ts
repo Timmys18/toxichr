@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
     // Сначала сохраняем текст вакансии: это бесплатно и позволяет вернуться к
     // нему после оплаты. Сам Match Analyst до оплаты не запускается.
-    const vacancy = existingVacancy
+    const vacancy = existingVacancy && !sourceChanged
       ? await prisma.vacancy.update({
           where: { id: existingVacancy.id },
           data: { userId: ownerId, sourceText: parsed.data.text },

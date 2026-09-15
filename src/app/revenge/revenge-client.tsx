@@ -46,6 +46,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
   const [, setBeforeScore] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -68,6 +69,23 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     improvementUsed: false,
     paymentStatus: "none",
   });
+
+  async function checkImprovedVersion() {
+    setChecking(true); setError(null);
+    try {
+      if (editorText !== savedEditorText) {
+        const saved = await fetch(`/api/improvements/${analysisId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ improvedText: editorText }) });
+        const payload = await saved.json();
+        if (!saved.ok) throw new Error(payload.error);
+        setSavedEditorText(payload.improvedText);
+      }
+      const response = await fetch(`/api/improvements/${analysisId}/recheck`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      window.location.assign(`/vacancy?analysisId=${encodeURIComponent(data.analysisId)}`);
+    } catch (reason) { setError(requestErrorMessage(reason, "Не удалось проверить новую версию.")); }
+    finally { setChecking(false); }
+  }
 
   const refreshAccess = useCallback(async (refreshPayment = false) => {
     const response = await fetch(`/api/payments/access?analysisId=${encodeURIComponent(analysisId)}${refreshPayment ? "&refresh=1" : ""}`, {
@@ -430,7 +448,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
             <div className="exports">
               <a className="thr-btn thr-btn-tox" href={`/api/improvements/${analysisId}/docx`}>Скачать DOCX</a>
               <Link className="thr-btn thr-btn-line" href={`/revenge/${analysisId}/print`} target="_blank">Открыть PDF / печать</Link>
-              <Link className="thr-btn vacancy-next" href={`/vacancy?analysisId=${analysisId}`}>Проверить под вакансию →</Link>
+              <button className="thr-btn vacancy-next" type="button" disabled={checking || editorSaving} onClick={() => void checkImprovedVersion()}>{checking ? "Проверяем новую версию…" : "Проверить под вакансию →"}</button>
             </div>
           )}
         </div>

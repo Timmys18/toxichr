@@ -4,6 +4,7 @@
  * работы конвейера, в конце — completed с analysisId (или error).
  */
 
+import { auth } from "@/lib/auth";
 import type { PersonaId } from "@/lib/personas";
 import { readJson } from "@/lib/api";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
     );
   }
 
+  const session = await auth();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (data: unknown) => {
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
       };
 
       try {
-        const reusable = await findReusableAnalysis(resumeId, personaId);
+        const reusable = await findReusableAnalysis(resumeId, personaId, session?.user?.id);
         if (reusable?.status === "COMPLETED") {
           send({
             type: "finding",
@@ -88,6 +90,8 @@ export async function POST(request: Request) {
           resumeId,
           personaId,
           send,
+          undefined,
+          session?.user?.id,
         );
         send({ type: "completed", analysisId });
       } catch (error) {
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
           error instanceof AnalysisInputError
             ? error.message
             : analysisErrorMessage(error);
-        send({ type: "error", message });
+        send({ type: "error", message, purchaseAnalysisId: error instanceof AnalysisInputError ? error.purchaseAnalysisId : undefined });
       } finally {
         try {
           controller.close();
