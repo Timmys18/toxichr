@@ -10,7 +10,7 @@ import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
 import { readPendingVacancy } from "@/lib/pending-vacancy";
 import { ANALYSIS_RETRY_MESSAGE, requestErrorMessage } from "@/lib/user-facing-errors";
-import { EditorialSection, EmptyState, EvidenceItem, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel, VerdictBlock } from "@/components/ui/system";
+import { CollapsibleSection, EditorialSection, EmptyState, EvidenceItem, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel, VerdictBlock } from "@/components/ui/system";
 
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
@@ -42,6 +42,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const [liveRoast, setLiveRoast] = useState("");
   const [stage, setStage] = useState<string>(viewId ? "persona" : "extract");
   const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [resultMode, setResultMode] = useState<"live" | "test">("live");
   const [analysisId, setAnalysisId] = useState<string | null>(viewId ?? null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeId ?? null);
   const [purchaseAnalysisId, setPurchaseAnalysisId] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           window.clearTimeout(watch);
           if (!cancelled) {
             setReport(data.report as AnalysisReport);
+            setResultMode(data.resultMode === "test" ? "test" : "live");
             if (data.personaId) setPersonaCode(data.personaId as PersonaId);
             if (data.resumeId) setActiveResumeId(data.resumeId as string);
             setAnalysisId(id);
@@ -246,6 +248,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
             analysisId={analysisId}
             resumeId={activeResumeId}
             personaCode={personaCode}
+            resultMode={resultMode}
           />
         ) : null}
       </div>
@@ -253,12 +256,13 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   );
 }
 
-function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
+function Verdict({ report, hrName, analysisId, resumeId, personaCode, resultMode }: {
   report: AnalysisReport;
   hrName: string;
   analysisId: string | null;
   resumeId: string | null;
   personaCode: PersonaId | null;
+  resultMode: "live" | "test";
 }) {
   const { status } = useSession();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -326,24 +330,19 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
 
   const r = report;
   const problemCount = Math.max(1, r.topProblems.length);
+  const featuredProblems = r.topProblems.filter((problem, index) => index < 3 || problem.severity === "critical");
+  const additionalProblems = r.topProblems.filter((problem) => !featuredProblems.includes(problem));
 
   return (
     <div className="verdict">
+      {resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это демонстрация интерфейса, а не полноценная профессиональная оценка резюме.</span></div> : null}
       <VerdictBlock className="diag" label="Заключение" title={r.verdict.title} summary={r.verdict.comment} />
 
-
-
-      {r.hrReview?.deepDive ? (
-        <EditorialSection className="review" title={`Разбор от ${hrName}`}>{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</EditorialSection>
-      ) : null}
-
-      {r.topProblems.length ? (
-        <EditorialSection title="Где резюме проседает"><div className="probs">{r.topProblems.map((problem) => (
+      {featuredProblems.length ? (
+        <EditorialSection title={featuredProblems.length === 1 ? "Главное замечание" : "Главные замечания"}><div className="probs">{featuredProblems.map((problem) => (
           <EvidenceItem key={problem.id} title={problem.roast} description={problem.recommendation ?? "Нужен подтверждённый факт вместо общего заявления."} quote={`«${problem.quote}»`} />
         ))}</div></EditorialSection>
       ) : null}
-
-      {r.hrReview?.hiringTake ? <SurfacePanel className="hiring" label="Возьмут или нет">{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</SurfacePanel> : null}
 
       {analysisId ? (
         <Link
@@ -357,6 +356,20 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode }: {
           <strong>Начать исправление →</strong>
         </Link>
       ) : null}
+
+      {additionalProblems.length ? (
+        <CollapsibleSection title={`Остальные замечания · ${additionalProblems.length}`}>
+          <div className="probs">{additionalProblems.map((problem) => (
+            <EvidenceItem key={problem.id} title={problem.roast} description={problem.recommendation ?? "Нужен подтверждённый факт вместо общего заявления."} quote={`«${problem.quote}»`} />
+          ))}</div>
+        </CollapsibleSection>
+      ) : null}
+
+      {r.hrReview?.deepDive ? (
+        <CollapsibleSection title={`Полный разбор от ${hrName}`}>{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</CollapsibleSection>
+      ) : null}
+
+      {r.hrReview?.hiringTake ? <SurfacePanel className="hiring" label="Решение HR">{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</SurfacePanel> : null}
 
       <div className="sec-h next-h"><h3>Ещё можно</h3></div>
       <div className="next-actions">

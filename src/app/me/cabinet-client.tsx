@@ -62,7 +62,9 @@ export function CabinetClient({
 
   return (
     <PageContainer className="ds-cabinet">
-      <PageIntro className="ds-cabinet-intro" label="Центр карьеры" title={<>{name}, резюме <span>{status}</span></>} action={last ? <PrimaryAction href="/">Новый разбор</PrimaryAction> : null} />
+      <PageIntro className="ds-cabinet-intro" label="Центр карьеры" title={<>{name}, резюме <span>{status}</span></>} />
+
+      {improved[0] ? <SurfacePanel className="cab-priority" label="Готовый документ" action={<Link href={`/revenge?analysisId=${improved[0].id}`}>открыть →</Link>}><h2>Новая версия сохранена</h2><p>Продолжи с последнего результата: скачай документ, сравни версии или проверь его под вакансией.</p><PrimaryAction href={`/revenge?analysisId=${improved[0].id}`}>Открыть готовое резюме</PrimaryAction></SurfacePanel> : last ? <SurfacePanel className="cab-priority" label="Следующий шаг"><h2>Разбор готов — теперь можно исправить резюме</h2><p>Ответы и новая версия останутся привязаны к этому разбору.</p><PrimaryAction href={`/revenge?analysisId=${last.id}`}>Продолжить работу</PrimaryAction></SurfacePanel> : null}
 
       {last ? (
         <div className="cab-grid">
