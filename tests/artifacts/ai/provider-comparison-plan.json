@@ -1,0 +1,52 @@
+{
+  "status": "blocked_pending_product_owner_and_data_terms",
+  "providers": ["openai-baseline", "yandexgpt-pro-5.1"],
+  "caseIds": [
+    "junior-ux",
+    "senior-backend",
+    "support-manager",
+    "operations-executive",
+    "construction-pm",
+    "clinic-nurse"
+  ],
+  "stages": [
+    "extract",
+    "professional_assessment",
+    "vacancy",
+    "match",
+    "persona",
+    "rewrite",
+    "adaptation"
+  ],
+  "manualCriteria": [
+    "factual_grounding",
+    "vacancy_reading",
+    "match_grounding",
+    "persona_distinction",
+    "rewrite_adaptation_utility",
+    "language_clarity"
+  ],
+  "blockers": [
+    "hallucination_or_unfounded_fact",
+    "lost_critical_requirement",
+    "incorrect_match_or_grounding",
+    "technical_or_schema_failure",
+    "product_contract_violation"
+  ],
+  "telemetryWithoutContent": [
+    "runId",
+    "caseId",
+    "provider",
+    "model",
+    "rulesVersion",
+    "stage",
+    "status",
+    "latencyMs",
+    "tokensIn",
+    "tokensOut",
+    "costRub",
+    "manualScore"
+  ],
+  "approvalRequired": true,
+  "externalCallsPerformed": false
+}
