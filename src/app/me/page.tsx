@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { PERSONAS } from "@/lib/personas";
-import { CabinetClient, type CabItem, type CabinetPackage } from "./cabinet-client";
+import { CabinetClient, type CabDocument, type CabDraftTarget, type CabItem, type CabinetPackage } from "./cabinet-client";
 
 export const metadata: Metadata = { title: "Центр карьеры" };
 
@@ -21,7 +21,7 @@ export default async function MePage() {
     redirect("/auth?next=/me");
   }
 
-  const [analyses, vacancyCount, packages] = await Promise.all([
+  const [analyses, vacancyCount, packages, adaptations, matchTargets] = await Promise.all([
     prisma.analysis.findMany({
       where: { userId: session.user.id, status: "COMPLETED" },
       include: {
@@ -37,6 +37,18 @@ export default async function MePage() {
       where: { userId: session.user.id },
       include: { usages: { where: { status: "COMPLETED" } } },
       orderBy: { createdAt: "desc" },
+    }),
+    prisma.resumeAdaptation.findMany({
+      where: { userId: session.user.id, status: "ready", adaptedText: { not: null } },
+      include: { vacancy: true, analysis: { include: { resumeVersion: true } } },
+      orderBy: { updatedAt: "desc" },
+      take: 20,
+    }),
+    prisma.vacancyMatch.findMany({
+      where: { userId: session.user.id },
+      include: { vacancy: true, analysis: { include: { resumeVersion: true } } },
+      orderBy: { updatedAt: "desc" },
+      take: 30,
     }),
   ]);
 
@@ -69,6 +81,35 @@ export default async function MePage() {
     session.user.email?.split("@")[0] ||
     "Кандидат";
 
+  const documents: CabDocument[] = [
+    ...analyses.flatMap((analysis) => analysis.improvements.filter((improvement) => improvement.status === "ready" && improvement.improvedText).map((improvement) => ({
+      id: improvement.id,
+      kind: "improvement" as const,
+      analysisId: analysis.id,
+      resumeId: analysis.resumeVersion.resumeId,
+      title: "Улучшенная версия резюме",
+      detail: improvement.afterScore === null ? "Оценка новой версии не рассчитана" : `Оценка новой версии: ${improvement.afterScore}/100`,
+      updatedAt: improvement.updatedAt.toISOString(),
+      href: `/revenge?analysisId=${analysis.id}`,
+    }))),
+    ...adaptations.map((adaptation) => ({
+      id: adaptation.id,
+      kind: "adaptation" as const,
+      analysisId: adaptation.analysisId,
+      resumeId: adaptation.analysis.resumeVersion.resumeId,
+      title: `Адаптация под «${adaptation.vacancy.title ?? "вакансию"}»`,
+      detail: "Это отдельная версия под вакансию; общая оценка резюме не пересчитывалась",
+      updatedAt: adaptation.updatedAt.toISOString(),
+      href: `/adaptation?analysisId=${adaptation.analysisId}&vacancyId=${adaptation.vacancyId}`,
+    })),
+  ].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+
+  const draftTargets: CabDraftTarget[] = matchTargets.map((match) => ({
+    analysisId: match.analysisId,
+    vacancyId: match.vacancyId,
+    vacancyTitle: match.vacancy.title ?? "вакансию",
+  }));
+
   const currentResumeId = items[0]?.resumeId;
   const currentPackage = currentResumeId ? packages.find((item) => item.resumeId === currentResumeId) : null;
   const packageStatus: CabinetPackage = currentPackage
@@ -84,7 +125,7 @@ export default async function MePage() {
   return (
     <>
       <main id="main" className="flex flex-1 flex-col">
-        <CabinetClient name={name} items={items} vacancyCount={vacancyCount} packageStatus={packageStatus} />
+        <CabinetClient name={name} items={items} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} />
       </main>
     </>
   );

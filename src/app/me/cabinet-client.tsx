@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { EmptyState, PageContainer, PageIntro, PrimaryAction, SecondaryAction, SurfacePanel } from "@/components/ui/system";
@@ -28,6 +29,10 @@ export type CabinetPackage = {
   adaptationUsed: boolean;
 };
 
+export type CabDocument = { id: string; kind: "improvement" | "adaptation"; analysisId: string; resumeId: string; title: string; detail: string; updatedAt: string; href: string };
+export type CabDraftTarget = { analysisId: string; vacancyId: string; vacancyTitle: string };
+type ActiveDraft = { title: string; detail: string; href: string };
+
 function timeAgo(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("ru-RU", {
@@ -43,32 +48,58 @@ export function CabinetClient({
   items,
   vacancyCount,
   packageStatus,
+  documents,
+  draftTargets,
 }: {
   name: string;
   items: CabItem[];
   vacancyCount: number;
   packageStatus: CabinetPackage;
+  documents: CabDocument[];
+  draftTargets: CabDraftTarget[];
 }) {
   const last = items[0];
   const improved = items.filter((item) => item.hasImprovement);
-  const status =
-    !last
-      ? "ждёт разбора"
-      : last.score >= 75
-        ? "почти готово"
-        : last.score >= 55
-          ? "сыровато"
-          : "тонет в воде";
+  const latestDocument = documents[0];
+  const [activeDraft, setActiveDraft] = useState<ActiveDraft | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      for (const item of items) {
+        if (documents.some((document) => document.kind === "improvement" && document.analysisId === item.id)) continue;
+        try {
+          const answers = JSON.parse(window.localStorage.getItem(`toxichr:revenge:${item.id}`) ?? "{}") as Record<string, unknown>;
+          if (Object.values(answers).some((answer) => typeof answer === "string" && answer.trim())) {
+            setActiveDraft({ title: "Незавершённые ответы по улучшению", detail: `Исходный разбор: «${item.verdictTitle}». Ответы сохранены на этом устройстве.`, href: `/revenge?analysisId=${item.id}` });
+            return;
+          }
+        } catch { /* повреждённый локальный черновик пропускаем */ }
+      }
+      for (const target of draftTargets) {
+        try {
+          const answers = JSON.parse(window.localStorage.getItem(`toxichr:adaptation:${target.analysisId}:${target.vacancyId}`) ?? "{}") as Record<string, unknown>;
+          if (Object.values(answers).some((answer) => typeof answer === "string" && answer.trim())) {
+            setActiveDraft({ title: `Незавершённая адаптация под «${target.vacancyTitle}»`, detail: "Ответы сохранены на этом устройстве и относятся к указанной вакансии.", href: `/adaptation?analysisId=${target.analysisId}&vacancyId=${target.vacancyId}` });
+            return;
+          }
+        } catch { /* повреждённый локальный черновик пропускаем */ }
+      }
+      setActiveDraft(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [documents, draftTargets, items]);
+
+  const pageState = activeDraft ? "работа не закончена" : latestDocument ? "последняя версия готова" : last ? "исходный разбор готов" : "ждёт резюме";
 
   return (
     <PageContainer className="ds-cabinet">
-      <PageIntro className="ds-cabinet-intro" label="Центр карьеры" title={<>{name}, резюме <span>{status}</span></>} />
+      <PageIntro className="ds-cabinet-intro" label="Центр карьеры" title={<>{name}: <span>{pageState}</span></>} />
 
-      {improved[0] ? <SurfacePanel className="cab-priority" label="Готовый документ" action={<Link href={`/revenge?analysisId=${improved[0].id}`}>открыть →</Link>}><h2>Новая версия сохранена</h2><p>Продолжи с последнего результата: скачай документ, сравни версии или проверь его под вакансией.</p><PrimaryAction href={`/revenge?analysisId=${improved[0].id}`}>Открыть готовое резюме</PrimaryAction></SurfacePanel> : last ? <SurfacePanel className="cab-priority" label="Следующий шаг"><h2>Разбор готов — теперь можно исправить резюме</h2><p>Ответы и новая версия останутся привязаны к этому разбору.</p><PrimaryAction href={`/revenge?analysisId=${last.id}`}>Продолжить работу</PrimaryAction></SurfacePanel> : null}
+      {activeDraft ? <SurfacePanel className="cab-priority" label="Продолжить работу" action={<Link href={activeDraft.href}>открыть →</Link>}><h2>{activeDraft.title}</h2><p>{activeDraft.detail}</p><PrimaryAction href={activeDraft.href}>Продолжить с ответами</PrimaryAction></SurfacePanel> : latestDocument ? <SurfacePanel className="cab-priority" label="Последний релевантный документ" action={<Link href={latestDocument.href}>открыть →</Link>}><h2>{latestDocument.title}</h2><p>{latestDocument.detail} · сохранено {timeAgo(latestDocument.updatedAt)}.</p><PrimaryAction href={latestDocument.href}>Открыть готовый документ</PrimaryAction></SurfacePanel> : last ? <SurfacePanel className="cab-priority" label="Следующий шаг"><h2>Исходный разбор готов</h2><p>Оценка исходной версии: {last.score}/100. Ответы и новый документ будут привязаны к этому разбору.</p><PrimaryAction href={`/revenge?analysisId=${last.id}`}>Продолжить работу</PrimaryAction></SurfacePanel> : null}
 
       {last ? (
         <div className="cab-grid">
-          <SurfacePanel label="Последний разбор" action={<Link href={`/session?view=${last.id}`}>открыть →</Link>}>
+          <SurfacePanel label="Исходная версия · последний разбор" action={<Link href={`/session?view=${last.id}`}>открыть →</Link>}>
             <div className="last">
               <span
                 className="ava thr-photo"
@@ -95,7 +126,7 @@ export function CabinetClient({
               </div>
               <div className="c">
                 <div className="v tox">{last.score}</div>
-                <div className="k">оценка убедительности</div>
+                <div className="k">оценка исходной версии</div>
               </div>
             </div>
             <SecondaryAction href={`/revenge?analysisId=${last.id}`} className="rebtn">

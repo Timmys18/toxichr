@@ -338,12 +338,6 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode, resultMode
       {resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это демонстрация интерфейса, а не полноценная профессиональная оценка резюме.</span></div> : null}
       <VerdictBlock className="diag" label="Заключение" title={r.verdict.title} summary={r.verdict.comment} />
 
-      {featuredProblems.length ? (
-        <EditorialSection title={featuredProblems.length === 1 ? "Главное замечание" : "Главные замечания"}><div className="probs">{featuredProblems.map((problem) => (
-          <EvidenceItem key={problem.id} title={problem.roast} description={problem.recommendation ?? "Нужен подтверждённый факт вместо общего заявления."} quote={`«${problem.quote}»`} />
-        ))}</div></EditorialSection>
-      ) : null}
-
       {analysisId ? (
         <Link
           href={`/revenge?analysisId=${analysisId}`}
@@ -355,6 +349,12 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode, resultMode
           <span>{problemCount === 1 ? "Разберём одно слабое место" : `Разберём слабые места: ${problemCount}`}, зададим вопросы по фактам и соберём новую версию.</span>
           <strong>Начать исправление →</strong>
         </Link>
+      ) : null}
+
+      {featuredProblems.length ? (
+        <EditorialSection title={featuredProblems.length === 1 ? "Главное замечание" : "Главные замечания"}><div className="probs">{featuredProblems.map((problem) => (
+          <EvidenceItem key={problem.id} title={problem.roast} description={problem.recommendation ?? "Нужен подтверждённый факт вместо общего заявления."} quote={`«${problem.quote}»`} />
+        ))}</div></EditorialSection>
       ) : null}
 
       {additionalProblems.length ? (
