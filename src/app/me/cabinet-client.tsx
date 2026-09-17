@@ -135,13 +135,13 @@ export function CabinetClient({
           </SurfacePanel>
 
           <div>
-            <SurfacePanel className="package-status" label="Пакет ToxicHR" action={<span>{packageStatus.active ? "активен" : "не открыт"}</span>}>
+            <SurfacePanel className="package-status" label="Пакет ToxicHR · для показанной версии" action={<span>{packageStatus.active ? "активен" : latestDocument ? "документ доступен" : "не открыт"}</span>}>
               {packageStatus.active ? <>
                 <p>Сопоставления: осталось {packageStatus.matchesRemaining} из 5</p>
                 <p>Повторные проверки: осталось {packageStatus.rechecksRemaining} из 5</p>
                 <p>Улучшение: {packageStatus.improvementUsed ? "использовано" : "доступно"}</p>
                 <p>Адаптация под вакансию: {packageStatus.adaptationUsed ? "использована" : "доступна"}</p>
-              </> : <><p>Один пакет за 199 ₽ открывает персональную работу с этим резюме.</p><Link href={`/revenge?analysisId=${last.id}`}>Открыть пакет →</Link></>}
+              </> : latestDocument ? <><p>Готовый документ остаётся доступен. Запись пакета для этой версии не найдена — это не ограничивает просмотр и скачивание уже созданного результата.</p><Link href={latestDocument.href}>Открыть готовый документ →</Link></> : <><p>Один пакет за 199 ₽ открывает персональную работу с этим резюме.</p><Link href={`/revenge?analysisId=${last.id}`}>Открыть пакет →</Link></>}
             </SurfacePanel>
             <SurfacePanel label="Мои разборы" action={<span aria-label={`Мои разборы: ${items.length}`}>{items.length}</span>}>
               <div className="rlist">

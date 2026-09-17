@@ -167,6 +167,9 @@ test("полный путь: два HR → редактор → вакансия
   await page.evaluate(({ id }) => window.localStorage.removeItem(`toxichr:revenge:${id}`), { id: secondAnalysisId! });
   await page.reload();
   await expect(page.getByRole("heading", { name: /последняя версия готова/ })).toBeVisible();
+  await expect(page.getByText("Пакет ToxicHR · для показанной версии")).toBeVisible();
+  await expect(page.getByText(/Готовый документ остаётся доступен|Сопоставления: осталось/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Открыть готовый документ →" }).first()).toBeVisible();
   await captureResponsive(page, "cabinet");
   await expect(page.getByRole("link", { name: /Мои вакансии/ }).first()).toBeVisible();
   await page.getByRole("link", { name: /Мои вакансии/ }).first().click();

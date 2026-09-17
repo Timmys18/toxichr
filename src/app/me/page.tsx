@@ -110,7 +110,10 @@ export default async function MePage() {
     vacancyTitle: match.vacancy.title ?? "вакансию",
   }));
 
-  const currentResumeId = items[0]?.resumeId;
+  // The package panel must describe the same resume as the document promoted
+  // above it. A user can have a newer analysis while their latest ready
+  // document still belongs to an older resume.
+  const currentResumeId = documents[0]?.resumeId ?? items[0]?.resumeId;
   const currentPackage = currentResumeId ? packages.find((item) => item.resumeId === currentResumeId) : null;
   const packageStatus: CabinetPackage = currentPackage
     ? {
