@@ -1,8 +1,7 @@
 import { recordCalibrationAiCall } from "@/lib/ai/calibration-audit";
 
 /**
- * AI Gateway — боевой режим: OpenAI (ChatGPT).
- * Anthropic — запасной вариант. Без ключа анализ не притворяется «живым».
+ * AI Gateway. Без ключа выбранного провайдера анализ не притворяется «живым».
  */
 
 export type AiStage =
@@ -16,7 +15,7 @@ export type AiStage =
   | "vacancy"
   | "vacancy_match";
 
-export type AiProvider = "openai" | "anthropic";
+export type AiProvider = "openai" | "anthropic" | "yandex";
 
 export type AiRequest = {
   stage: AiStage;
@@ -65,10 +64,18 @@ function hasAnthropicKey(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }
 
-/** Какой провайдер выбран. По умолчанию — ChatGPT (openai). */
+function hasYandexCredentials(): boolean {
+  return Boolean(
+    process.env.YANDEX_AI_API_KEY?.trim() &&
+    process.env.YANDEX_AI_FOLDER_ID?.trim(),
+  );
+}
+
+/** Какой провайдер выбран. По умолчанию — OpenAI для обратной совместимости. */
 export function resolveProvider(): AiProvider {
   const configured = (process.env.AI_PROVIDER ?? "openai").toLowerCase();
   if (configured === "anthropic") return "anthropic";
+  if (configured === "yandex") return "yandex";
   return "openai";
 }
 
@@ -76,7 +83,8 @@ export function aiLiveEnabled(): boolean {
   if (aiMockEnabled()) return false;
   const provider = resolveProvider();
   if (provider === "openai") return hasOpenAiKey();
-  return hasAnthropicKey();
+  if (provider === "anthropic") return hasAnthropicKey();
+  return hasYandexCredentials();
 }
 
 /** Локальный честный режим для разработки и smoke-тестов без внешнего AI. */
@@ -97,6 +105,11 @@ export function assertAiReady(): void {
       "Нужен ключ Anthropic: добавь ANTHROPIC_API_KEY в файл .env и перезапусти сервер.",
     );
   }
+  if (provider === "yandex" && !hasYandexCredentials()) {
+    throw new AiConfigError(
+      "Для YandexGPT нужны YANDEX_AI_API_KEY и YANDEX_AI_FOLDER_ID в секретах окружения.",
+    );
+  }
 }
 
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? "45000");
@@ -114,11 +127,11 @@ async function fetchWithTimeout(
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
       throw new AiTimeoutError(
-        `AI не ответил за ${Math.round(ms / 1000)}с. Проверь доступ к сети или VPN и попробуй ещё раз.`,
+        `AI не ответил за ${Math.round(ms / 1000)}с. Попробуй ещё раз.`,
       );
     }
     throw new Error(
-      "Не удалось связаться с AI. Проверь доступ к сети или VPN и попробуй ещё раз.",
+      "Не удалось связаться с AI. Попробуй ещё раз.",
     );
   } finally {
     clearTimeout(timer);
@@ -131,7 +144,6 @@ async function callOpenAi(
   options?: { temperature?: number; maxTokens?: number; model?: string; jsonSchemaName?: string; jsonSchema?: Record<string, unknown>; timeoutMs?: number; reasoningEffort?: "minimal" | "low" | "medium" | "high" },
 ): Promise<AiResponse> {
   const model = options?.model ?? process.env.OPENAI_MODEL ?? "gpt-4o";
-  // Можно указать обходной адрес, если прямой доступ к OpenAI закрыт в стране.
   const baseRaw = process.env.OPENAI_BASE_URL?.trim();
   const base = (baseRaw || "https://api.openai.com/v1").replace(/\/$/, "");
   const res = await fetchWithTimeout(`${base}/chat/completions`, {
@@ -170,9 +182,7 @@ async function callOpenAi(
       );
     }
     if (res.status === 403 && /country|region|territory/i.test(err)) {
-      throw new AiConfigError(
-        "OpenAI не принимает запросы из этой страны. Нужен обходной доступ (OPENAI_BASE_URL) или сервер за рубежом.",
-      );
+      throw new AiConfigError("OpenAI недоступен в регионе размещения сервера. Выбери поддерживаемого провайдера.");
     }
     if (res.status === 429) {
       throw new Error(
@@ -262,6 +272,72 @@ async function callAnthropic(
   };
 }
 
+async function callYandex(
+  system: string,
+  user: string,
+  options?: { temperature?: number; maxTokens?: number; jsonSchemaName?: string; jsonSchema?: Record<string, unknown>; timeoutMs?: number },
+): Promise<AiResponse> {
+  const folderId = process.env.YANDEX_AI_FOLDER_ID!.trim();
+  const model = process.env.YANDEX_AI_MODEL?.trim() || `gpt://${folderId}/yandexgpt/latest`;
+  const res = await fetchWithTimeout("https://ai.api.cloud.yandex.net/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Api-Key ${process.env.YANDEX_AI_API_KEY!.trim()}`,
+      "Content-Type": "application/json",
+      "OpenAI-Project": folderId,
+      "x-data-logging-enabled": "false",
+    },
+    body: JSON.stringify({
+      model,
+      temperature: options?.temperature ?? 0.3,
+      max_tokens: options?.maxTokens ?? 4500,
+      stream: false,
+      response_format: options?.jsonSchema
+        ? {
+            type: "json_schema",
+            json_schema: {
+              name: options.jsonSchemaName ?? "toxichr_output",
+              strict: true,
+              schema: options.jsonSchema,
+            },
+          }
+        : { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  }, options?.timeoutMs);
+
+  if (!res.ok) {
+    const err = await res.text();
+    if (res.status === 401 || res.status === 403) {
+      throw new AiConfigError(
+        "Yandex AI Studio не принял ключ или у сервисного аккаунта нет роли ai.languageModels.user.",
+      );
+    }
+    if (res.status === 429) {
+      throw new Error("Yandex AI Studio временно ограничил запросы. Попробуй ещё раз позже.");
+    }
+    throw new Error(`Yandex AI Studio ${res.status}: ${err.slice(0, 240)}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+  const tokensIn = data.usage?.prompt_tokens ?? 0;
+  const tokensOut = data.usage?.completion_tokens ?? 0;
+  return {
+    provider: "yandex",
+    model,
+    content: data.choices?.[0]?.message?.content ?? "{}",
+    tokensIn,
+    tokensOut,
+    costUsd: 0,
+  };
+}
+
 export async function runAi(request: AiRequest): Promise<AiResponse> {
   assertAiReady();
   const provider = resolveProvider();
@@ -279,7 +355,9 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
   try {
     const response = provider === "openai"
       ? await callOpenAi(request.system, request.user, options)
-      : await callAnthropic(request.system, request.user, options);
+      : provider === "anthropic"
+        ? await callAnthropic(request.system, request.user, options)
+        : await callYandex(request.system, request.user, options);
     recordCalibrationAiCall({ stage: request.stage, provider: response.provider, model: response.model, status: "success" });
     return response;
   } catch (error) {
@@ -381,7 +459,7 @@ export async function runAiStream(
     if (e instanceof AiConfigError) throw e;
     if (e instanceof Error && e.name === "AbortError") {
       throw new Error(
-        `Поток молчал ${Math.round(AI_TIMEOUT_MS / 1000)}с. Проверь сеть или VPN.`,
+        `Поток молчал ${Math.round(AI_TIMEOUT_MS / 1000)}с. Попробуй ещё раз.`,
       );
     }
     throw e;
