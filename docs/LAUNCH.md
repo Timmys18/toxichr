@@ -13,7 +13,7 @@ Production readiness before public beta traffic.
 | `AUTH_SECRET` | Long random (`openssl rand -base64 32`) |
 | `OPS_EMAILS` | Emails allowed to open `/ops/funnel` |
 | `YANDEX_AI_API_KEY` + `YANDEX_AI_FOLDER_ID` | Required for YandexGPT; store only as production secrets |
-| `YANDEX_AI_MODEL` | Optional explicit model URI; defaults to `gpt://<folder>/yandexgpt/latest` |
+| Model | Fixed in code: `gpt://<YANDEX_AI_FOLDER_ID>/yandexgpt-5.1` |
 | `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Optional non-production comparison providers |
 | `AI_PROVIDER` | `mock` \| `yandex` \| `openai` \| `anthropic` |
 | `BETA_PAYWALL_ENABLED` | Keep `false` until payment smoke-test is complete |

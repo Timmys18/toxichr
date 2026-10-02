@@ -39,6 +39,9 @@ export type AiResponse = {
   content: string;
   tokensIn: number;
   tokensOut: number;
+  /** Валюта провайдера; новое поле для корректной телеметрии. */
+  cost?: { amount: number; currency: "USD" | "RUB" };
+  /** @deprecated Совместимость со старой телеметрией до её миграции на cost. */
   costUsd: number;
 };
 
@@ -73,10 +76,13 @@ function hasYandexCredentials(): boolean {
 
 /** Какой провайдер выбран. По умолчанию — OpenAI для обратной совместимости. */
 export function resolveProvider(): AiProvider {
-  const configured = (process.env.AI_PROVIDER ?? "openai").toLowerCase();
+  const configured = (process.env.AI_PROVIDER ?? "openai").trim().toLowerCase();
+  if (configured === "openai") return "openai";
   if (configured === "anthropic") return "anthropic";
   if (configured === "yandex") return "yandex";
-  return "openai";
+  throw new AiConfigError(
+    `Неизвестный AI_PROVIDER: ${configured || "<пусто>"}. Разрешены openai, anthropic, yandex или mock.`,
+  );
 }
 
 export function aiLiveEnabled(): boolean {
@@ -209,6 +215,7 @@ async function callOpenAi(
     content,
     tokensIn,
     tokensOut,
+    cost: { amount: costUsd, currency: "USD" },
     costUsd,
   };
 }
@@ -268,6 +275,7 @@ async function callAnthropic(
     content: text,
     tokensIn,
     tokensOut,
+    cost: { amount: tokensIn * 0.000003 + tokensOut * 0.000015, currency: "USD" },
     costUsd: tokensIn * 0.000003 + tokensOut * 0.000015,
   };
 }
@@ -278,7 +286,7 @@ async function callYandex(
   options?: { temperature?: number; maxTokens?: number; jsonSchemaName?: string; jsonSchema?: Record<string, unknown>; timeoutMs?: number },
 ): Promise<AiResponse> {
   const folderId = process.env.YANDEX_AI_FOLDER_ID!.trim();
-  const model = process.env.YANDEX_AI_MODEL?.trim() || `gpt://${folderId}/yandexgpt/latest`;
+  const model = `gpt://${folderId}/yandexgpt-5.1`;
   const res = await fetchWithTimeout("https://ai.api.cloud.yandex.net/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -297,7 +305,9 @@ async function callYandex(
             type: "json_schema",
             json_schema: {
               name: options.jsonSchemaName ?? "toxichr_output",
-              strict: true,
+              // Контракт API поддерживает strict, но для Pro 5.1 включаем его
+              // только после отдельного live-smoke на синтетических данных.
+              strict: false,
               schema: options.jsonSchema,
             },
           }
@@ -323,17 +333,33 @@ async function callYandex(
   }
 
   const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
   };
+  const choice = data.choices?.[0];
+  const content = choice?.message?.content?.trim();
+  if (!content) {
+    throw new Error("Yandex AI Studio вернул пустой ответ.");
+  }
+  if (choice?.finish_reason !== "stop") {
+    throw new Error(`Yandex AI Studio завершил ответ с причиной ${choice?.finish_reason ?? "unknown"}.`);
+  }
+  try {
+    JSON.parse(content);
+  } catch {
+    throw new Error("Yandex AI Studio вернул невалидный JSON.");
+  }
   const tokensIn = data.usage?.prompt_tokens ?? 0;
   const tokensOut = data.usage?.completion_tokens ?? 0;
+  const costRub = (tokensIn + tokensOut) * 0.0008;
   return {
     provider: "yandex",
     model,
-    content: data.choices?.[0]?.message?.content ?? "{}",
+    content,
     tokensIn,
     tokensOut,
+    cost: { amount: costRub, currency: "RUB" },
+    // Оставлено только для обратной совместимости; рублёвая стоимость — в cost.
     costUsd: 0,
   };
 }
@@ -473,6 +499,7 @@ export async function runAiStream(
     content: full,
     tokensIn: 0,
     tokensOut: 0,
+    cost: { amount: full.length * 0.0000004, currency: "USD" },
     costUsd: full.length * 0.0000004,
   };
 }

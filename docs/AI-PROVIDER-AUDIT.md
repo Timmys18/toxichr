@@ -33,10 +33,12 @@ GigaChat Max — резервный кандидат. Его API также по
 ### Реализация после аудита · 02.10.2026
 
 - В gateway добавлен изолированный режим `AI_PROVIDER=yandex` через официальный OpenAI-compatible Chat Completions endpoint.
-- Поддержаны `Api-Key`, `OpenAI-Project`, строгий JSON Schema и явное `x-data-logging-enabled: false`; модель задаётся только через `YANDEX_AI_MODEL` и не наследует имена OpenAI-моделей из стадий pipeline.
+- Поддержаны `Api-Key`, `OpenAI-Project`, JSON Schema и явное `x-data-logging-enabled: false`; модель жёстко закреплена как `gpt://<folder>/yandexgpt-5.1` и не наследует имена OpenAI-моделей из стадий pipeline.
 - Без пары `YANDEX_AI_API_KEY` + `YANDEX_AI_FOLDER_ID` внешний запрос не выполняется. Ключи в Git не добавлялись, live-вызов YandexGPT не выполнялся.
 - Локальные regression-тесты проверяют fail-closed конфигурацию и точную форму запроса с перехваченным `fetch`.
 - Облачные ресурсы пока не созданы: встроенная консоль Yandex Cloud завершила загрузку по таймауту. Выпуск ключа и роль `ai.languageModels.user` остаются осознанным pre-release действием Product Owner.
+- Официальный контракт описывает `strict: true`, но поведение Pro 5.1 в ToxicHR ещё не подтверждено live. До синтетического smoke production adapter передаёт `strict: false`; gated smoke подготовлен в `tests/persona/yandex-provider-live-smoke.spec.ts`.
+- Точная схема будущих облачных ресурсов, scope ключа и бюджет: [YANDEX-AI-SETUP.md](YANDEX-AI-SETUP.md).
 
 ## Минимальный адаптер
 
