@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import mammoth from "mammoth";
 
 const RESUME = `Иван Иванов
 Product Manager
@@ -22,6 +23,18 @@ const VACANCY = `Senior Product Manager
 Ожидаем подтверждённые результаты запусков и влияние на выручку.
 Мы предлагаем дружный коллектив, амбициозные задачи и возможности роста.`;
 
+async function captureResponsive(page: import("@playwright/test").Page, name: string) {
+  await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; window.scrollTo(0, 0); });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.screenshot({ path: `tests/artifacts/ux-after/${name}-1280.png`, fullPage: true, animations: "disabled" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: `tests/artifacts/ux-after/${name}-390.png`, fullPage: true, animations: "disabled" });
+  await page.setViewportSize({ width: 1280, height: 720 });
+}
+
 test("полный путь: два HR → редактор → вакансия → кабинет", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Токсичный HR/i })).toBeVisible();
@@ -29,14 +42,21 @@ test("полный путь: два HR → редактор → вакансия
   await page.getByRole("button", { name: /^Лера —/ }).click();
   await page.getByRole("button", { name: "Вставить текст" }).click();
   await page.getByLabel("Текст резюме").fill(RESUME);
+  await page.getByRole("checkbox", { name: /Согласен на обработку резюме/ }).check();
   await page.getByRole("button", { name: /Отдать текст/i }).click();
 
   await expect(page).toHaveURL(/\/session\?/);
   await expect(page.getByText("Одно резюме. Четыре разных фильтра.")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText("Тестовый ответ", { exact: true })).toBeVisible();
+  const resultOrder = await page.locator(".verdict").evaluate((node) => ({
+    mainAction: node.querySelector(".conversion-band")?.getBoundingClientRect().top ?? 0,
+    fullReview: node.querySelector(".ds-collapsible")?.getBoundingClientRect().top ?? 0,
+  }));
+  expect(resultOrder.mainAction).toBeLessThan(resultOrder.fullReview);
+  await captureResponsive(page, "result");
 
   const improvementHref = await page
-    .getByRole("link", { name: /Исправить резюме/i })
-    .first()
+    .locator(".conversion-band")
     .getAttribute("href");
   expect(improvementHref).toMatch(/^\/revenge\?analysisId=/);
   const firstAnalysisId = new URL(improvementHref!, "http://local").searchParams.get("analysisId");
@@ -51,6 +71,9 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page).toHaveURL(/personaId=tamara/);
   await expect(page.locator(".presence .nm")).toHaveText("Тамара Петровна");
   await expect(page.locator(".presence .st")).toContainText("заключение готово", { timeout: 60_000 });
+  const secondImprovementHref = await page.locator(".conversion-band").getAttribute("href");
+  const secondAnalysisId = new URL(secondImprovementHref!, "http://local").searchParams.get("analysisId");
+  expect(secondAnalysisId).toBeTruthy();
   await page.reload();
   await expect(page.locator(".presence .nm")).toHaveText("Тамара Петровна");
   await expect(page.locator(".presence .st")).toContainText("заключение готово", { timeout: 60_000 });
@@ -66,29 +89,62 @@ test("полный путь: два HR → редактор → вакансия
     await page.getByRole("button", { name: /^(Дальше|Пропустить)$/ }).click();
   }
   await page.getByRole("button", { name: /Собрать резюме/ }).click();
-  await expect(page.getByRole("heading", { name: "Новая версия готова" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Резюме готово" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("button", { name: /Скачать готовое резюме/ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Резюме готово" })).toBeVisible();
+  const improvementLayout = await page.evaluate(() => ({
+    navBottom: document.querySelector("nav")?.getBoundingClientRect().bottom ?? 0,
+    titleTop: document.querySelector("main h1")?.getBoundingClientRect().top ?? 0,
+  }));
+  expect(improvementLayout.titleTop).toBeGreaterThanOrEqual(improvementLayout.navBottom + 20);
+  await captureResponsive(page, "improvement");
 
   await page.getByRole("tab", { name: "Редактор" }).click();
   const editor = page.getByLabel("Редактор новой версии резюме");
   const generated = await editor.inputValue();
-  await editor.fill(`${generated}\nПровёл 12 интервью и проверил 4 продуктовые гипотезы.`);
+  const latestManualEdit = "Провёл 12 интервью и проверил 4 продуктовые гипотезы — последняя редакция.";
+  await editor.fill(`${generated}\n${latestManualEdit}`);
   await expect(page.getByText("Есть несохранённые правки")).toBeVisible();
-  await page.getByRole("button", { name: "Сохранить версию" }).click();
+  const saveAndDownload = page.getByRole("button", { name: "Сохранить и скачать · DOCX" });
+  await expect(saveAndDownload).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await saveAndDownload.click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+  expect(downloadPath).toBeTruthy();
+  const exported = await mammoth.extractRawText({ path: downloadPath! });
+  expect(exported.value).toContain(latestManualEdit);
   await expect(page.getByText(/DOCX, PDF и проверка вакансией используют эту версию/)).toBeVisible();
+
+  await editor.fill(`${await editor.inputValue()}\nЭта строка не должна попасть в DOCX при ошибке сохранения.`);
+  let exportRequests = 0;
+  page.on("request", (request) => { if (request.url().includes(`/api/improvements/${firstAnalysisId}/docx`)) exportRequests += 1; });
+  await page.route(`**/api/improvements/${firstAnalysisId}`, async (route) => {
+    if (route.request().method() === "PATCH") await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "Тестовая ошибка сохранения" }) });
+    else await route.continue();
+  });
+  await page.getByRole("button", { name: "Сохранить и скачать · DOCX" }).click();
+  await expect(page.locator(".revenge .error")).toContainText("Тестовая ошибка сохранения");
+  expect(exportRequests).toBe(0);
+  await page.unroute(`**/api/improvements/${firstAnalysisId}`);
+  await page.getByRole("button", { name: "Отменить несохранённые правки" }).click();
 
   await page.getByRole("tab", { name: "Сравнить до / после" }).click();
   await expect(page.getByText("Исходное резюме", { exact: true })).toBeVisible();
   await expect(page.getByText("Новая версия", { exact: true })).toBeVisible();
 
-  await page.getByRole("link", { name: /Проверить под вакансию/ }).click();
+  await page.getByRole("button", { name: /Проверить под вакансию/ }).click();
   await page.getByLabel("Текст вакансии").fill(VACANCY);
   await page.getByRole("button", { name: "Сопоставить с резюме" }).click();
   await expect(page.getByText(/Вакансия сохранена · \d+ знаков/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText("Тестовый ответ", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: /Откликайся|Сначала поправь резюме|Не трать время/ })).toBeVisible();
   const matchedVacancyUrl = page.url();
   await page.reload();
   await expect(page).toHaveURL(matchedVacancyUrl);
   await expect(page.getByRole("heading", { name: /Откликайся|Сначала поправь резюме|Не трать время/ })).toBeVisible();
+  await captureResponsive(page, "vacancy-match");
 
   const email = `e2e-${Date.now()}@example.com`;
   await page.goto(`/auth?analysisId=${firstAnalysisId}&next=/me`);
@@ -100,9 +156,21 @@ test("полный путь: два HR → редактор → вакансия
 
   await expect(page).toHaveURL(/\/me$/, { timeout: 30_000 });
   await expect(page.getByText("Версии до / после")).toBeVisible();
-  await expect(page.getByLabel("Мои разборы: 2")).toBeVisible();
+  await expect(page.getByLabel(/Мои разборы: [2-9]\d*/)).toBeVisible();
   await expect(page.getByText(/^Лера ·/).first()).toBeVisible();
   await expect(page.getByText(/^Тамара Петровна ·/).first()).toBeVisible();
+  await expect(page.getByText(/Последний релевантный документ|Незавершённые ответы/)).toBeVisible();
+  await page.evaluate(({ id }) => window.localStorage.setItem(`toxichr:revenge:${id}`, JSON.stringify({ draft: "Подтверждённый черновой ответ" })), { id: secondAnalysisId! });
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /работа не закончена/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Незавершённые ответы по улучшению" })).toBeVisible();
+  await page.evaluate(({ id }) => window.localStorage.removeItem(`toxichr:revenge:${id}`), { id: secondAnalysisId! });
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /последняя версия готова/ })).toBeVisible();
+  await expect(page.getByText("Пакет ToxicHR · для показанной версии")).toBeVisible();
+  await expect(page.getByText(/Готовый документ остаётся доступен|Сопоставления: осталось/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Открыть готовый документ →" }).first()).toBeVisible();
+  await captureResponsive(page, "cabinet");
   await expect(page.getByRole("link", { name: /Мои вакансии/ }).first()).toBeVisible();
   await page.getByRole("link", { name: /Мои вакансии/ }).first().click();
   await expect(page.getByRole("heading", { name: "Сохранённые вакансии" })).toBeVisible();
@@ -112,6 +180,16 @@ test("полный путь: два HR → редактор → вакансия
   await expect(page.getByText(/199 ₽/).first()).toBeVisible();
   await expect(page.getByText(/Первый HR-разбор и ещё один взгляд/)).toBeVisible();
   await expect(page.locator(".topnav").getByText("Мои вакансии")).toHaveCount(0);
+});
+
+test("UX: самостоятельный разбор вакансии отделён от сравнения", async ({ page }) => {
+  await page.goto("/vacancy");
+  await page.getByLabel("Текст вакансии").fill(VACANCY);
+  await page.getByRole("button", { name: "Разобрать вакансию" }).click();
+  await expect(page.getByRole("heading", { name: "Вакансия разобрана" })).toBeVisible();
+  await expect(page.getByText("Тестовый ответ", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Добавить резюме и проверить себя/ })).toBeVisible();
+  await captureResponsive(page, "vacancy-only");
 });
 
 test("защитные сценарии API не ломают продукт", async ({ request }) => {

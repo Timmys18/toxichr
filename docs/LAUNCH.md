@@ -12,8 +12,10 @@ Production readiness before public beta traffic.
 | `DATABASE_URL` | Persistent production database |
 | `AUTH_SECRET` | Long random (`openssl rand -base64 32`) |
 | `OPS_EMAILS` | Emails allowed to open `/ops/funnel` |
-| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Required for live persona voice |
-| `AI_PROVIDER` | `mock` \| `openai` \| `anthropic` |
+| `YANDEX_AI_API_KEY` + `YANDEX_AI_FOLDER_ID` | Required for YandexGPT; store only as production secrets |
+| Model | Fixed in code: `gpt://<YANDEX_AI_FOLDER_ID>/yandexgpt-5.1` |
+| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Optional non-production comparison providers |
+| `AI_PROVIDER` | `mock` \| `yandex` \| `openai` \| `anthropic` |
 | `BETA_PAYWALL_ENABLED` | Keep `false` until payment smoke-test is complete |
 | `YOOKASSA_SHOP_ID` | Production YooKassa shop id |
 | `YOOKASSA_SECRET_KEY` | Production YooKassa secret key |

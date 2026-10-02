@@ -41,7 +41,7 @@ export const VacancyPersonaDraftSchema = z.object({ comment: z.string().min(20).
 export type VacancyPersonaDraft = z.infer<typeof VacancyPersonaDraftSchema>;
 
 export type VacancyWriterId = PersonaId | "vacancy";
-export type VacancyReview = { schemaVersion: typeof VACANCY_ASSESSMENT_VERSION; vacancyAssessment: StructuredVacancyAssessment; matchAssessment?: MatchAssessment; persona: { id: VacancyWriterId; comment: string; contentBlocks: VacancyPersonaDraft["contentBlocks"] } };
+export type VacancyReview = { schemaVersion: typeof VACANCY_ASSESSMENT_VERSION; resultMode?: "live" | "test"; vacancyAssessment: StructuredVacancyAssessment; matchAssessment?: MatchAssessment; persona: { id: VacancyWriterId; comment: string; contentBlocks: VacancyPersonaDraft["contentBlocks"] } };
 
 export class VacancyAiError extends Error {
   constructor(
@@ -328,8 +328,9 @@ export async function writeVacancyWriter(vacancy: StructuredVacancyAssessment): 
 }
 export async function reviewVacancy(input: { vacancyText: string; professionalAssessment?: ProfessionalAssessment; personaId?: PersonaId }): Promise<VacancyReview> {
   const vacancyAssessment = await assessVacancy(input.vacancyText); const matchAssessment = input.professionalAssessment ? await assessMatch(vacancyAssessment, input.professionalAssessment) : undefined;
-  if (!matchAssessment) { const writer = await writeVacancyWriter(vacancyAssessment); return { schemaVersion: VACANCY_ASSESSMENT_VERSION, vacancyAssessment, persona: { id: "vacancy", ...writer } }; }
-  const personaId = input.personaId ?? "lera"; const persona = await writeVacancyPersona(personaId, vacancyAssessment, matchAssessment); return { schemaVersion: VACANCY_ASSESSMENT_VERSION, vacancyAssessment, matchAssessment, persona: { id: personaId, ...persona } };
+  const resultMode = aiLiveEnabled() ? "live" : "test";
+  if (!matchAssessment) { const writer = await writeVacancyWriter(vacancyAssessment); return { schemaVersion: VACANCY_ASSESSMENT_VERSION, resultMode, vacancyAssessment, persona: { id: "vacancy", ...writer } }; }
+  const personaId = input.personaId ?? "lera"; const persona = await writeVacancyPersona(personaId, vacancyAssessment, matchAssessment); return { schemaVersion: VACANCY_ASSESSMENT_VERSION, resultMode, vacancyAssessment, matchAssessment, persona: { id: personaId, ...persona } };
 }
 export function vacancyFingerprint(vacancyText: string) { return fingerprint(vacancyText); }
 
