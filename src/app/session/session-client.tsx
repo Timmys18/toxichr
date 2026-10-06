@@ -202,7 +202,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
 
   return (
     <PageContainer className="session">
-      <aside className="presence">
+      <aside className="presence min-w-0">
         <div className={`hrcard ${speaking ? "speaking" : ""}`}>
           <span className="ph thr-photo" style={{ backgroundImage: `url('${hr.img}')` }} />
           <span className="shade" />
@@ -336,6 +336,7 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode, resultMode
   return (
     <div className="verdict">
       {resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это демонстрация интерфейса, а не полноценная профессиональная оценка резюме.</span></div> : null}
+      {resultMode !== "test" && r.generationMeta?.voice?.status === "limited" ? <div className="ds-result-mode" role="status"><b>Ограниченный разбор</b><span>Полный комментарий HR сейчас недоступен. Показаны наблюдения разбора и следующие шаги.</span></div> : null}
       <VerdictBlock className="diag" label="Заключение" title={r.verdict.title} summary={r.verdict.comment} />
 
       {analysisId ? (
