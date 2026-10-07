@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { yandexBaseUrl } from "../../src/lib/ai/gateway";
 
 test("YandexGPT Pro 5.1 accepts strict JSON Schema", async () => {
   test.skip(process.env.RUN_YANDEX_STRICT_SMOKE !== "1", "Requires explicit pre-release approval and Yandex credentials");
@@ -7,8 +8,9 @@ test("YandexGPT Pro 5.1 accepts strict JSON Schema", async () => {
   expect(apiKey, "YANDEX_AI_API_KEY is required").toBeTruthy();
   expect(folderId, "YANDEX_AI_FOLDER_ID is required").toBeTruthy();
 
-  const response = await fetch("https://ai.api.cloud.yandex.net/v1/chat/completions", {
+  const response = await fetch(`${yandexBaseUrl()}/chat/completions`, {
     method: "POST",
+    signal: AbortSignal.timeout(20_000),
     headers: {
       Authorization: `Api-Key ${apiKey}`,
       "Content-Type": "application/json",

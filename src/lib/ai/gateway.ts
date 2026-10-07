@@ -59,6 +59,15 @@ export class AiTimeoutError extends Error {
   }
 }
 
+/** Explicit Yandex routing only. Never forward a secret to an arbitrary URL. */
+export function yandexBaseUrl(): string {
+  const base = (process.env.YANDEX_AI_BASE_URL?.trim() || "https://ai.api.cloud.yandex.net/v1").replace(/\/+$/, "");
+  if (base !== "https://ai.api.cloud.yandex.net/v1" && base !== "https://llm.api.cloud.yandex.net/v1") {
+    throw new AiConfigError("YANDEX_AI_BASE_URL должен указывать на один из двух разрешённых HTTPS-адресов Yandex AI Studio.");
+  }
+  return base;
+}
+
 function hasOpenAiKey(): boolean {
   return Boolean(process.env.OPENAI_API_KEY?.trim());
 }
@@ -287,7 +296,7 @@ async function callYandex(
 ): Promise<AiResponse> {
   const folderId = process.env.YANDEX_AI_FOLDER_ID!.trim();
   const model = `gpt://${folderId}/yandexgpt-5.1`;
-  const res = await fetchWithTimeout("https://ai.api.cloud.yandex.net/v1/chat/completions", {
+  const res = await fetchWithTimeout(`${yandexBaseUrl()}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Api-Key ${process.env.YANDEX_AI_API_KEY!.trim()}`,
