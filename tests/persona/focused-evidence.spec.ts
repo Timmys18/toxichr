@@ -3,6 +3,8 @@ import { parseGroundedAssessment } from "../../src/lib/ai/professional-assessmen
 import { personaFocus } from "../../src/lib/ai/persona-focus";
 import { runAnalysisPipeline } from "../../src/lib/ai/pipeline";
 import { buildImprovedResume, buildImprovementQuestions } from "../../src/lib/improvement";
+import { buildAdaptationQuestions } from "../../src/lib/adaptation";
+import { MatchAssessmentSchema, StructuredVacancyAssessmentSchema, VACANCY_ASSESSMENT_VERSION, MATCH_ASSESSMENT_VERSION } from "../../src/lib/vacancy";
 
 test("уточнение и четыре профессиональные оптики работают с конкретными цитатами", async () => {
   const before = process.env.AI_PROVIDER;
@@ -39,6 +41,15 @@ test("уточнение и четыре профессиональные опт
     if (before === undefined) delete process.env.AI_PROVIDER;
     else process.env.AI_PROVIDER = before;
   }
+});
+
+test("unknown без цитаты из резюме всё равно создаёт вопрос без выдуманной цитаты", () => {
+  const vacancy = StructuredVacancyAssessmentSchema.parse({ schemaVersion: VACANCY_ASSESSMENT_VERSION, vacancyFingerprint: "0123456789abcdef", title: "Менеджер", roleReality: "Роль требует подтверждённого английского языка.", whoTheySeek: "Нужен менеджер с подтверждённым английским языком.", mainTask: "Вести работу в международной команде.", requirements: [{ id: "VR01", text: "Английский язык не ниже B2", sourceQuote: "Английский язык не ниже B2", priority: "critical", kind: "fact", interpretation: "Работодатель прямо указывает языковое требование." }], contradictions: [], risks: [], clarificationPoints: [], employerQuestions: [] });
+  const match = MatchAssessmentSchema.parse({ schemaVersion: MATCH_ASSESSMENT_VERSION, decision: { code: "explain_gap", headline: "Нужно уточнить требование", reasoning: "В тексте резюме нет прямого подтверждения уровня английского языка." }, matches: [{ requirementId: "VR01", status: "unknown", resumeEvidenceIds: [], resumeQuotes: [], explanation: "Резюме этого не показывает; нужен ответ кандидата." }], whyInviteRequirementIds: [], whyRejectRequirementIds: [], preApplyFixes: [], unknownRequirementIds: ["VR01"], candidateQuestions: ["Какой у тебя уровень английского языка?"], employerQuestions: [], limits: [] });
+  const questions = buildAdaptationQuestions(vacancy, match);
+  expect(questions).toHaveLength(1);
+  expect(questions[0]).toMatchObject({ requirementId: "VR01", resumeQuote: "" });
+  expect(questions[0].question).toMatch(/есть ли|уточни|укажи/i);
 });
 
 test("rewrite не предлагает редактировать должность, отрицание или чужое действие", async () => {

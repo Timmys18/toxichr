@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { AiConfigError, aiLiveEnabled, runAi, yandexBaseUrl } from "../../src/lib/ai/gateway";
+import { aggregateAnalysisCost, analysisCostFields } from "../../src/lib/ai/run-analysis-cost";
 
 const envNames = ["AI_PROVIDER", "YANDEX_AI_API_KEY", "YANDEX_AI_FOLDER_ID", "YANDEX_AI_BASE_URL"] as const;
 
@@ -133,6 +134,13 @@ test("Yandex provider uses isolated credentials, pinned model and documented sch
       else process.env[name] = saved[name];
     }
   }
+});
+
+test("run-analysis preserves Yandex amount and RUB instead of legacy zero costUsd", () => {
+  expect(analysisCostFields({ amount: 0.16, currency: "RUB" }, 0)).toEqual({ cost: 0, costAmount: 0.16, costCurrency: "RUB" });
+  expect(analysisCostFields({ amount: 0.02, currency: "USD" }, 0.02)).toEqual({ cost: 0.02, costAmount: 0.02, costCurrency: "USD" });
+  expect(analysisCostFields(undefined, 0.02)).toEqual({ cost: 0.02, costAmount: 0.02, costCurrency: "USD" });
+  expect(aggregateAnalysisCost([{ amount: 0.16, currency: "RUB" }])).toEqual({ amount: 0.16, currency: "RUB" });
 });
 
 for (const sample of [

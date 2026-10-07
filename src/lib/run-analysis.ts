@@ -9,6 +9,7 @@ import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
 import { hasPaidPackageForResume } from "@/lib/package";
+import { analysisCostFields } from "@/lib/ai/run-analysis-cost";
 
 export const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
@@ -166,7 +167,7 @@ export async function createAndRunAnalysis(
         status: "COMPLETED",
         modelProvider: result.provider,
         modelName: result.model,
-        cost: result.costUsd,
+        ...analysisCostFields(result.cost, result.costUsd),
         scorePayload: result.report.score,
         reportPayload: result.report,
       },
@@ -191,7 +192,12 @@ export async function createAndRunAnalysis(
       },
     });
 
-    await trackServer("analysis_completed", { analysisId: analysis.id });
+    await trackServer("analysis_completed", {
+      analysisId: analysis.id,
+      costAmount: result.cost?.amount ?? result.costUsd,
+      costCurrency: result.cost?.currency ?? "USD",
+      costUsd: result.costUsd,
+    });
     return { analysisId: analysis.id };
   } catch (error) {
     await prisma.analysis.update({

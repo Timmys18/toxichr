@@ -10,6 +10,7 @@ import { PERSONA_BIBLES, PERSONA_BIBLE_VERSION } from "@/lib/ai/prompts/persona-
 import { WRITER_CORE_PROMPT, WRITER_CORE_VERSION } from "@/lib/ai/prompts/writer-core";
 import { PROFESSIONAL_CORE_VERSION } from "@/lib/ai/prompts/professional-core";
 import { editorPrompt, EDITOR_CORE_VERSION } from "@/lib/ai/prompts/editor-core";
+import { aggregateAnalysisCost, type AnalysisCost } from "@/lib/ai/run-analysis-cost";
 import { personaFocus } from "@/lib/ai/persona-focus";
 import { voiceCalibration } from "@/lib/ai/voice/runtime";
 import {
@@ -33,7 +34,7 @@ export type PipelineInput = {
   professionalAssessment?: ProfessionalAssessment;
   onEvent?: (event: PipelineEvent) => void;
 };
-export type PipelineResult = { report: AnalysisReport; provider: string; model: string; costUsd: number };
+export type PipelineResult = { report: AnalysisReport; provider: string; model: string; costUsd: number; cost?: AnalysisCost };
 
 function writerSystem(personaId: PersonaId): string {
   return `${WRITER_CORE_PROMPT}\n\nБиблия персоны (${PERSONA_BIBLE_VERSION}):\n${PERSONA_BIBLES[personaId]}`;
@@ -353,5 +354,11 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   };
   const report = groundReport(reportFromDraft(base, assessment, draft, input.personaId, meta, input.resumeText), input.resumeText);
   emit({ type: "roast", delta: report.hrReview.deepDive }); emit({ type: "stage", stage: "persona", status: "done" });
-  return { report, provider: editor?.provider ?? writer?.provider ?? analyst?.provider ?? "fallback", model: editor?.model ?? writer?.model ?? analyst?.model ?? "heuristic-fallback", costUsd: (analyst?.costUsd ?? 0) + writerCost };
+  return {
+    report,
+    provider: editor?.provider ?? writer?.provider ?? analyst?.provider ?? "fallback",
+    model: editor?.model ?? writer?.model ?? analyst?.model ?? "heuristic-fallback",
+    costUsd: (analyst?.costUsd ?? 0) + writerCost,
+    cost: aggregateAnalysisCost([analyst?.cost, writer?.cost, editor?.cost]),
+  };
 }

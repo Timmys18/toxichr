@@ -6,6 +6,7 @@ import type { AnalysisReport } from "@/lib/ai/schemas";
 import {
   buildImprovedResume,
   buildImprovementQuestions,
+  ImprovementAiError,
   type ImprovementAnswer,
 } from "@/lib/improvement";
 import {
@@ -56,6 +57,9 @@ function packageRequired(error?: PackageAccessError) {
 }
 
 function errorResponse(error: unknown) {
+  if (error instanceof ImprovementAiError) {
+    return NextResponse.json({ error: "AI временно недоступен. Лимит не списан — попробуй ещё раз.", retryable: true }, { status: 502 });
+  }
   if (error instanceof ImprovementAccessError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }

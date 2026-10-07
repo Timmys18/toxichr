@@ -59,6 +59,22 @@ test("AI-редактура не добавляет выдуманные фак�
   );
 });
 
+test("обычное улучшение не превращает отрицание личной ответственности в утверждение", () => {
+  const problem: Problem = { ...PROBLEM, quote: "Не утверждал бюджет. Не подписывал договоры." };
+  const answer = "Подготовку расчётов выполняла команда; я собирал исходные данные.";
+  const fabricated = "Утверждал бюджет. Не подписывал договоры.";
+  expect(selectSafeReplacement(problem, answer, fabricated)).not.toBe(fabricated);
+});
+
+test("адаптация сохраняет отрицание и различает вклад от результата команды", () => {
+  const original = "Не утверждал бюджет. Не подписывал договоры.";
+  const answer = "Команда утвердила бюджет; я подготовил расчёты, но решения не принимал.";
+  const fabricated = "Утверждал бюджет. Не подписывал договоры.";
+  const replacement = selectSafeAdaptationReplacement(original, answer, fabricated);
+  expect(replacement).not.toBe(fabricated);
+  expect(isGroundedAdaptationText(replacement, original, answer)).toBe(true);
+});
+
 test("AI-редактура принимает только подтверждённое сокращение ответа", () => {
   const answer =
     "Лично провёл 12 интервью, проверил 4 гипотезы и довёл 2 до запуска.";
