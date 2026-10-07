@@ -130,6 +130,7 @@ export async function POST(request: Request) {
     const result = await reviewVacancy({
       vacancyText: parsed.data.text,
       professionalAssessment: professionalAssessment?.data,
+      fullResumeText: analysis?.resumeVersion.resume.sanitizedText ?? undefined,
       personaId: (analysis?.persona?.code as PersonaId | undefined) ?? "lera",
     });
 

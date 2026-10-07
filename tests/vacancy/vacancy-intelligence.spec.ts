@@ -90,6 +90,20 @@ test("косвенная финансовая метрика не подтвер
   expect(validateMatchAssessment(unknown, pnlVacancy, resumeAssessment)?.matches[0].status).toBe("unknown");
 });
 
+test("английский без релевантных фактов остаётся unknown и ведёт к уточнению", () => {
+  const req = { ...vacancyAssessment.requirements[0], id: "VR01", text: "Английский язык не ниже B2", sourceQuote: "Английский язык не ниже B2", priority: "critical" as const };
+  const languageVacancy = { ...vacancyAssessment, requirements: [req] };
+  const contractors = { ...resumeAssessment, findings: [{ ...resumeAssessment.findings[0], sourceQuote: "Вёл переговоры с подрядчиками и согласовывал графики поставок." }], strengths: [] };
+  const skip = { ...matchAssessment, decision: { ...matchAssessment.decision, code: "skip" as const }, matches: [{ ...matchAssessment.matches[0], requirementId: "VR01", status: "gap" as const, resumeEvidenceIds: ["F01"], resumeQuotes: ["Вёл переговоры с подрядчиками и согласовывал графики поставок."], explanation: "Уровень английского не подтверждён." }], whyInviteRequirementIds: [], whyRejectRequirementIds: ["VR01"], unknownRequirementIds: [], preApplyFixes: [] };
+  const validated = validateMatchAssessment(skip, languageVacancy, contractors, "Опыт работы с подрядчиками. Вёл переговоры с подрядчиками и согласовывал графики поставок.\n\nДополнительные сведения: Английский язык не указан.");
+  expect(validated?.matches[0]).toMatchObject({ status: "unknown", resumeEvidenceIds: [], resumeQuotes: [] });
+  expect(validated?.decision.code).not.toBe("skip");
+  expect(validated?.unknownRequirementIds).toContain("VR01");
+  expect(validated?.candidateQuestions.join(" ")).toMatch(/английск/i);
+  const levelOutsideSample = validateMatchAssessment(skip, languageVacancy, contractors, "Вёл переговоры с подрядчиками. Дополнительные сведения: Английский язык — B2.");
+  expect(levelOutsideSample?.matches[0]).toMatchObject({ status: "unknown", resumeEvidenceIds: [], resumeQuotes: [] });
+});
+
 test("unknown не привязывает соседний факт как подтверждение требования", () => {
   const wrong = { ...matchAssessment, matches: matchAssessment.matches.map((item) => item.requirementId === "VR03"
     ? { ...item, resumeEvidenceIds: ["S01"], resumeQuotes: ["Запустил новый сервис для клиентов."] }

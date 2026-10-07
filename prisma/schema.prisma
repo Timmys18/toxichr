@@ -166,6 +166,8 @@ model Analysis {
   scorePayload    Json?
   reportPayload   Json?
   cost            Float?
+  costAmount      Float?
+  costCurrency    String?
   tokensIn        Int?
   tokensOut       Int?
   createdAt       DateTime            @default(now())

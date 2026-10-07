@@ -10,7 +10,9 @@ import { PERSONA_BIBLES, PERSONA_BIBLE_VERSION } from "@/lib/ai/prompts/persona-
 import { WRITER_CORE_PROMPT, WRITER_CORE_VERSION } from "@/lib/ai/prompts/writer-core";
 import { PROFESSIONAL_CORE_VERSION } from "@/lib/ai/prompts/professional-core";
 import { editorPrompt, EDITOR_CORE_VERSION } from "@/lib/ai/prompts/editor-core";
+import { aggregateAnalysisCost, type AnalysisCost } from "@/lib/ai/run-analysis-cost";
 import { personaFocus } from "@/lib/ai/persona-focus";
+import { voiceCalibration } from "@/lib/ai/voice/runtime";
 import {
   buildSharePrivacyContext,
   PERSONA_DRAFT_JSON_SCHEMA,
@@ -32,7 +34,7 @@ export type PipelineInput = {
   professionalAssessment?: ProfessionalAssessment;
   onEvent?: (event: PipelineEvent) => void;
 };
-export type PipelineResult = { report: AnalysisReport; provider: string; model: string; costUsd: number };
+export type PipelineResult = { report: AnalysisReport; provider: string; model: string; costUsd: number; cost?: AnalysisCost };
 
 function writerSystem(personaId: PersonaId): string {
   return `${WRITER_CORE_PROMPT}\n\nБиблия персоны (${PERSONA_BIBLE_VERSION}):\n${PERSONA_BIBLES[personaId]}`;
@@ -110,44 +112,40 @@ function theatreFromAssessment(assessment: ProfessionalAssessment, fallback: The
   return [...items, ...fallback].slice(0, Math.max(3, Math.min(6, items.length || 3)));
 }
 
-function fallbackDraft(base: AnalysisReport, assessment: ProfessionalAssessment, personaId: PersonaId): PersonaDraft {
+/** Bounded non-model output: preserve observations, never imitate live improvisation. */
+export function fallbackDraft(base: AnalysisReport, assessment: ProfessionalAssessment, personaId: PersonaId): PersonaDraft {
   const focus = personaFocus(assessment, personaId);
   const evidence = focus.evidence;
-  const quote = evidence[0]?.sourceQuote ?? base.topProblems[0]?.quote ?? "";
-  const secondQuote = evidence[1]?.sourceQuote ?? quote;
-  const focusItem = evidence[0];
-  const isFinding = focusItem ? assessment.findings.some((item) => item.id === focusItem.id) : false;
-  const interpretation = focusItem?.interpretation ?? "В этой строке есть профессиональный факт, который стоит точнее показать.";
-  const personaComment: Record<PersonaId, string> = {
-    tamara: isFinding
-      ? `«${quote}» — здесь важна граница роли: ${interpretation} ${focus.question}`
-      : `«${quote}» подтверждает вес этой роли: ${interpretation} Не приписываю полномочия сверх написанного; покажите рядом именно вашу зону решения.`,
-    lera: `Для первого экрана резюме выбрала бы «${quote}»: ${interpretation} Рекрутер должен сразу увидеть эту специализацию, а не искать её среди обязанностей.`,
-    gleb: isFinding
-      ? `В строке «${quote}» есть вопрос к причинной связи: ${interpretation} Уточните механизм именно этого результата, если он вам известен; новую цифру не придумывайте.`
-      : `«${quote}» уже даёт связку действия и результата: ${interpretation} Для проверки причинности можно уточнить способ измерения, но сам подтверждённый результат не нужно обесценивать.`,
-    vadik: isFinding
-      ? `«${quote}» — тут хочу понять личное действие: ${interpretation} ${focus.question}`
-      : `«${quote}» — это уже дело, а не список качеств: ${interpretation} Вынеси собственное действие вперёд, чтобы практическая польза читалась сразу.`,
+  const first = evidence[0];
+  const hasFindings = assessment.findings.length > 0;
+  const openings: Record<PersonaId, string> = {
+    tamara: "Посмотрим на содержание этой роли.",
+    lera: "Начнём с того, что уже видно в тексте.",
+    gleb: "Отделим установленные сведения от вопросов.",
+    vadik: "Разберём конкретную работу, которая описана.",
   };
-  const title: Record<PersonaId, string> = {
-    tamara: "Должность и полномочия: сверим границы",
-    lera: "Что рекрутер увидит первым?",
-    gleb: "Как решение связано с результатом?",
-    vadik: "Что здесь сделано лично?",
-  };
+  const summary = hasFindings
+    ? "Сначала уточните отмеченные формулировки по реальному опыту. Это замечания к описанию работы, а не заключение о человеке."
+    : "Сохраните описанные сильные стороны. Для дополнительной оценки нужен конкретный контекст отклика; придумывать новый недостаток не требуется.";
   return {
-    verdict: { title: title[personaId], comment: personaComment[personaId].slice(0, 900) },
+    verdict: {
+      title: hasFindings ? "Что стоит уточнить в резюме" : "Что уже показывает ваш опыт",
+      comment: `${openings[personaId]} ${first?.interpretation ?? assessment.professionalAssessment.overallImpression}`.slice(0, 900),
+    },
     contentBlocks: [
-      { type: "observation", findingIds: evidence.map((item) => item.id), content: personaComment[personaId] },
-      { type: "question", findingIds: evidence.slice(1).map((item) => item.id).length ? [evidence[1].id] : evidence.map((item) => item.id), content: `К фрагменту «${secondQuote}»: ${focus.question}` },
-      { type: "summary", findingIds: [], content: personaComment[personaId] },
+      ...evidence.map(item => ({
+        type: assessment.findings.some(f => f.id === item.id) ? "finding" as const : "strength" as const,
+        findingIds: [item.id], content: `«${item.sourceQuote}»\n${item.interpretation}`.slice(0, 1600),
+      })),
+      { type: "summary" as const, findingIds: [], content: summary },
     ],
-    priorities: (assessment.findings.length ? assessment.findings : evidence).slice(0, 3).map((item) => ({
+    priorities: (assessment.findings.length ? assessment.findings : evidence).slice(0, 3).map(item => ({
       findingIds: [item.id],
-      action: `${focus.question} Уточните только подтверждённое в этой строке.`,
+      action: assessment.findings.some(f => f.id === item.id)
+        ? `Уточните по реальному опыту: ${item.interpretation}`.slice(0, 600)
+        : "Сохраните конкретное действие и описанный результат рядом; не заменяйте их общим самоописанием.",
     })),
-    shareLines: ["Резюме становится сильнее, когда громкость формулировки совпадает с её содержанием."],
+    shareLines: ["Резюме становится понятнее, когда формулировка показывает конкретную работу."],
   };
 }
 
@@ -159,25 +157,34 @@ function reportFromDraft(
   meta: AnalysisReport["generationMeta"],
   resumeText: string,
 ): AnalysisReport {
-  const blocksFor = (id: string) => draft.contentBlocks.find((item) => item.findingIds.includes(id))?.content;
   const actionFor = (id: string) => draft.priorities.find((item) => item.findingIds.includes(id))?.action ?? "Уточните формулировку только реальными фактами из опыта.";
   const topProblems: Problem[] = assessment.findings.slice(0, 8).map((item, index) => ({
     id: `p-${index}`,
     severity: item.severity,
     title: item.interpretation.slice(0, 120),
     quote: item.sourceQuote,
-    roast: blocksFor(item.id) ?? item.interpretation,
+    roast: item.interpretation,
     diagnosis: item.whyItMatters,
     recommendation: actionFor(item.id),
   }));
   const strengths = assessment.strengths.slice(0, 6).map((item, index) => ({
     id: `s-${index}`, title: item.interpretation.slice(0, 120), quote: item.sourceQuote,
-    comment: blocksFor(item.id) ?? item.interpretation,
+    comment: item.interpretation,
   }));
   const privacy = buildSharePrivacyContext(resumeText, [assessment.candidateContext.primaryProfession, assessment.candidateContext.industry]);
   const safeShareLines = draft.shareLines.map((line) => stripSensitiveShareText(line, privacy)).filter((line): line is string => Boolean(line));
-  const body = draft.contentBlocks.map((block) => block.content).join("\n\n");
-  const summary = draft.contentBlocks.find((block) => block.type === "summary")?.content ?? draft.verdict.comment;
+  const summary = draft.contentBlocks.find((block) => block.type === "summary")?.content
+    ?? assessment.professionalAssessment.seniorityConsistency;
+  // Verdict, problem cards, narrative and final take have distinct jobs.
+  // Preserve all analytical findings while avoiding copied prose on screen.
+  const normalized = (value: string) => value.replace(/\s+/g, " ").trim().toLowerCase();
+  const narrative = draft.contentBlocks.filter(block => block.type !== "summary").map(block => block.content);
+  const paragraphs = [...new Set(narrative)];
+  for (const extra of [assessment.professionalAssessment.strongestProfessionalSignal, assessment.professionalAssessment.mainResumeProblem]) {
+    if (paragraphs.join("\n\n").length >= 200) break;
+    if (![draft.verdict.comment, summary, ...paragraphs].some(value => normalized(value) === normalized(extra))) paragraphs.push(extra);
+  }
+  const body = paragraphs.join("\n\n");
   const firstImpression = `${draft.verdict.comment} ${assessment.professionalAssessment.overallImpression}`;
   const fixPriority = draft.priorities.map((item) => item.action).join(" ") || "Сохраните сильные стороны и уточните только те формулировки, которые создают вопросы.";
   return AnalysisReportSchema.parse({
@@ -193,7 +200,7 @@ function reportFromDraft(
     verdict: draft.verdict,
     hrReview: {
       firstImpression: firstImpression.length >= 80 ? firstImpression : `${firstImpression} Оценка относится только к содержанию резюме.`,
-      deepDive: body.length >= 200 ? body : `${body}\n\n${assessment.professionalAssessment.mainResumeProblem}\n\n${summary}`,
+      deepDive: body.length >= 200 ? body : `${body}\n\nОценка относится к представленному описанию работы. Уточнения следует добавлять только из реального опыта; отсутствие детали в резюме само по себе не означает отсутствия навыка или выполненной задачи.`,
       hiringTake: summary.length >= 60 ? summary : `${summary} Итог относится к тому, что показывает текст резюме.`,
       fixPriority: fixPriority.length >= 60 ? fixPriority : `${fixPriority} Используйте только подтверждённый опыт.`,
     },
@@ -221,10 +228,12 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
 
   if (aiMockEnabled()) {
     const assessment = suppliedAssessment ?? fallbackAssessment(base);
+    const calibration = voiceCalibration(assessment, input.personaId);
     const draft = fallbackDraft(base, assessment, input.personaId);
     const report = reportFromDraft(base, assessment, draft, input.personaId, {
       promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}`,
       personaVersion: PERSONA_BIBLE_VERSION, stages: [], retryCount: 0, editorUsed: false,
+      voice: { ...calibration.metadata, status: "mock" },
     }, input.resumeText);
     emit({ type: "stage", stage: "extract", status: "done" });
     emit({ type: "stage", stage: "score", status: "start" }); emit({ type: "stage", stage: "score", status: "done" });
@@ -273,7 +282,8 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   const masculineVerbs = resumeTextVerbCount(input.resumeText, /[а-яё]+(?:ил|ал|ял|ёл)(?=[\s,.!?;:]|$)/giu);
   const avoidMasculineSecondPerson = feminineVerbs >= 2 && masculineVerbs === 0;
   const editorialFocus = personaFocus(assessment, input.personaId);
-  const writerInput = JSON.stringify({ assessment, editorialFocus, allowedFindingIds: [...evidenceIds], uiLanguage: "ru", noUnsupportedCriticism: !metricIssueGrounded ? "В замечаниях нет доказанной проблемы с числовыми результатами. Не требуй добавить цифру или масштаб; можно предложить переставить уже названный факт либо задать узкий вопрос без оценки недостатка." : undefined });
+  const calibration = voiceCalibration(assessment, input.personaId);
+  const writerInput = JSON.stringify({ assessment, editorialFocus, voiceCalibration: calibration, allowedFindingIds: [...evidenceIds], uiLanguage: "ru", noUnsupportedCriticism: !metricIssueGrounded ? "В замечаниях нет доказанной проблемы с числовыми результатами. Не требуй добавить цифру или масштаб; можно предложить переставить уже названный факт либо задать узкий вопрос без оценки недостатка." : undefined });
   const privacy = buildSharePrivacyContext(input.resumeText, [assessment.candidateContext.primaryProfession, assessment.candidateContext.industry]);
   let retryCount = 0;
   let editorUsed = false;
@@ -298,8 +308,9 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
       }
     }
   }
+  const validationOptions = { personaId: input.personaId, privacy, enforceVoice: true, hasFindings: assessment.findings.length > 0, metricIssueGrounded, avoidMasculineSecondPerson, groundedText: input.resumeText };
   let validation = writer
-    ? validatePersonaDraft(filterShareLines(jsonObject(writer.content), privacy, input.personaId), evidenceIds, { personaId: input.personaId, privacy, enforceVoice: true, hasFindings: assessment.findings.length > 0, metricIssueGrounded, avoidMasculineSecondPerson })
+    ? validatePersonaDraft(filterShareLines(jsonObject(writer.content), privacy, input.personaId), evidenceIds, validationOptions)
     : { ok: false, errors: ["писатель недоступен"] };
   if (writer && !validation.ok) {
     console.warn("[pipeline] persona draft rejected by quality gate", validation.errors);
@@ -308,12 +319,12 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
     try {
       editor = await runAi({
         stage: "persona", system: `${writerSystem(input.personaId)}\n\n${editorPrompt(validation.errors)} (${EDITOR_CORE_VERSION})`,
-        user: JSON.stringify({ previous: jsonObject(writer.content), assessment, editorialFocus, allowedFindingIds: [...evidenceIds] }), jsonSchemaName: "persona_review_repair_v2",
+        user: JSON.stringify({ previousUntrustedDraft: jsonObject(writer.content), assessment, editorialFocus, voiceCalibration: calibration, allowedFindingIds: [...evidenceIds] }), jsonSchemaName: "persona_review_repair_v2",
         jsonSchema: PERSONA_DRAFT_JSON_SCHEMA, temperature: 0.2, maxTokens: 3000, timeoutMs: 35_000, reasoningEffort: "minimal",
         model: process.env.OPENAI_EDITOR_MODEL ?? "gpt-5-nano",
       });
       writerCost += editor.costUsd;
-      validation = validatePersonaDraft(filterShareLines(jsonObject(editor.content), privacy, input.personaId), evidenceIds, { personaId: input.personaId, privacy, enforceVoice: true, hasFindings: assessment.findings.length > 0, metricIssueGrounded, avoidMasculineSecondPerson });
+      validation = validatePersonaDraft(filterShareLines(jsonObject(editor.content), privacy, input.personaId), evidenceIds, validationOptions);
       if (!validation.ok) console.warn("[pipeline] edited persona draft still rejected", validation.errors);
     } catch (error) {
       if (error instanceof AiConfigError) throw error;
@@ -325,6 +336,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   const meta = {
     promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}`,
     personaVersion: PERSONA_BIBLE_VERSION,
+    voice: { ...calibration.metadata, status: validation.ok && !analystFallback ? "generated" as const : "limited" as const },
     stages: [
       {
         name: suppliedAssessment ? "professional-analyst-reused" : analystFallback ? "professional-analyst-fallback" : "professional-analyst",
@@ -342,5 +354,11 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   };
   const report = groundReport(reportFromDraft(base, assessment, draft, input.personaId, meta, input.resumeText), input.resumeText);
   emit({ type: "roast", delta: report.hrReview.deepDive }); emit({ type: "stage", stage: "persona", status: "done" });
-  return { report, provider: editor?.provider ?? writer?.provider ?? analyst?.provider ?? "fallback", model: editor?.model ?? writer?.model ?? analyst?.model ?? "heuristic-fallback", costUsd: (analyst?.costUsd ?? 0) + writerCost };
+  return {
+    report,
+    provider: editor?.provider ?? writer?.provider ?? analyst?.provider ?? "fallback",
+    model: editor?.model ?? writer?.model ?? analyst?.model ?? "heuristic-fallback",
+    costUsd: (analyst?.costUsd ?? 0) + writerCost,
+    cost: aggregateAnalysisCost([analyst?.cost, writer?.cost, editor?.cost]),
+  };
 }

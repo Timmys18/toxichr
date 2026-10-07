@@ -48,5 +48,6 @@ export async function GET(_request: Request, { params }: Params) {
     createdAt: analysis.createdAt,
     unlocked: true,
     claimed: Boolean(analysis.userId),
+    resultMode: analysis.modelProvider === "mock" ? "test" : "live",
   });
 }

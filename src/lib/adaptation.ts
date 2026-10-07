@@ -73,18 +73,23 @@ export function buildAdaptationQuestions(
   for (const requirementId of preferredRequirementIds(match)) {
     if (seen.has(requirementId)) continue;
     const requirement = requirements.get(requirementId);
-    const evidence = matchByRequirement.get(requirementId)?.resumeQuotes[0];
-    if (!requirement || !evidence) continue;
+    const matched = matchByRequirement.get(requirementId);
+    const evidence = matched?.resumeQuotes[0] ?? "";
+    if (!requirement || !matched) continue;
+    const needsClarification = matched.status === "unknown";
+    if (!evidence && !needsClarification) continue;
     // Название роли и короткий ярлык должности — не строка резюме для
     // «усиления»: туда легко приклеить чужой результат и получить абсурд.
-    if (requirement.sourceQuote.trim().toLowerCase() === vacancy.title.trim().toLowerCase() || evidence.trim().length < 20) continue;
+    if (requirement.sourceQuote.trim().toLowerCase() === vacancy.title.trim().toLowerCase() || (evidence && evidence.trim().length < 20)) continue;
     seen.add(requirementId);
     questions.push({
       requirementId,
       requirement: requirement.text,
       vacancyQuote: requirement.sourceQuote,
       resumeQuote: evidence,
-      question: `Что именно в этом опыте важно для требования «${requirement.text}»? Укажи только то, что делал лично и можешь подтвердить.`,
+      question: needsClarification
+        ? `Резюме этого не показывает. Есть ли у тебя подтверждённый опыт по требованию «${requirement.text}»? Укажи только то, что делал лично и можешь подтвердить; если такого опыта нет, так и ответь.`
+        : `Что именно в этом опыте важно для требования «${requirement.text}»? Укажи только то, что делал лично и можешь подтвердить.`,
     });
     if (questions.length === 5) break;
   }

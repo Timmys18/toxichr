@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
 import { EvidenceQuote, InfoNote, PageContainer, PageIntro, PrimaryAction, QuestionField, SecondaryAction, SectionLabel, SurfacePanel } from "@/components/ui/system";
 import { requestErrorMessage } from "@/lib/user-facing-errors";
@@ -41,6 +42,7 @@ type AccessState = {
 };
 
 export function RevengeClient({ analysisId }: { analysisId: string }) {
+  const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [, setBeforeScore] = useState(0);
@@ -82,7 +84,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       const response = await fetch(`/api/improvements/${analysisId}/recheck`, { method: "POST" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
-      window.location.assign(`/vacancy?analysisId=${encodeURIComponent(data.analysisId)}`);
+      router.push(`/vacancy?analysisId=${encodeURIComponent(data.analysisId)}`);
     } catch (reason) { setError(requestErrorMessage(reason, "Не удалось проверить новую версию.")); }
     finally { setChecking(false); }
   }
@@ -301,6 +303,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       setEditorText(data.improvedText ?? "");
       setSavedEditorText(data.improvedText ?? "");
       setResultView("changes");
+      try { window.localStorage.removeItem(`toxichr:revenge:${analysisId}`); } catch { /* готовая версия уже сохранена на сервере */ }
       await refreshAccess().catch(() => undefined);
       window.setTimeout(
         () => document.getElementById("revenge-result")?.scrollIntoView({ behavior: "smooth" }),
@@ -338,8 +341,8 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
     }
   }
 
-  async function saveEditor() {
-    if (!result || editorText.trim().length < 80) return;
+  async function saveEditor(): Promise<boolean> {
+    if (!result || editorText.trim().length < 80) return false;
     setEditorSaving(true);
     setEditorMessage(null);
     setError(null);
@@ -360,10 +363,37 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       } catch {
         // Сервер уже сохранил версию.
       }
+      return true;
     } catch (reason) {
       setError(requestErrorMessage(reason, "Не удалось сохранить правки. Черновик остался на этом устройстве."));
+      return false;
     } finally {
       setEditorSaving(false);
+    }
+  }
+
+  async function downloadDocx() {
+    if (!result || editorSaving || editorText.trim().length < 80) return;
+    setError(null);
+    const needsSave = editorText.trim() !== savedEditorText.trim();
+    if (needsSave && !(await saveEditor())) return;
+    try {
+      const response = await fetch(`/api/improvements/${analysisId}/docx`, { cache: "no-store" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error ?? "Не удалось скачать DOCX");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `toxichr-resume-${analysisId.slice(0, 8)}.docx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (reason) {
+      setError(requestErrorMessage(reason, "Не удалось скачать DOCX. Сохранённая версия осталась в кабинете."));
     }
   }
 
@@ -371,8 +401,8 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
 
   return (
     <PageContainer className="revenge">
-      <PageIntro label="Реванш" title="Теперь исправим то, что HR разнёс." lead="Ответь только фактами. Если точной цифры не помнишь — не придумывай: сервис соберёт честную формулировку без неё." />
-      <InfoNote className="deal" title={`Новая версия входит в пакет ToxicHR за ${access.priceRub} ₽.`}>{access.improvementUsed ? "Улучшение уже использовано для этого резюме." : "Одно улучшение, без подписки и доплат."}</InfoNote>
+      <PageIntro label="Реванш" title={result ? "Резюме готово" : "Теперь исправим то, что HR разнёс."} lead={result ? "Готовая версия сохранена. Скачай документ или проверь, что именно изменилось." : "Ответь только фактами. Если точной цифры не помнишь — не придумывай: сервис соберёт честную формулировку без неё."} />
+      {!result ? <InfoNote className="deal" title={`Новая версия входит в пакет ToxicHR за ${access.priceRub} ₽.`}>{access.improvementUsed ? "Улучшение уже использовано для этого резюме." : "Одно улучшение, без подписки и доплат."}</InfoNote> : null}
       {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
 
       {restoredAnswersCount > 0 && !result ? (
@@ -423,7 +453,7 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
       {result ? (
         <div className="result" id="revenge-result">
           <div className="result-head">
-            <div><h2>Новая версия готова</h2><p>Проверь изменения, сравни тексты или отредактируй всё вручную.</p></div>
+            <div><h2>{result.replacements.length} {result.replacements.length === 1 ? "правка готова" : "правок готовы"}</h2><p>{hasUnsavedEditorChanges ? "Есть несохранённая редакция. Перед скачиванием сервис сохранит именно её." : "Документ сохранён. Детали и ручной редактор — ниже."}</p><button type="button" className="thr-btn thr-btn-tox ds-docx-action" onClick={() => void downloadDocx()} disabled={editorSaving || editorText.trim().length < 80}>{editorSaving ? "Сохраняем…" : hasUnsavedEditorChanges ? "Сохранить и скачать · DOCX" : "Скачать готовое резюме · DOCX"}</button></div>
             <span className={`save-state ${hasUnsavedEditorChanges ? "dirty" : "clean"}`}>{hasUnsavedEditorChanges ? "Есть несохранённые правки" : "Версия сохранена"}</span>
           </div>
 
@@ -446,7 +476,6 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
 
           {hasUnsavedEditorChanges ? <div className="export-lock" role="status">Сохрани изменения в редакторе — после этого экспорт и проверка вакансией обновятся.</div> : (
             <div className="exports">
-              <a className="thr-btn thr-btn-tox" href={`/api/improvements/${analysisId}/docx`}>Скачать DOCX</a>
               <Link className="thr-btn thr-btn-line" href={`/revenge/${analysisId}/print`} target="_blank">Открыть PDF / печать</Link>
               <button className="thr-btn vacancy-next" type="button" disabled={checking || editorSaving} onClick={() => void checkImprovedVersion()}>{checking ? "Проверяем новую версию…" : "Проверить под вакансию →"}</button>
             </div>

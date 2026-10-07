@@ -15,7 +15,7 @@ import {
 const artifact = (name: string) => resolve(process.cwd(), "tests", "artifacts", "ai", name);
 const json = <T>(name: string): T => JSON.parse(readFileSync(artifact(name), "utf8")) as T;
 
-test("исторические голоса сохраняют grounding; общие выводы Леры и Глеба отклоняются новым gate", () => {
+test("исторические голоса сохраняют grounding; прежние lexical metrics не оценивают литературу", () => {
   const resume = readFileSync(artifact("management-resume.txt"), "utf8");
   const assessment = json<ReturnType<typeof parseGroundedAssessment>["assessment"]>("management-assessment.json");
   const grounded = parseGroundedAssessment(assessment, resume);
@@ -31,25 +31,18 @@ test("исторические голоса сохраняют grounding; общ
       privacy: buildSharePrivacyContext(resume),
       enforceVoice: true,
     });
-    // Keep the historical AI artifact unchanged: its generic Gleb opening is
-    // now a regression example, not a current quality acceptance.
-    expect(validation.errors, personaId).toEqual(personaId === "gleb"
-      ? ["вместо оптики персоны повторена общая оценка; начните с конкретной детали editorialFocus"]
-      : personaId === "lera" ? ["Лера должна выбрать заметный сигнал для рекрутера; общий вопрос о личном вкладе не раскрывает её оптику"]
-      : []);
+    // Historical artifacts stay unchanged; marker words no longer trigger repair.
+    expect(validation.errors, personaId).toEqual([]);
     const metrics = scorePersonaQuality(results[personaId], ids, personaId);
     expect(metrics, `${personaId}: метрики должны совпадать с сохранённым acceptance-артефактом`).toEqual(expectedMetrics[personaId]);
     expect(metrics.grounding, personaId).toBe("pass");
-    for (const key of ["professionalDepth", "specificity", "personaDistinctiveness", "sarcasm", "punchQuality", "usefulness"] as const) {
-      expect(metrics[key], `${personaId}.${key}`).toBeGreaterThanOrEqual(4);
-    }
     texts.add(results[personaId].contentBlocks.map((block) => block.content).join(" "));
   }
   expect(texts.size).toBe(4);
 });
 
 for (const fixtureName of ["strong-case.json", "weak-case.json"] as const) {
-  test(`${fixtureName}: оценка привязана к исходнику, голос и польза проходят порог`, () => {
+  test(`${fixtureName}: оценка привязана к исходнику; историческая диагностика совместима`, () => {
     const fixture = json<{ resume: string; assessment: NonNullable<ReturnType<typeof parseGroundedAssessment>["assessment"]>; personaId: PersonaId; result: PersonaDraft }>(fixtureName);
     expect(parseGroundedAssessment(fixture.assessment, fixture.resume).errors).toEqual([]);
     const ids = new Set([...fixture.assessment.findings.map((item) => item.id), ...fixture.assessment.strengths.map((item) => item.id)]);
@@ -59,9 +52,6 @@ for (const fixtureName of ["strong-case.json", "weak-case.json"] as const) {
     const expectedMetrics = json<Record<"strong" | "weak", PersonaQualityMetrics>>("quality-metrics.json")[metricKey];
     expect(validation.quality).toEqual(expectedMetrics);
     expect(validation.quality?.grounding).toBe("pass");
-    for (const key of ["professionalDepth", "specificity", "personaDistinctiveness", "sarcasm", "punchQuality", "usefulness"] as const) {
-      expect(validation.quality?.[key], key).toBeGreaterThanOrEqual(4);
-    }
     if (fixtureName === "strong-case.json") expect(fixture.assessment.findings).toHaveLength(0);
     if (fixtureName === "weak-case.json") expect(fixture.assessment.findings.length).toBeGreaterThanOrEqual(3);
   });

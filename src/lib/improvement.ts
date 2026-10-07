@@ -24,6 +24,13 @@ export type ImprovementReplacement = {
   grounded: boolean;
 };
 
+export class ImprovementAiError extends Error {
+  constructor(message = "AI временно недоступен. Попробуй ещё раз.", options?: ErrorOptions) {
+    super(message, options);
+    this.name = "ImprovementAiError";
+  }
+}
+
 export const IMPROVEMENT_RULES_VERSION = "improvement@2.4";
 
 function isEditableQuote(quote: string, role: string): boolean {
@@ -249,6 +256,44 @@ function usefulImprovementFact(answer: string): string | null {
   return useful ? clean : null;
 }
 
+function hasNegation(text: string) {
+  return /(?:^|[\s,;])(?:не|без|никогда|отсутств(?:ие|овал[аи]?))(?=[\s,.!?;:]|$)/iu.test(text);
+}
+
+function splitMeaningfulClauses(text: string) {
+  return text.split(/[.!?;\n]+/u).map((part) => part.trim()).filter(Boolean);
+}
+
+function preservesNegationAndActor(candidate: string, sources: string[]) {
+  const sourceClauses = sources.flatMap(splitMeaningfulClauses);
+  const candidateClauses = splitMeaningfulClauses(candidate);
+  const tokens = (value: string) => new Set(contentTokens(value));
+  for (const source of sourceClauses) {
+    const sourceTokens = tokens(source);
+    if (sourceTokens.size < 2) continue;
+    const sourceNegative = hasNegation(source);
+    const sourceTeamActor = /\b(?:команд\w*|коллег\w*|отдел\w*|совместно|вместе)\b/iu.test(source);
+    for (const proposed of candidateClauses) {
+      const proposedTokens = tokens(proposed);
+      const overlap = [...sourceTokens].filter((token) => proposedTokens.has(token)).length;
+      if (overlap < 2 || overlap / Math.min(sourceTokens.size, proposedTokens.size) < 0.6) continue;
+      const proposedTeamActor = /\b(?:команд\w*|коллег\w*|отдел\w*|совместно|вместе)\b/iu.test(proposed);
+      // Explicitly assigning an action to the team does not contradict a
+      // first-person denial; dropping that actor would.
+      if (sourceNegative !== hasNegation(proposed) && !(sourceNegative && proposedTeamActor)) return false;
+      if (sourceTeamActor && !/\b(?:команд\w*|коллег\w*|отдел\w*|совместно|вместе)\b/iu.test(proposed)) {
+        const personalConfirmation = sources.some((value) => splitMeaningfulClauses(value).some((clause) =>
+          !/\b(?:команд\w*|коллег\w*|отдел\w*|совместно|вместе)\b/iu.test(clause)
+          && !hasNegation(clause)
+          && [...sourceTokens].filter((token) => tokens(clause).has(token)).length >= 2,
+        ));
+        if (!personalConfirmation) return false;
+      }
+    }
+  }
+  return true;
+}
+
 function fallbackReplacement(problem: Problem, answer: string): string {
   const clean = usefulImprovementFact(answer);
   if (!clean) return problem.quote;
@@ -273,7 +318,7 @@ export function selectSafeReplacement(
   const scopeWords = /(?:^|\s)(?:не|без|совместно|командой|частично|только)(?=\s|[.,;!?]|$)/giu;
   const preservesScope = [problem.quote, usefulAnswer].every((source) => (source.match(scopeWords) ?? []).every((word) => candidate.toLowerCase().includes(word.trim().toLowerCase())));
   const preservesNumbers = numbers(problem.quote).every((number) => numbers(candidate).includes(number));
-  return candidate !== problem.quote && preservesScope && preservesNumbers && isGroundedImprovementText(candidate, [problem.quote, usefulAnswer])
+  return candidate !== problem.quote && preservesScope && preservesNumbers && preservesNegationAndActor(candidate, [problem.quote, usefulAnswer]) && isGroundedImprovementText(candidate, [problem.quote, usefulAnswer])
     ? candidate
     : fallback;
 }
@@ -294,6 +339,7 @@ export function isGroundedAdaptationText(
   if (!candidateTokens.length || !originalTokens.length || !answerTokens.length) return false;
   const allowed = [...originalTokens, ...answerTokens];
   return (
+    preservesNegationAndActor(candidate, [original, answer]) &&
     isOrderedSubsequence(candidateTokens, allowed) &&
     isOrderedSubsequence(contentTokens(original), contentTokens(candidate)) &&
     numbers(original).every((number) => numbers(candidate).includes(number))
@@ -329,9 +375,15 @@ async function aiReplacements(input: {
   answers: ImprovementAnswer[];
   resumeText: string;
 }): Promise<Record<string, string>> {
-  if (!aiLiveEnabled() || input.problems.length === 0) return {};
+  if (input.problems.length === 0) return {};
+  const testFailure = process.env.AI_TEST_VACANCY_FAILURES === "markers"
+    && JSON.stringify(input).includes("[[TOXICHR_TEST_AI_ERROR]]");
+  if (testFailure) throw new ImprovementAiError("Смоделированный отказ AI-провайдера.");
+  if (!aiLiveEnabled()) return {};
 
-  const response = await runAi({
+  let response: Awaited<ReturnType<typeof runAi>>;
+  try {
+    response = await runAi({
     stage: "anti_generic",
     system: `Ты редактор резюме. Перепиши только перечисленные слабые строки.
 Используй исключительно факты из исходного резюме и ответов кандидата.
@@ -343,7 +395,10 @@ async function aiReplacements(input: {
     jsonSchemaName: "resume_improvement",
     temperature: 0.2,
     maxTokens: 1800,
-  });
+    });
+  } catch (error) {
+    throw new ImprovementAiError(undefined, { cause: error });
+  }
 
   const start = response.content.indexOf("{");
   const end = response.content.lastIndexOf("}");
@@ -385,7 +440,7 @@ export async function buildImprovedResume(input: {
     problems,
     answers: usefulAnswers,
     resumeText: input.resumeText,
-  }).catch(() => ({} as Record<string, string>));
+  });
   const candidates: ImprovementReplacement[] = problems.map((problem) => {
     const answer = answerMap.get(problem.id) ?? "";
     const usefulAnswer = usefulImprovementFact(answer) ?? "";

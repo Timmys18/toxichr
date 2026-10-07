@@ -38,7 +38,7 @@ export default defineConfig({
       AI_PROVIDER: "mock",
       AI_TEST_VACANCY_FAILURES: "markers",
       NEXT_PUBLIC_APP_URL: baseURL,
-      BETA_PAYWALL_ENABLED: "false",
+      BETA_PAYWALL_ENABLED: process.env.BETA_PAYWALL_ENABLED ?? "false",
     },
   },
   projects: [
