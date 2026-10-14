@@ -56,20 +56,18 @@ export class VacancyAiError extends Error {
 }
 
 const text = { type: "string" } as const;
-const text6 = { type: "string", minLength: 6 } as const;
 const text8 = { type: "string", minLength: 8 } as const;
-const text12 = { type: "string", minLength: 12 } as const;
-const text20 = { type: "string", minLength: 20 } as const;
 const text24 = { type: "string", minLength: 24 } as const;
+const boundedText = (minLength: number, maxLength: number) => ({ type: "string", minLength, maxLength });
 const evidenceKind = { type: "string", enum: ["fact", "inference", "hypothesis"] } as const;
 const priority = { type: "string", enum: ["critical", "secondary", "wishlist"] } as const;
 const vacancyRequirementId = { type: "string", pattern: "^VR[0-9]{2,}$" } as const;
 const vacancyObservationId = { type: "string", pattern: "^VO[0-9]{2,}$" } as const;
 const resumeEvidenceId = { type: "string", pattern: "^[FS][0-9]{2,}$" } as const;
-const obsSchema = { type: "object", additionalProperties: false, required: ["id", "sourceQuote", "kind", "interpretation"], properties: { id: vacancyObservationId, sourceQuote: text6, kind: evidenceKind, interpretation: text12 } } as const;
-export const VACANCY_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = { type: "object", additionalProperties: false, required: ["schemaVersion", "vacancyFingerprint", "title", "roleReality", "whoTheySeek", "mainTask", "requirements", "contradictions", "risks", "clarificationPoints", "employerQuestions"], properties: { schemaVersion: { type: "string", const: VACANCY_ASSESSMENT_VERSION }, vacancyFingerprint: text, title: { type: "string", minLength: 2 }, roleReality: text20, whoTheySeek: text20, mainTask: text12, requirements: { type: "array", minItems: 1, maxItems: 16, items: { type: "object", additionalProperties: false, required: ["id", "text", "sourceQuote", "priority", "kind", "interpretation"], properties: { id: vacancyRequirementId, text: text6, sourceQuote: text6, priority, kind: evidenceKind, interpretation: text12 } } }, contradictions: { type: "array", maxItems: 8, items: obsSchema }, risks: { type: "array", maxItems: 8, items: obsSchema }, clarificationPoints: { type: "array", maxItems: 10, items: obsSchema }, employerQuestions: { type: "array", maxItems: 10, items: text8 } } };
-export const MATCH_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = { type: "object", additionalProperties: false, required: ["schemaVersion", "decision", "matches", "whyInviteRequirementIds", "whyRejectRequirementIds", "preApplyFixes", "unknownRequirementIds", "candidateQuestions", "employerQuestions", "limits"], properties: { schemaVersion: { type: "string", const: MATCH_ASSESSMENT_VERSION }, decision: { type: "object", additionalProperties: false, required: ["code", "headline", "reasoning"], properties: { code: { type: "string", enum: ["apply", "revise", "explain_gap", "skip"] }, headline: text8, reasoning: text24 } }, matches: { type: "array", minItems: 1, maxItems: 16, items: { type: "object", additionalProperties: false, required: ["requirementId", "status", "resumeEvidenceIds", "resumeQuotes", "explanation"], properties: { requirementId: vacancyRequirementId, status: { type: "string", enum: ["strong_match", "partial_match", "hidden_match", "unknown", "gap"] }, resumeEvidenceIds: { type: "array", maxItems: 4, items: resumeEvidenceId }, resumeQuotes: { type: "array", maxItems: 4, items: text8 }, explanation: text12 } } }, whyInviteRequirementIds: { type: "array", maxItems: 8, items: vacancyRequirementId }, whyRejectRequirementIds: { type: "array", maxItems: 8, items: vacancyRequirementId }, unknownRequirementIds: { type: "array", maxItems: 8, items: vacancyRequirementId }, preApplyFixes: { type: "array", maxItems: 8, items: { type: "object", additionalProperties: false, required: ["requirementIds", "action", "boundary"], properties: { requirementIds: { type: "array", minItems: 1, maxItems: 4, items: vacancyRequirementId }, action: text12, boundary: text8 } } }, candidateQuestions: { type: "array", maxItems: 10, items: text8 }, employerQuestions: { type: "array", maxItems: 10, items: text8 }, limits: { type: "array", maxItems: 10, items: text8 } } };
-export const VACANCY_PERSONA_JSON_SCHEMA: Record<string, unknown> = { type: "object", additionalProperties: false, required: ["comment", "contentBlocks"], properties: { comment: text, contentBlocks: { type: "array", minItems: 1, maxItems: 4, items: { type: "object", additionalProperties: false, required: ["type", "requirementIds", "content"], properties: { type: { type: "string", enum: ["observation", "question", "summary"] }, requirementIds: { type: "array", maxItems: 6, items: vacancyRequirementId }, content: text } } } } };
+const obsSchema = { type: "object", additionalProperties: false, required: ["id", "sourceQuote", "kind", "interpretation"], properties: { id: vacancyObservationId, sourceQuote: boundedText(6, 700), kind: evidenceKind, interpretation: boundedText(12, 900) } } as const;
+export const VACANCY_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = { type: "object", additionalProperties: false, required: ["schemaVersion", "vacancyFingerprint", "title", "roleReality", "whoTheySeek", "mainTask", "requirements", "contradictions", "risks", "clarificationPoints", "employerQuestions"], properties: { schemaVersion: { type: "string", const: VACANCY_ASSESSMENT_VERSION }, vacancyFingerprint: text, title: boundedText(2, 200), roleReality: boundedText(20, 1_200), whoTheySeek: boundedText(20, 1_200), mainTask: boundedText(12, 900), requirements: { type: "array", minItems: 1, maxItems: 16, items: { type: "object", additionalProperties: false, required: ["id", "text", "sourceQuote", "priority", "kind", "interpretation"], properties: { id: vacancyRequirementId, text: boundedText(6, 500), sourceQuote: boundedText(6, 700), priority, kind: evidenceKind, interpretation: boundedText(12, 900) } } }, contradictions: { type: "array", maxItems: 8, items: obsSchema }, risks: { type: "array", maxItems: 8, items: obsSchema }, clarificationPoints: { type: "array", maxItems: 10, items: obsSchema }, employerQuestions: { type: "array", maxItems: 10, items: boundedText(8, 700) } } };
+export const MATCH_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = { type: "object", additionalProperties: false, required: ["schemaVersion", "decision", "matches", "whyInviteRequirementIds", "whyRejectRequirementIds", "preApplyFixes", "unknownRequirementIds", "candidateQuestions", "employerQuestions", "limits"], properties: { schemaVersion: { type: "string", const: MATCH_ASSESSMENT_VERSION }, decision: { type: "object", additionalProperties: false, required: ["code", "headline", "reasoning"], properties: { code: { type: "string", enum: ["apply", "revise", "explain_gap", "skip"] }, headline: { ...text8, maxLength: 180 }, reasoning: { ...text24, maxLength: 1_000 } } }, matches: { type: "array", minItems: 1, maxItems: 16, items: { type: "object", additionalProperties: false, required: ["requirementId", "status", "resumeEvidenceIds", "resumeQuotes", "explanation"], properties: { requirementId: vacancyRequirementId, status: { type: "string", enum: ["strong_match", "partial_match", "hidden_match", "unknown", "gap"] }, resumeEvidenceIds: { type: "array", maxItems: 4, items: resumeEvidenceId }, resumeQuotes: { type: "array", maxItems: 4, items: boundedText(8, 700) }, explanation: boundedText(12, 900) } } }, whyInviteRequirementIds: { type: "array", maxItems: 8, items: vacancyRequirementId }, whyRejectRequirementIds: { type: "array", maxItems: 8, items: vacancyRequirementId }, unknownRequirementIds: { type: "array", maxItems: 8, items: vacancyRequirementId }, preApplyFixes: { type: "array", maxItems: 8, items: { type: "object", additionalProperties: false, required: ["requirementIds", "action", "boundary"], properties: { requirementIds: { type: "array", minItems: 1, maxItems: 4, items: vacancyRequirementId }, action: boundedText(12, 800), boundary: boundedText(8, 500) } } }, candidateQuestions: { type: "array", maxItems: 10, items: boundedText(8, 700) }, employerQuestions: { type: "array", maxItems: 10, items: boundedText(8, 700) }, limits: { type: "array", maxItems: 10, items: boundedText(8, 700) } } };
+export const VACANCY_PERSONA_JSON_SCHEMA: Record<string, unknown> = { type: "object", additionalProperties: false, required: ["comment", "contentBlocks"], properties: { comment: boundedText(20, 700), contentBlocks: { type: "array", minItems: 1, maxItems: 4, items: { type: "object", additionalProperties: false, required: ["type", "requirementIds", "content"], properties: { type: { type: "string", enum: ["observation", "question", "summary"] }, requirementIds: { type: "array", maxItems: 6, items: vacancyRequirementId }, content: boundedText(20, 1_000) } } } } };
 
 function fingerprint(value: string) { return createHash("sha256").update(value.trim().replace(/\s+/g, " ")).digest("hex").slice(0, 16); }
 function normalize(value: string) { return value.toLowerCase().replace(/[«»“”„]/g, '"').replace(/\s+/g, " ").trim(); }
@@ -111,14 +109,28 @@ export function cleanAssessment(raw: unknown, vacancyText: string): StructuredVa
     console.error("[vacancy-ai] stage=vacancy validation=missing_named_requirement");
     return null;
   }
-  if (explicitDutyClauses(vacancyText).some((clause) => !groundedRequirements.some((item) => {
+  const missingDuties = [...new Set(explicitDutyClauses(vacancyText))].filter((clause) => !groundedRequirements.some((item) => {
     const quote = normalize(item.sourceQuote).replace(/^["]|["]$/g, "").replace(/[.!?;]+$/, "");
     const source = normalize(clause).replace(/[.!?;]+$/, "");
     return source.includes(quote) || quote.includes(source);
-  }))) {
-    console.error("[vacancy-ai] stage=vacancy validation=missing_duty_clause");
+  }));
+  // The model may list qualifications but omit the duties it was explicitly
+  // given. Restore only literal clauses from the vacancy, never inferred facts.
+  if (groundedRequirements.length + missingDuties.length > 16 || missingDuties.some((clause) => clause.length < 6 || clause.length > 500)) {
+    console.error("[vacancy-ai] stage=vacancy validation=too_many_duty_clauses");
     return null;
   }
+  const completeRequirements = [
+    ...groundedRequirements,
+    ...missingDuties.map((clause, index) => ({
+      id: `VR${String(groundedRequirements.length + index + 1).padStart(2, "0")}`,
+      text: clause,
+      sourceQuote: clause,
+      priority: "secondary" as const,
+      kind: "fact" as const,
+      interpretation: "Прямая обязанность, указанная в тексте вакансии.",
+    })),
+  ];
   if (!groundedRequirements.length) {
     console.error("[vacancy-ai] stage=vacancy validation=no_grounded_requirements");
     return null;
@@ -137,7 +149,7 @@ export function cleanAssessment(raw: unknown, vacancyText: string): StructuredVa
     roleReality: sanitizeUserFacingLanguage(parsed.data.roleReality),
     whoTheySeek: sanitizeUserFacingLanguage(parsed.data.whoTheySeek),
     mainTask: sanitizeUserFacingLanguage(parsed.data.mainTask),
-    requirements: groundedRequirements.map((item) => ({ ...item, text: sanitizeUserFacingLanguage(item.text), interpretation: sanitizeUserFacingLanguage(item.interpretation) })),
+    requirements: completeRequirements.map((item) => ({ ...item, text: sanitizeUserFacingLanguage(item.text), interpretation: sanitizeUserFacingLanguage(item.interpretation) })),
     contradictions: groundedObservations(parsed.data.contradictions).map((item) => ({ ...item, interpretation: sanitizeUserFacingLanguage(item.interpretation) })),
     risks: groundedObservations(parsed.data.risks).map((item) => ({ ...item, interpretation: sanitizeUserFacingLanguage(item.interpretation) })),
     clarificationPoints: groundedObservations(parsed.data.clarificationPoints).map((item) => ({ ...item, interpretation: sanitizeUserFacingLanguage(item.interpretation) })),

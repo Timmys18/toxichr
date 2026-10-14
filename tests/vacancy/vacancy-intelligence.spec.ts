@@ -71,13 +71,30 @@ test("извлечение сохраняет каждую явно перечи
     { ...vacancyAssessment.requirements[0], id: "VR01", text: "Брать кровь", sourceQuote: "брать кровь" },
     { ...vacancyAssessment.requirements[0], id: "VR02", text: "Сертификат", sourceQuote: "Требуется сертификат" },
   ] };
-  expect(cleanAssessment(raw, source)).toBeNull();
+  const restored = cleanAssessment(raw, source);
+  expect(restored?.requirements).toHaveLength(4);
+  expect(restored?.requirements.slice(2).every((item) => source.includes(item.sourceQuote))).toBe(true);
   const complete = { ...raw, requirements: [
     ...raw.requirements,
     { ...raw.requirements[0], id: "VR03", text: "Вести журнал температур", sourceQuote: "вести журнал температур" },
     { ...raw.requirements[0], id: "VR04", text: "Контролировать укладки", sourceQuote: "контролировать укладки" },
   ] };
   expect(cleanAssessment(complete, source)?.requirements).toHaveLength(4);
+});
+
+test("дословно восстанавливает обязанности, которые Yandex пропустил при извлечении", () => {
+  const source = "Младший UX-исследователь. Проводить интервью и юзабилити-тесты, анализировать качественные данные. Нужен опыт самостоятельного выбора методологии и работы с мобильными продуктами.";
+  const named = "Нужен опыт самостоятельного выбора методологии и работы с мобильными продуктами";
+  const raw = { ...vacancyAssessment, vacancyFingerprint: vacancyFingerprint(source), requirements: [
+    { ...vacancyAssessment.requirements[0], id: "VR01", text: "Опыт самостоятельного выбора методологии", sourceQuote: named },
+    { ...vacancyAssessment.requirements[0], id: "VR02", text: "Опыт работы с мобильными продуктами", sourceQuote: named },
+  ] };
+  const result = cleanAssessment(raw, source);
+  expect(result).not.toBeNull();
+  expect(result?.requirements.map((item) => item.sourceQuote)).toContain("Проводить интервью и юзабилити-тесты");
+  expect(result?.requirements.map((item) => item.sourceQuote)).toContain("анализировать качественные данные.");
+  expect(result?.requirements.every((item) => source.includes(item.sourceQuote))).toBe(true);
+  expect(result?.requirements.slice(2).every((item) => item.priority === "secondary")).toBe(true);
 });
 
 test("косвенная финансовая метрика не подтверждает P&L", () => {

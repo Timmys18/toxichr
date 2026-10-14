@@ -42,7 +42,7 @@ export class AdaptationAiError extends Error {
 const AiAdaptationSchema = z.object({
   replacements: z.array(z.object({
     requirementId: z.string().min(1),
-    text: z.string().trim().min(1).max(2_000),
+    text: z.string().trim().max(2_000),
   })).max(7),
 });
 
@@ -109,6 +109,10 @@ async function aiAdaptedReplacements(input: {
         ? "invalid_json"
         : null
     : null;
+  // Preparing clarification questions is not a generation request. With no
+  // confirmed fact, the model must not invent a replacement or incur a call.
+  const answeredQuestions = input.questions.filter((question) => input.answers.some((answer) => answer.requirementId === question.requirementId));
+  if (answeredQuestions.length === 0 && !testFailure) return {};
   if (!aiLiveEnabled() && !testFailure) return {};
   const answerByRequirement = Object.fromEntries(input.answers.map((item) => [item.requirementId, item.answer]));
   let response: Awaited<ReturnType<typeof runAi>>;
@@ -126,9 +130,9 @@ async function aiAdaptedReplacements(input: {
       system: `Ты адаптируешь резюме под вакансию. Перепиши только данные строки резюме.
 Сохрани исходное действие и все его числа. Используй только слова и факты из исходной строки и подтверждённого ответа кандидата.
 Не добавляй компании, технологии, команды, бюджеты, сроки, результаты или способности. Не пиши о личности кандидата.
-Если безопасно объединить строку и ответ нельзя, верни исходную строку без изменений.
+Если безопасно объединить строку и ответ нельзя, не добавляй этот пункт в replacements. Не возвращай пустой text.
 Верни только JSON: {"replacements":[{"requirementId":"...","text":"..."}]}.`,
-      user: JSON.stringify({ questions: input.questions, answers: answerByRequirement }),
+      user: JSON.stringify({ questions: answeredQuestions, answers: answerByRequirement }),
       jsonSchemaName: "resume_vacancy_adaptation",
       temperature: 0.15,
       maxTokens: 1_600,
@@ -155,8 +159,8 @@ async function aiAdaptedReplacements(input: {
     console.error("[adaptation-ai] stage=anti_generic reason=validation_failed", parsed.error.issues);
     throw new AdaptationAiError("validation_failed", "Ответ AI не прошёл проверку адаптации.");
   }
-  const allowed = new Set(input.questions.map((item) => item.requirementId));
-  return Object.fromEntries(parsed.data.replacements.filter((item) => allowed.has(item.requirementId)).map((item) => [item.requirementId, item.text]));
+  const allowed = new Set(answeredQuestions.map((item) => item.requirementId));
+  return Object.fromEntries(parsed.data.replacements.filter((item) => allowed.has(item.requirementId) && item.text).map((item) => [item.requirementId, item.text]));
 }
 
 export async function buildAdaptedResume(input: {

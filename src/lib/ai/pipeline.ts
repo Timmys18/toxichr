@@ -37,7 +37,7 @@ export type PipelineInput = {
 export type PipelineResult = { report: AnalysisReport; provider: string; model: string; costUsd: number; cost?: AnalysisCost };
 
 function writerSystem(personaId: PersonaId): string {
-  return `${WRITER_CORE_PROMPT}\n\nБиблия персоны (${PERSONA_BIBLE_VERSION}):\n${PERSONA_BIBLES[personaId]}`;
+  return `${WRITER_CORE_PROMPT}\n\nБиблия персоны (${PERSONA_BIBLE_VERSION}):\n${PERSONA_BIBLES[personaId]}\n\nФинальная проверка каждого пользовательского поля: не пиши «кандидат демонстрирует», «навыки», «умение», «способность» или «необходимо укрепить». Это оценка человека и общий HR-шаблон. Вместо неё назови конкретное действие, результат или пробел именно в тексте резюме. Если такого факта нет, прямо скажи, что резюме этого не показывает; не достраивай опыт.`;
 }
 
 function jsonObject(content: string): unknown {

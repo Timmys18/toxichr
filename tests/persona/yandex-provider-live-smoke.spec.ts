@@ -8,6 +8,7 @@ test("YandexGPT Pro 5.1 accepts strict JSON Schema", async () => {
   expect(apiKey, "YANDEX_AI_API_KEY is required").toBeTruthy();
   expect(folderId, "YANDEX_AI_FOLDER_ID is required").toBeTruthy();
 
+  const startedAt = performance.now();
   const response = await fetch(`${yandexBaseUrl()}/chat/completions`, {
     method: "POST",
     signal: AbortSignal.timeout(20_000),
@@ -37,8 +38,9 @@ test("YandexGPT Pro 5.1 accepts strict JSON Schema", async () => {
       },
     }),
   });
-  if (!response.ok) throw new Error(`Yandex strict smoke failed: ${response.status} ${(await response.text()).slice(0, 300)}`);
+  if (!response.ok) throw new Error(`Yandex strict smoke failed: HTTP ${response.status}`);
   const payload = await response.json() as { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
   expect(payload.choices?.[0]?.finish_reason).toBe("stop");
   expect(JSON.parse(payload.choices?.[0]?.message?.content ?? "")).toEqual({ ok: true });
+  console.log(JSON.stringify({ strictSmoke: "passed", httpStatus: response.status, elapsedMs: Math.round(performance.now() - startedAt) }));
 });

@@ -118,7 +118,8 @@
     "missing-target-practice",
     "confidentiality",
     "unspecified-scope",
-    "insufficient-context"
+      "insufficient-context",
+      "owned-action"
   ],
   "editorialGate": {
     "criteria": [

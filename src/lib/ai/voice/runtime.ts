@@ -56,12 +56,14 @@ export type ProseInspection = { blockers: string[]; warnings: string[] };
 const words = (s: string) => s.toLowerCase().replace(/ё/g, "е").match(/[\p{L}\p{N}]+/gu) ?? [];
 const grams = (s: string, n: number) => { const w = words(s); return new Set(w.slice(0, Math.max(0, w.length - n + 1)).map((_, i) => w.slice(i, i + n).join(" "))); };
 const numbers = (s: string) => new Set((s.match(/\d+(?:[.,]\d+)?/g) ?? []).map(n => n.replace(",", ".")));
+const PROFANITY = /(?:^|[^\p{L}])(?:жоп\p{L}*|бляд\p{L}*|пизд\p{L}*|(?:хуй|хуя|хуе|хуё)\p{L}*|(?:ебан|ёбан|заеб|заёб)\p{L}*)(?=$|[^\p{L}])/iu;
 
 /** Extra mechanical checks; NOT an evaluator of truth, voice or humour. */
 export function inspectVoiceProse(text: string, { groundedText, displayedBlocks = [] }: { groundedText: string; displayedBlocks?: string[] }): ProseInspection {
   const blockers: string[] = [], warnings: string[] = [];
   const w = words(text);
   if (w.some(t => policyAsset.directInsultTokens.includes(t))) blockers.push("прямое оскорбление вместо оценки резюме");
+  if (PROFANITY.test(text)) blockers.push("мат и грубая лексика в готовом ответе");
   const allowed = numbers(groundedText);
   if ([...numbers(text)].some(n => !allowed.has(n))) blockers.push("цифровой факт отсутствует в исходном материале");
   const sourceGrams = grams(groundedText, 8), outputGrams = grams(text, 8);

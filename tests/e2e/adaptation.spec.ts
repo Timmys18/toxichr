@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { prisma } from "@/lib/prisma";
+import { buildAdaptationQuestions } from "@/lib/adaptation";
+import { MatchAssessmentSchema, StructuredVacancyAssessmentSchema, VACANCY_ASSESSMENT_VERSION, MATCH_ASSESSMENT_VERSION } from "@/lib/vacancy";
 
 const RESUME = `Анна Петрова
 Product Manager
@@ -14,6 +16,16 @@ const VACANCY = `Senior Product Manager
 Нужно проводить исследования пользователей и продуктовые эксперименты.
 Требуется опыт управления кросс-функциональной командой.
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
+
+test("unknown без цитаты из резюме всё равно создаёт вопрос без выдуманной цитаты", () => {
+  const requirement = { id: "VR01", text: "Английский язык не ниже B2", sourceQuote: "Английский язык не ниже B2", priority: "critical" as const, kind: "fact" as const, interpretation: "Работодатель прямо указывает языковое требование." };
+  const vacancy = StructuredVacancyAssessmentSchema.parse({ schemaVersion: VACANCY_ASSESSMENT_VERSION, vacancyFingerprint: "fingerprint", title: "Менеджер", roleReality: "Роль требует подтверждённого английского языка.", whoTheySeek: "Нужен менеджер с подтверждённым английским языком.", mainTask: "Вести работу в международной команде.", requirements: [requirement], contradictions: [], risks: [], clarificationPoints: [], employerQuestions: [] });
+  const match = MatchAssessmentSchema.parse({ schemaVersion: MATCH_ASSESSMENT_VERSION, decision: { code: "explain_gap", headline: "Нужно уточнить требование", reasoning: "В тексте резюме нет прямого подтверждения уровня английского языка." }, matches: [{ requirementId: "VR01", status: "unknown", resumeEvidenceIds: [], resumeQuotes: [], explanation: "Резюме этого не показывает; нужен ответ кандидата." }], whyInviteRequirementIds: [], whyRejectRequirementIds: [], preApplyFixes: [], unknownRequirementIds: ["VR01"], candidateQuestions: ["Какой у тебя уровень английского языка?"], employerQuestions: [], limits: [] });
+  const questions = buildAdaptationQuestions(vacancy, match);
+  expect(questions).toHaveLength(1);
+  expect(questions[0]).toMatchObject({ requirementId: "VR01", resumeQuote: "" });
+  expect(questions[0].question).toMatch(/есть ли|уточни|укажи/i);
+});
 
 test("адаптация создаёт новую версию по подтверждённому факту и повторно сопоставляет её без второго списания", async ({ request, page }) => {
   const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });

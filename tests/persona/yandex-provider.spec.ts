@@ -4,6 +4,36 @@ import { aggregateAnalysisCost, analysisCostFields } from "../../src/lib/ai/run-
 
 const envNames = ["AI_PROVIDER", "YANDEX_AI_API_KEY", "YANDEX_AI_FOLDER_ID", "YANDEX_AI_BASE_URL"] as const;
 
+test("Yandex transport diagnostics preserve the connection error code without secrets or retries", async () => {
+  const saved = Object.fromEntries(envNames.map(name => [name, process.env[name]]));
+  const originalFetch = global.fetch;
+  const originalWarn = console.warn;
+  const logs: unknown[][] = [];
+  let requests = 0;
+  const cause = Object.assign(new Error("synthetic-secret-key synthetic-private-folder"), {
+    name: "ConnectTimeoutError", code: "UND_ERR_CONNECT_TIMEOUT", errno: -1, syscall: "connect",
+  });
+  global.fetch = async () => { requests++; throw new TypeError("synthetic-secret-key", { cause }); };
+  console.warn = (...args: unknown[]) => { logs.push(args); };
+  process.env.AI_PROVIDER = "yandex";
+  process.env.YANDEX_AI_API_KEY = "synthetic-secret-key";
+  process.env.YANDEX_AI_FOLDER_ID = "synthetic-private-folder";
+  delete process.env.YANDEX_AI_BASE_URL;
+  try {
+    await expect(runAi({ stage: "extract", system: "s", user: "u" })).rejects.toThrow("Не удалось связаться с AI");
+    expect(requests).toBe(1);
+    expect(logs).toHaveLength(1);
+    const diagnostic = JSON.parse(String(logs[0][1]));
+    expect(diagnostic).toMatchObject({ hostname: "ai.api.cloud.yandex.net", errorName: "TypeError", causeName: "ConnectTimeoutError", code: "UND_ERR_CONNECT_TIMEOUT", errno: -1, syscall: "connect", message: "network_request_failed" });
+    expect(diagnostic.elapsedMs).toBeGreaterThanOrEqual(0);
+    expect(JSON.stringify(logs)).not.toMatch(/synthetic-secret-key|synthetic-private-folder|https:\/\/|Authorization/);
+  } finally {
+    global.fetch = originalFetch;
+    console.warn = originalWarn;
+    for (const name of envNames) { if (saved[name] === undefined) delete process.env[name]; else process.env[name] = saved[name]; }
+  }
+});
+
 for (const base of [undefined, "https://ai.api.cloud.yandex.net/v1", "https://llm.api.cloud.yandex.net/v1/"]) {
   test(`Yandex endpoint is explicit: ${base ?? "default"}`, async () => {
     const saved = Object.fromEntries(envNames.map(name => [name, process.env[name]]));

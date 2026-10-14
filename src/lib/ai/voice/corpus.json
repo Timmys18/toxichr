@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "createdAt": "2026-10-06",
   "language": "ru",
   "status": "integration-candidate-not-provider-validated",
@@ -1525,6 +1525,38 @@
       "outputExample": "Дай желаемую роль и одну настоящую задачу: что делал, что получилось. Учебный проект тоже подойдёт, если другого опыта пока мало.\n\nПо трём прилагательным я не буду выдумывать ни сильного специалиста, ни слабого. «Быстро обучаюсь» — хорошее начало разговора, когда понятно, для какой работы.",
       "authorship": "original-synthetic-editorial",
       "notLiveGenerated": true
+    },
+    {
+      "id": "T17", "caseId": "C17", "persona": "tamara", "industry": "cross-industry", "function": "operations", "scenario": "owned-action", "polarity": "strength", "seniorityContext": "unspecified", "requires": ["owned-action"], "rhetoricalMove": "границы ответственности без преувеличения", "intensity": 2, "lengthClass": "short",
+      "professionalPoint": "Признать явно описанное собственное действие без присвоения командного результата.",
+      "sourceFragment": "Лично подготовил инструкцию для передачи смены.",
+      "disallowedInference": "Нельзя приписывать автору снижение ошибок или руководство сменой: исход не указан.",
+      "outputExample": "Собственный участок здесь виден: инструкцию для передачи смены вы подготовили лично. Это гораздо точнее, чем безымянное «обеспечил процесс». Если документ вошёл в работу, покажите это отдельно; пока в тексте подтверждена подготовка, не результат всей смены.",
+      "authorship": "original-synthetic-editorial", "notLiveGenerated": true
+    },
+    {
+      "id": "L17", "caseId": "C17", "persona": "lera", "industry": "cross-industry", "function": "operations", "scenario": "owned-action", "polarity": "strength", "seniorityContext": "unspecified", "requires": ["owned-action"], "rhetoricalMove": "сильный сигнал с первого взгляда", "intensity": 2, "lengthClass": "short",
+      "professionalPoint": "Выделить понятное рекрутеру личное действие без выдуманного эффекта.",
+      "sourceFragment": "Лично подготовил инструкцию для передачи смены.",
+      "disallowedInference": "Нельзя утверждать, что инструкцию внедрили или что она улучшила показатели.",
+      "outputExample": "Вот строка, за которую удобно зацепиться: вы сами подготовили инструкцию для передачи смены. Поставьте её рядом с задачей, ради которой она понадобилась. Итог внедрения можно добавить, только если он действительно известен; сама подготовка уже говорит конкретнее общих качеств.",
+      "authorship": "original-synthetic-editorial", "notLiveGenerated": true
+    },
+    {
+      "id": "G17", "caseId": "C17", "persona": "gleb", "industry": "cross-industry", "function": "operations", "scenario": "owned-action", "polarity": "strength", "seniorityContext": "unspecified", "requires": ["owned-action"], "rhetoricalMove": "отделение действия от эффекта", "intensity": 2, "lengthClass": "short",
+      "professionalPoint": "Развести доказанное действие и неописанный результат.",
+      "sourceFragment": "Лично подготовил инструкцию для передачи смены.",
+      "disallowedInference": "Нельзя заключать, что число ошибок снизилось: такого сравнения нет.",
+      "outputExample": "Факт простой и ценный: инструкцию подготовили вы. Работала ли она после передачи смены — другой вопрос, на который эта строка не отвечает. Не обесценивайте первое из-за отсутствия второго и не называйте второй результатом без данных.",
+      "authorship": "original-synthetic-editorial", "notLiveGenerated": true
+    },
+    {
+      "id": "V17", "caseId": "C17", "persona": "vadik", "industry": "cross-industry", "function": "operations", "scenario": "owned-action", "polarity": "strength", "seniorityContext": "unspecified", "requires": ["owned-action"], "rhetoricalMove": "практическая граница результата", "intensity": 2, "lengthClass": "short",
+      "professionalPoint": "Признать сделанный артефакт и не дорисовывать его эффект.",
+      "sourceFragment": "Лично подготовил инструкцию для передачи смены.",
+      "disallowedInference": "Нельзя утверждать, что смены начали работать лучше или что документ внедрён.",
+      "outputExample": "Инструкция для передачи смены — это уже сделанная вещь, не разговор о «коммуникабельности». Ты написал её сам, и это стоит оставить в резюме. Если по ней теперь реально передают работу, расскажи как; если нет, не выдавай подготовку документа за перестройку процесса.",
+      "authorship": "original-synthetic-editorial", "notLiveGenerated": true
     }
   ]
 }

@@ -23,6 +23,7 @@ services:
     restart: unless-stopped
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST:?Set PUBLIC_HOST}
+      BETA_ACCESS_HASH: ${BETA_ACCESS_HASH:?Set BETA_ACCESS_HASH}
     ports:
       - "80:80"
       - "443:443"

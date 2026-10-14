@@ -34,10 +34,10 @@ function fixture(caseId = "C05"): { resume: string; assessment: ProfessionalAsse
   }) };
 }
 
-test("64 эталона, 16 контекстов, равные голоса; это авторский корпус", () => {
-  expect(corpus.entries).toHaveLength(64);
-  expect(new Set(corpus.entries.map(e => e.id)).size).toBe(64);
-  for (const persona of corpus.personas) expect(corpus.entries.filter(e => e.persona === persona)).toHaveLength(16);
+test("68 эталонов, 17 контекстов, равные голоса; это авторский корпус", () => {
+  expect(corpus.entries).toHaveLength(68);
+  expect(new Set(corpus.entries.map(e => e.id)).size).toBe(68);
+  for (const persona of corpus.personas) expect(corpus.entries.filter(e => e.persona === persona)).toHaveLength(17);
   expect(corpus.entries.every(e => e.notLiveGenerated)).toBe(true);
 });
 
@@ -88,6 +88,21 @@ test("неизвестная ситуация остаётся без приме
   expect(PERSONA_BIBLES.lera).toContain("Быстрая");
 });
 
+test("явное личное действие выбирает релевантный голос и передаёт пример writer; должность и командный итог не подходят", () => {
+  const { assessment } = fixture("C17");
+  for (const persona of ["tamara", "lera", "gleb", "vadik"] as const) {
+    const calibration = voiceCalibration(assessment, persona);
+    expect(calibration.metadata.selectedIds).toContain(`${persona[0].toUpperCase()}17`);
+    expect(calibration.fictionalStyleExamplesNeverCandidateEvidence[0].fictionalResponse).toBeTruthy();
+  }
+  assessment.strengths[0].sourceQuote = "Команда подготовила инструкцию для передачи смены.";
+  expect(voiceCalibration(assessment, "tamara").metadata.selectedIds).toEqual([]);
+  assessment.strengths[0].sourceQuote = "Руководитель смены, ответственный специалист.";
+  expect(voiceCalibration(assessment, "tamara").metadata.selectedIds).toEqual([]);
+  assessment.strengths[0].sourceQuote = "Не подготовил инструкцию для передачи смены.";
+  expect(voiceCalibration(assessment, "tamara").metadata.selectedIds).toEqual([]);
+});
+
 test("чужое число, прямое оскорбление и видимый дубль блокируются; копия — warning", () => {
   expect(inspectVoiceProse("У вас 118% плана.", { groundedText: "Работал с клиентами." }).blockers).toContain("цифровой факт отсутствует в исходном материале");
   expect(inspectVoiceProse("Вы идиот.", { groundedText: "" }).blockers).toContain("прямое оскорбление вместо оценки резюме");
@@ -95,6 +110,13 @@ test("чужое число, прямое оскорбление и видимы
   const inspection = inspectVoiceProse(example.outputExample, { groundedText: example.sourceFragment, displayedBlocks: [example.outputExample, example.outputExample] });
   expect(inspection.blockers).toContain("одинаковый текст в разных видимых блоках");
   expect(inspection.warnings).toContain("возможное дословное копирование стилевого примера");
+});
+
+test("грубая фраза о кандидате не проходит как допустимый голос", () => {
+  const value = draft();
+  value.contentBlocks[0].content = "Изоляция очередей — реальная задача. Видно, что руки не из жопы.";
+  expect(validatePersonaDraft(value, new Set(["F01"]), { groundedText: fixture().resume }).errors)
+    .toContain("мат и грубая лексика в готовом ответе");
 });
 
 function draft(): PersonaDraft {

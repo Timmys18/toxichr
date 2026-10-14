@@ -56,7 +56,12 @@ export function voiceContext(assessment: ProfessionalAssessment, persona: Person
   for (const s of assessment.strengths) {
     const q = s.sourceQuote;
     // Explicit negative outcomes override a mistakenly labelled strength.
-    if (/не\s+(?:внедр|использ|сократ|прекрат)|не\s+удалось/iu.test(q)) continue;
+    if (/не\s+(?:внедр|использ|сократ|прекрат|подготов|разработ|пров[её]л|организ|согласов|настро|созда|создал|пересобрал)|не\s+удалось/iu.test(q)) continue;
+    // Broad, source-led positive situation: an actual action, not a title,
+    // adjective or a team outcome attributed to one person.
+    if (/(?:^|[^\p{L}])(?:лично\s+)?(?:подготовил[аи]?|разработал[аи]?|внедрил[аи]?|пров[её]л[аи]?|организовал[аи]?|согласовал[аи]?|настроил[аи]?|создал[аи]?|пересобрал[аи]?)(?=$|[^\p{L}])/iu.test(q)
+      && !/(?:команда|отдел|мы)\s+(?:подготовил|разработал|внедрил|создал)/iu.test(q))
+      add("owned-action", ["owned-action"], s.id);
     if (/sql|p95|запрос/iu.test(q) && /\d/iu.test(q) && /одинаков|сопоставим/iu.test(q) && /production|внедр/iu.test(q))
       add("comparable-tech", ["technical-action", "metric", "comparable-test", "deployment"], s.id);
     if (/документац/iu.test(q) && /передав|передач/iu.test(q) && /смен/iu.test(q) && /обучал/iu.test(q) && /сестр|медицин/iu.test(`${q} ${professionalContext}`))

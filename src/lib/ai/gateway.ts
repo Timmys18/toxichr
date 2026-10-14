@@ -135,11 +135,30 @@ async function fetchWithTimeout(
   init: RequestInit,
   ms = AI_TIMEOUT_MS,
 ): Promise<Response> {
+  const startedAt = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } catch (e) {
+    const cause = e instanceof Error ? (e as Error & { cause?: unknown }).cause : undefined;
+    const causeFields = cause instanceof Error ? cause as Error & { code?: unknown; errno?: unknown; syscall?: unknown } : undefined;
+    let hostname = "unknown";
+    try { hostname = new URL(url).hostname; } catch { /* Do not log an unparsed URL. */ }
+    if (hostname === "ai.api.cloud.yandex.net" || hostname === "llm.api.cloud.yandex.net") {
+      const safeString = (value: unknown) => typeof value === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(value) ? value : undefined;
+      const safeNumber = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : undefined;
+      console.warn("[ai-network] Yandex request failed", JSON.stringify({
+        hostname,
+        elapsedMs: Date.now() - startedAt,
+        errorName: e instanceof Error ? e.name : "UnknownError",
+        message: e instanceof Error && e.name === "AbortError" ? "request_timeout" : "network_request_failed",
+        causeName: causeFields?.name,
+        code: safeString(causeFields?.code),
+        errno: safeNumber(causeFields?.errno) ?? safeString(causeFields?.errno),
+        syscall: safeString(causeFields?.syscall),
+      }));
+    }
     if (e instanceof Error && e.name === "AbortError") {
       throw new AiTimeoutError(
         `AI не ответил за ${Math.round(ms / 1000)}с. Попробуй ещё раз.`,
