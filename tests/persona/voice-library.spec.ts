@@ -8,6 +8,7 @@ import { WRITER_CORE_PROMPT } from "../../src/lib/ai/prompts/writer-core";
 import { editorPrompt } from "../../src/lib/ai/prompts/editor-core";
 import { PERSONA_DRAFT_JSON_SCHEMA, validatePersonaDraft, type PersonaDraft } from "../../src/lib/ai/writer-validator";
 import { runAnalysisPipeline } from "../../src/lib/ai/pipeline";
+import { normalizeYandexJsonContent } from "../../src/lib/ai/gateway";
 
 const interpretations: Record<string, string> = {
   C01: "Управленческие решения не раскрыты в описании работы.",
@@ -149,7 +150,7 @@ test("repair сохраняет голос, а существующий техн
   expect(PERSONA_DRAFT_JSON_SCHEMA.required).toEqual(["verdict", "contentBlocks", "priorities", "shareLines"]);
 });
 
-async function withStubbedYandex(outputs: PersonaDraft[], run: (requests: Array<Record<string, unknown>>) => Promise<void>) {
+async function withStubbedYandex(outputs: Array<PersonaDraft | string>, run: (requests: Array<Record<string, unknown>>) => Promise<void>) {
   const keys = ["AI_PROVIDER", "YANDEX_AI_API_KEY", "YANDEX_AI_FOLDER_ID"];
   const saved = keys.map(k => process.env[k]); const originalFetch = globalThis.fetch;
   const requests: Array<Record<string, unknown>> = [];
@@ -157,11 +158,26 @@ async function withStubbedYandex(outputs: PersonaDraft[], run: (requests: Array<
   globalThis.fetch = async (_url, init) => {
     requests.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
     const output = outputs[Math.min(requests.length - 1, outputs.length - 1)];
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(output) }, finish_reason: "stop" }], usage: { prompt_tokens: 20, completion_tokens: 20 } }), { status: 200 });
+    return new Response(JSON.stringify({ choices: [{ message: { content: typeof output === "string" ? output : JSON.stringify(output) }, finish_reason: "stop" }], usage: { prompt_tokens: 20, completion_tokens: 20 } }), { status: 200 });
   };
   process.env.AI_PROVIDER = "yandex"; process.env.YANDEX_AI_API_KEY = "synthetic-test-key"; process.env.YANDEX_AI_FOLDER_ID = "synthetic-folder";
   try { await run(requests); } finally { globalThis.fetch = originalFetch; keys.forEach((k, i) => { if (saved[i] === undefined) delete process.env[k]; else process.env[k] = saved[i]; }); }
 }
+
+test("invalid analyst JSON twice fails instead of saving a fake completed review", async () => {
+  await withStubbedYandex(['{"unfinished":', '{"unfinished":'], async requests => {
+    await expect(runAnalysisPipeline({ resumeText: fixture().resume, personaId: "tamara" }))
+      .rejects.toThrow("AI не завершил разбор");
+    expect(requests).toHaveLength(2);
+    expect(requests.every((request) => (request.response_format as { json_schema?: { strict?: boolean } }).json_schema?.strict === true)).toBe(true);
+  });
+});
+
+test("Yandex JSON control characters are repaired without accepting unrelated broken JSON", () => {
+  expect(JSON.parse(normalizeYandexJsonContent('{"note":"первая строка\nвторая строка"}')))
+    .toEqual({ note: "первая строка\nвторая строка" });
+  expect(() => normalizeYandexJsonContent('{"note":"unfinished"')).toThrow();
+});
 
 test("pipeline передаёт корпус writer, сохраняет выбор и общую аналитику без внешнего запроса", async () => {
   const { resume, assessment } = fixture();

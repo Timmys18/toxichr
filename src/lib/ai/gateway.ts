@@ -83,6 +83,32 @@ function hasYandexCredentials(): boolean {
   );
 }
 
+/** YandexGPT may put literal line breaks inside JSON strings even with json_schema. */
+export function normalizeYandexJsonContent(content: string): string {
+  try { JSON.parse(content); return content; } catch { /* Repair only control characters in strings. */ }
+  let inString = false;
+  let escaped = false;
+  let repaired = "";
+  for (const char of content) {
+    if (escaped) {
+      repaired += char;
+      escaped = false;
+    } else if (char === "\\" && inString) {
+      repaired += char;
+      escaped = true;
+    } else if (char === '"') {
+      repaired += char;
+      inString = !inString;
+    } else if (inString && char.charCodeAt(0) < 32) {
+      repaired += JSON.stringify(char).slice(1, -1);
+    } else {
+      repaired += char;
+    }
+  }
+  JSON.parse(repaired);
+  return repaired;
+}
+
 /** Какой провайдер выбран. По умолчанию — OpenAI для обратной совместимости. */
 export function resolveProvider(): AiProvider {
   const configured = (process.env.AI_PROVIDER ?? "openai").trim().toLowerCase();
@@ -333,9 +359,9 @@ async function callYandex(
             type: "json_schema",
             json_schema: {
               name: options.jsonSchemaName ?? "toxichr_output",
-              // Контракт API поддерживает strict, но для Pro 5.1 включаем его
-              // только после отдельного live-smoke на синтетических данных.
-              strict: false,
+              // Синтетический live-smoke подтвердил strict для Pro 5.1,
+              // включая полную схему профессиональной оценки.
+              strict: true,
               schema: options.jsonSchema,
             },
           }
@@ -372,8 +398,9 @@ async function callYandex(
   if (choice?.finish_reason !== "stop") {
     throw new Error(`Yandex AI Studio завершил ответ с причиной ${choice?.finish_reason ?? "unknown"}.`);
   }
+  let validContent: string;
   try {
-    JSON.parse(content);
+    validContent = normalizeYandexJsonContent(content);
   } catch {
     throw new Error("Yandex AI Studio вернул невалидный JSON.");
   }
@@ -383,7 +410,7 @@ async function callYandex(
   return {
     provider: "yandex",
     model,
-    content,
+    content: validContent,
     tokensIn,
     tokensOut,
     cost: { amount: costRub, currency: "RUB" },

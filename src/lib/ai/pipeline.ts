@@ -243,7 +243,6 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
 
   const analystStartedAt = Date.now();
   let analyst: Awaited<ReturnType<typeof runProfessionalAnalyst>> | null = null;
-  let analystFallback = false;
   let analystRetries = 0;
   if (!suppliedAssessment) {
     try {
@@ -252,8 +251,8 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
     } catch (error) {
       if (error instanceof AiConfigError) throw error;
       if (error instanceof AiTimeoutError) {
-        analystFallback = true;
-        console.error("[pipeline] professional analyst timed out; using bounded fallback", error);
+        console.error("[pipeline] professional analyst timed out", error);
+        throw new Error("AI не завершил разбор. Попробуй ещё раз — результат не сохранён.");
       } else {
         analystRetries = 1;
         console.error("[pipeline] professional analyst first attempt failed; retrying once", error);
@@ -262,13 +261,14 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
           if (!analyst.assessment) throw new Error(analyst.errors.join("; "));
         } catch (retryError) {
           if (retryError instanceof AiConfigError) throw retryError;
-          analystFallback = true;
-          console.error("[pipeline] professional analyst unavailable; using bounded fallback", retryError);
+          console.error("[pipeline] professional analyst unavailable", retryError);
+          throw new Error("AI не завершил разбор. Попробуй ещё раз — результат не сохранён.");
         }
       }
     }
   }
-  const assessment = suppliedAssessment ?? analyst?.assessment ?? fallbackAssessment(base);
+  const assessment = suppliedAssessment ?? analyst?.assessment;
+  if (!assessment) throw new Error("AI не завершил разбор. Попробуй ещё раз — результат не сохранён.");
   emit({ type: "stage", stage: "extract", status: "done" });
   for (const item of theatreFromAssessment(assessment, base.theatreFindings)) emit({ type: "finding", stage: "extract", message: item.message });
   emit({ type: "stage", stage: "score", status: "start" }); emit({ type: "stage", stage: "score", status: "done" });
@@ -336,11 +336,11 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   const meta = {
     promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}`,
     personaVersion: PERSONA_BIBLE_VERSION,
-    voice: { ...calibration.metadata, status: validation.ok && !analystFallback ? "generated" as const : "limited" as const },
+    voice: { ...calibration.metadata, status: validation.ok ? "generated" as const : "limited" as const },
     stages: [
       {
-        name: suppliedAssessment ? "professional-analyst-reused" : analystFallback ? "professional-analyst-fallback" : "professional-analyst",
-        model: suppliedAssessment ? "stored-assessment" : analyst?.model ?? "heuristic-fallback",
+        name: suppliedAssessment ? "professional-analyst-reused" : "professional-analyst",
+        model: suppliedAssessment ? "stored-assessment" : analyst?.model ?? "unknown",
         latencyMs: suppliedAssessment ? 0 : writerStartedAt - analystStartedAt,
         tokensIn: analyst?.tokensIn ?? 0,
         tokensOut: analyst?.tokensOut ?? 0,
