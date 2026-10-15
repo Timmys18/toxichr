@@ -14,7 +14,6 @@
       <a class="brand" href="#top" aria-label="ToxicHR, наверх">TOXIC<i>HR</i></a>
       <nav class="nav-links" aria-label="Разделы страницы">
         <a href="#how">Как это работает</a>
-        <a href="#example">Пример разбора</a>
         <a href="#pricing">Цены</a>
       </nav>
       <a class="nav-action" href="#start">Разобрать резюме</a>
@@ -25,7 +24,7 @@
         <div class="landing-grid">
           <div class="intro">
             <h1 id="hero-title">Твоё резюме <em>не работает.</em></h1>
-            <p>Получи бесплатный разбор: что мешает откликам и как улучшить резюме. Выбери своего HR — регистрация не нужна.</p>
+            <p>Выбери своего HR и узнай почему</p>
           </div>
           <div class="persona" aria-live="polite">
             <img id="hero-photo" src="./assets/vadik.jpg" alt="Вадик, фаундер" />
@@ -36,14 +35,13 @@
             </div>
           </div>
           <div class="upload-rail" id="start">
-            <label class="consent"><input id="consent" type="checkbox" /> <span>Согласен на обработку резюме для работы сервиса. <a href="https://toxichr.ru/privacy" target="_blank" rel="noopener noreferrer">Условия</a></span></label>
             <input id="resume-file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
             <button class="file-action" type="button" id="choose-file">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
-              <span><b>Кидай резюме</b><small>PDF или DOCX</small></span>
+              <span><b>Загрузить резюме</b></span>
               <i aria-hidden="true">→</i>
             </button>
-            <button class="text-action" type="button" id="toggle-text" aria-expanded="false" aria-controls="paste-panel">Нет файла? Вставить текст</button>
+            <button class="text-action" type="button" id="toggle-text" aria-expanded="false" aria-controls="paste-panel">Вставить текст</button>
             <p class="upload-state" id="upload-state" aria-live="polite"></p>
           </div>
           <div class="roster" aria-label="Выбрать HR">
@@ -79,14 +77,6 @@
             <button class="team-card" type="button" data-select="gleb" aria-pressed="false"><img src="./assets/gleb.jpg" alt="" loading="lazy" /><span class="team-card-copy"><b>Глеб Аркадьевич</b><span>Партнёр консалтинга</span><strong>Профессионально игнорирует координаторов и фасилитаторов</strong></span></button>
             <button class="team-card" type="button" data-select="tamara" aria-pressed="false"><img src="./assets/tamara.jpg" alt="" loading="lazy" /><span class="team-card-copy"><b>Тамара Петровна</b><span>HR-директор из нефтегаза</span><strong>The kadrovik</strong></span></button>
           </div>
-        </div>
-      </section>
-
-      <section class="section page-wrap" id="example" aria-labelledby="example-title">
-        <h2 class="section-title" id="example-title">Пример разбора</h2>
-        <div class="example-grid">
-          <div class="example-source"><p>Строка резюме</p><blockquote>«Управлял командой и повысил эффективность процессов».</blockquote></div>
-          <div class="example-feedback"><p>Комментарий HR</p><h3>Результат не назван</h3><p>Из этой строки нельзя понять размер команды, твою роль и что именно стало лучше.</p><div><b>Что добавить</b><p>Размер команды, конкретное действие и результат, который можешь подтвердить. Если цифр нет — опиши изменение без выдуманных процентов.</p></div></div>
         </div>
       </section>
 
