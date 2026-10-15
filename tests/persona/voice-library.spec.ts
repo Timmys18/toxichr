@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ProfessionalAssessmentSchema, type ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
+import { ProfessionalAssessmentSchema, parseGroundedAssessment, type ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
 import { voiceContext } from "../../src/lib/ai/voice/context";
 import { inspectVoiceProse, selectVoiceExamples, voiceCalibration, VOICE_EXAMPLES } from "../../src/lib/ai/voice/runtime";
 import corpus from "../../src/lib/ai/voice/corpus.json";
@@ -34,6 +34,17 @@ function fixture(caseId = "C05"): { resume: string; assessment: ProfessionalAsse
     questionsCreatedByResume: [], uncertainties: [e.disallowedInference], claimsNotAllowed: ["Нельзя изобретать факты или оценивать личность."],
   }) };
 }
+
+test("цитата из резюме с большими пробелами остаётся точной и укладывается в лимит", () => {
+  const { resume, assessment } = fixture("C05");
+  const spacedResume = resume.replace(/\s+/g, " ".repeat(100));
+  const grounded = parseGroundedAssessment(assessment, spacedResume);
+  expect(grounded.assessment).not.toBeNull();
+  for (const item of [...grounded.assessment!.findings, ...grounded.assessment!.strengths]) {
+    expect(item.sourceQuote.length).toBeLessThanOrEqual(500);
+    expect(spacedResume).toContain(item.sourceQuote);
+  }
+});
 
 test("68 эталонов, 17 контекстов, равные голоса; это авторский корпус", () => {
   expect(corpus.entries).toHaveLength(68);

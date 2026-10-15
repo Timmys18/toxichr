@@ -104,7 +104,10 @@ function groundedSourceQuote(quote: string, resumeText: string): string | null {
   if (needle.length < 8) return null;
   // Keep the actual span, never the containing line (which may be the entire CV).
   const pattern = needle.split(/\s+/u).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/"/g, '[«»“”„"]').replace(/[её]/g, "[её]")).join("\\s+");
-  return resumeText.match(new RegExp(pattern, "iu"))?.[0] ?? null;
+  const matched = resumeText.match(new RegExp(pattern, "iu"))?.[0];
+  // The model's quote is bounded, but the original span may contain much more
+  // whitespace (for example from a PDF). Keep an exact, bounded source span.
+  return matched ? matched.slice(0, 500).trimEnd() : null;
 }
 
 export function parseGroundedAssessment(input: unknown, resumeText: string): { assessment: ProfessionalAssessment | null; errors: string[] } {
@@ -135,7 +138,10 @@ export function parseGroundedAssessment(input: unknown, resumeText: string): { a
     ...parsed.data.professionalAssessment,
     mainResumeProblem: "По подтверждённым наблюдениям существенный недостаток описания не установлен.",
   };
-  return { assessment: { ...parsed.data, professionalAssessment, findings, strengths, uncertainties }, errors };
+  const grounded = ProfessionalAssessmentSchema.safeParse({ ...parsed.data, professionalAssessment, findings, strengths, uncertainties });
+  return grounded.success
+    ? { assessment: grounded.data, errors }
+    : { assessment: null, errors: [...errors, "подтверждённая оценка не прошла проверку структуры"] };
 }
 
 export async function runProfessionalAnalyst(resumeText: string) {
