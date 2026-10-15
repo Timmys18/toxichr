@@ -14,161 +14,97 @@
       <a class="brand" href="#top" aria-label="ToxicHR, наверх">TOXIC<i>HR</i></a>
       <nav class="nav-links" aria-label="Разделы страницы">
         <a href="#how">Как это работает</a>
-        <a href="#team">HR-состав</a>
         <a href="#example">Пример разбора</a>
         <a href="#pricing">Цены</a>
       </nav>
-      <a class="nav-action" href="#start">Разобрать резюме <span aria-hidden="true">↗</span></a>
+      <a class="nav-action" href="#start">Разобрать резюме</a>
     </header>
 
     <main id="main">
-      <section class="hero page-wrap" id="top" aria-labelledby="hero-title">
-        <div class="hero-copy">
-          <p class="section-label">Разбор резюме без самообмана</p>
-          <h1 id="hero-title">Твоё резюме <em>не работает.</em></h1>
-          <p class="hero-lead">Выбери HR и узнай, какие строки мешают получить отклик. Первый разбор бесплатный, регистрация не нужна.</p>
-          <a class="text-link" href="#start">Проверить резюме <span aria-hidden="true">↗</span></a>
-        </div>
-        <div class="hero-persona" aria-live="polite">
-          <img id="hero-photo" src="./assets/vadik.jpg" alt="Вадик, фаундер стартапа" />
-          <div class="hero-persona-shade"></div>
-          <div class="hero-persona-copy">
-            <p class="section-label">Твой первый HR</p>
-            <h2 id="hero-name">Вадик</h2>
-            <p id="hero-role">Фаундер</p>
-            <p id="hero-focus">Смотрит на самостоятельность, скорость и влияние на продукт.</p>
+      <section class="landing" id="top" aria-labelledby="hero-title">
+        <div class="landing-grid">
+          <div class="intro">
+            <h1 id="hero-title">Твоё резюме <em>не работает.</em></h1>
+            <p>Получи бесплатный разбор: что мешает откликам и как улучшить резюме. Выбери своего HR — регистрация не нужна.</p>
           </div>
-        </div>
-      </section>
-
-      <section class="upload-section page-wrap" id="start" aria-labelledby="upload-title">
-        <div class="section-heading upload-heading">
-          <div>
-            <p class="section-label">Начни с резюме</p>
-            <h2 id="upload-title">Покажи, что увидит HR.</h2>
-          </div>
-          <p>Файл или текст — как удобнее. Выбери PDF или DOCX либо вставь резюме целиком.</p>
-        </div>
-        <div class="upload-grid">
-          <div class="upload-zone" id="drop-zone">
-            <input id="resume-file" class="visually-hidden" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-            <div class="upload-symbol" aria-hidden="true">↗</div>
-            <div class="upload-copy">
-              <h3>Перетащи резюме сюда</h3>
-              <p>Или выбери файл на компьютере. PDF и DOCX до 8 МБ.</p>
-              <p class="upload-state" id="upload-state" aria-live="polite"></p>
+          <div class="persona" aria-live="polite">
+            <img id="hero-photo" src="./assets/vadik.jpg" alt="Вадик, фаундер" />
+            <div class="persona-copy">
+              <h2 id="hero-name">Вадик</h2>
+              <p id="hero-role">Фаундер</p>
+              <p id="hero-quote">Ищет автора, не свидетеля</p>
             </div>
-            <button class="thr-btn thr-btn-tox upload-button" type="button" id="choose-file">Выбрать резюме <span aria-hidden="true">↗</span></button>
           </div>
-          <div class="upload-aside">
-            <p class="section-label">Без файла?</p>
-            <h3>Вставь текст</h3>
-            <p>Если резюме под рукой только в заметках, вставь его целиком. Формат не важен — факты важны.</p>
-            <button class="text-link text-button" type="button" id="toggle-text" aria-expanded="false" aria-controls="paste-panel">Вставить текст <span aria-hidden="true">↗</span></button>
+          <div class="upload-rail" id="start">
+            <label class="consent"><input id="consent" type="checkbox" /> <span>Согласен на обработку резюме для работы сервиса. <a href="https://toxichr.ru/privacy" target="_blank" rel="noopener noreferrer">Условия</a></span></label>
+            <input id="resume-file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+            <button class="file-action" type="button" id="choose-file">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+              <span><b>Кидай резюме</b><small>PDF или DOCX</small></span>
+              <i aria-hidden="true">→</i>
+            </button>
+            <button class="text-action" type="button" id="toggle-text" aria-expanded="false" aria-controls="paste-panel">Нет файла? Вставить текст</button>
+            <p class="upload-state" id="upload-state" aria-live="polite"></p>
+          </div>
+          <div class="roster" aria-label="Выбрать HR">
+            <button type="button" data-select="vadik" aria-label="Вадик — Фаундер" aria-pressed="true"><img src="./assets/vadik.jpg" alt="" /><span><b>Вадик</b><small>Стартап</small></span></button>
+            <button type="button" data-select="lera" aria-label="Лера — Бигтех" aria-pressed="false"><img src="./assets/lera.jpg" alt="" /><span><b>Лера</b><small>Хайтек</small></span></button>
+            <button type="button" data-select="gleb" aria-label="Глеб Аркадьевич — Партнёр консалтинга" aria-pressed="false"><img src="./assets/gleb.jpg" alt="" /><span><b>Глеб Аркадьевич</b><small>Консалтинг</small></span></button>
+            <button type="button" data-select="tamara" aria-label="Тамара Петровна — HR-директор из нефтегаза" aria-pressed="false"><img src="./assets/tamara.jpg" alt="" /><span><b>Тамара Петровна</b><small>Нефтегаз</small></span></button>
           </div>
         </div>
         <div class="paste-panel" id="paste-panel" hidden>
-          <label for="resume-text">Текст резюме</label>
-          <textarea id="resume-text" rows="7" placeholder="Вставь сюда резюме целиком…"></textarea>
+          <label for="resume-text">Резюме без файла</label>
+          <textarea id="resume-text" rows="8" placeholder="Опыт, проекты, результаты, образование…" maxlength="60000"></textarea>
           <p id="paste-state" aria-live="polite">Локальный макет: текст останется только в этой вкладке.</p>
         </div>
       </section>
 
-      <section class="section-block page-wrap" id="how" aria-labelledby="how-title">
-        <div class="section-heading">
-          <div>
-            <p class="section-label">Как это работает</p>
-            <h2 id="how-title">От резюме до ясного плана.</h2>
-          </div>
-          <p>Сначала получаешь разбор бесплатно, потом решаешь, нужна ли работа над новой версией.</p>
-        </div>
+      <section class="section page-wrap" id="how" aria-labelledby="how-title">
+        <h2 class="section-title" id="how-title">Как это работает</h2>
         <div class="steps">
-          <article class="step"><span>01 /</span><h3>Загружаешь</h3><p>Файл или текст. Без регистрации и формы на десять полей.</p></article>
-          <article class="step"><span>02 /</span><h3>Выбираешь HR</h3><p>Четыре разных взгляда на опыт. Первый разбор и ещё один взгляд бесплатны.</p></article>
-          <article class="step"><span>03 /</span><h3>Видишь слабое место</h3><p>Замечания привязаны к твоим словам: что убедительно, а где не хватает фактов.</p></article>
-          <article class="step"><span>04 /</span><h3>Исправляешь</h3><p>Собираешь новую версию и сверяешь её с выбранной вакансией в пакете ToxicHR.</p></article>
+          <article><span>01</span><h3>Загружаешь резюме</h3><p>Файл или текст.</p></article>
+          <article><span>02</span><h3>Выбираешь HR</h3><p>Разбор с выбранным взглядом.</p></article>
+          <article><span>03</span><h3>Видишь замечания</h3><p>По конкретным строкам резюме.</p></article>
+          <article><span>04</span><h3>Исправляешь</h3><p>Собираешь новую версию.</p></article>
         </div>
       </section>
 
-      <section class="section-block team-section" id="team" aria-labelledby="team-title">
+      <section class="section team-section" id="team" aria-labelledby="team-title">
         <div class="page-wrap">
-          <div class="section-heading">
-            <div>
-              <p class="section-label">HR-состав</p>
-              <h2 id="team-title">У каждого — свой взгляд.</h2>
-            </div>
-            <p>Четыре HR смотрят на опыт с разных сторон. Выбери, чьи вопросы помогут тебе увидеть проблему в резюме.</p>
-          </div>
-          <div class="hr-grid">
-            <article class="hr-card" data-hr="vadik">
-              <img src="./assets/vadik.jpg" alt="Вадик" loading="lazy" />
-              <div class="hr-info"><p class="section-label">Стартап / фаундер</p><h3>Вадик</h3><p>Скорость, самостоятельность и влияние на продукт.</p><blockquote>«Ищет автора, не свидетеля»</blockquote><button type="button" class="hr-select" data-select="vadik">Выбрать Вадика <span aria-hidden="true">↗</span></button></div>
-            </article>
-            <article class="hr-card" data-hr="lera">
-              <img src="./assets/lera.jpg" alt="Лера" loading="lazy" />
-              <div class="hr-info"><p class="section-label">Хайтек / бигтех</p><h3>Лера</h3><p>Ясность опыта и соответствие роли.</p><blockquote>«Свайпает карьеру влево»</blockquote><button type="button" class="hr-select" data-select="lera">Выбрать Леру <span aria-hidden="true">↗</span></button></div>
-            </article>
-            <article class="hr-card" data-hr="gleb">
-              <img src="./assets/gleb.jpg" alt="Глеб Аркадьевич" loading="lazy" />
-              <div class="hr-info"><p class="section-label">Консалтинг / партнёр</p><h3>Глеб Аркадьевич</h3><p>Структура мышления, масштаб и уровень.</p><blockquote>«Проверяет логику, факты и уровень роли»</blockquote><button type="button" class="hr-select" data-select="gleb">Выбрать Глеба <span aria-hidden="true">↗</span></button></div>
-            </article>
-            <article class="hr-card" data-hr="tamara">
-              <img src="./assets/tamara.jpg" alt="Тамара Петровна" loading="lazy" />
-              <div class="hr-info"><p class="section-label">Нефтегаз / HR-директор</p><h3>Тамара Петровна</h3><p>Факты, стабильность и корпоративный контекст.</p><blockquote>«Видит масштаб за названием должности»</blockquote><button type="button" class="hr-select" data-select="tamara">Выбрать Тамару <span aria-hidden="true">↗</span></button></div>
-            </article>
+          <h2 class="section-title" id="team-title">HR-состав</h2>
+          <div class="team-grid">
+            <button class="team-card" type="button" data-select="vadik" aria-pressed="true"><img src="./assets/vadik.jpg" alt="" loading="lazy" /><span class="team-card-copy"><b>Вадик</b><span>Фаундер</span><strong>Ищет автора, не свидетеля</strong></span></button>
+            <button class="team-card" type="button" data-select="lera" aria-pressed="false"><img src="./assets/lera.jpg" alt="" loading="lazy" /><span class="team-card-copy"><b>Лера</b><span>Бигтех</span><strong>Свайпает карьеру влево</strong></span></button>
+            <button class="team-card" type="button" data-select="gleb" aria-pressed="false"><img src="./assets/gleb.jpg" alt="" loading="lazy" /><span class="team-card-copy"><b>Глеб Аркадьевич</b><span>Партнёр консалтинга</span><strong>Профессионально игнорирует координаторов и фасилитаторов</strong></span></button>
+            <button class="team-card" type="button" data-select="tamara" aria-pressed="false"><img src="./assets/tamara.jpg" alt="" loading="lazy" /><span class="team-card-copy"><b>Тамара Петровна</b><span>HR-директор из нефтегаза</span><strong>The kadrovik</strong></span></button>
           </div>
         </div>
       </section>
 
-      <section class="section-block page-wrap" id="example" aria-labelledby="example-title">
-        <div class="section-heading">
-          <div>
-            <p class="section-label">Пример разбора</p>
-            <h2 id="example-title">Замечание, с которым можно работать.</h2>
-          </div>
-          <p>Демонстрационный пример на вымышленной строке резюме. Так выглядит связь между текстом и выводом HR.</p>
-        </div>
-        <div class="example-layout">
-          <aside class="example-persona"><img src="./assets/vadik.jpg" alt="" loading="lazy" /><div><span class="section-label">Разбирает Вадик</span><h3>Опыт есть.<br />Доказательств нет.</h3><p>Смотрим на фразу из резюме, а не на человека.</p></div></aside>
-          <div class="example-report">
-            <div class="report-row"><span class="section-label">Строка резюме</span><blockquote>«Управлял командой и повысил эффективность процессов».</blockquote></div>
-            <div class="report-row"><span class="section-label">Что видит HR</span><h3>Результат не назван</h3><p>Из этой строки нельзя понять размер команды, твою роль и что именно стало лучше. Сильный опыт может быть, но в тексте он не доказан.</p></div>
-            <div class="report-row report-next"><span class="section-label">Следующий шаг</span><p>Добавь размер команды, конкретное действие и результат, который можешь подтвердить. Если цифр нет — опиши наблюдаемое изменение без выдуманных процентов.</p></div>
-          </div>
+      <section class="section page-wrap" id="example" aria-labelledby="example-title">
+        <h2 class="section-title" id="example-title">Пример разбора</h2>
+        <div class="example-grid">
+          <div class="example-source"><p>Строка резюме</p><blockquote>«Управлял командой и повысил эффективность процессов».</blockquote></div>
+          <div class="example-feedback"><p>Комментарий HR</p><h3>Результат не назван</h3><p>Из этой строки нельзя понять размер команды, твою роль и что именно стало лучше.</p><div><b>Что добавить</b><p>Размер команды, конкретное действие и результат, который можешь подтвердить. Если цифр нет — опиши изменение без выдуманных процентов.</p></div></div>
         </div>
       </section>
 
-      <section class="section-block pricing-section" id="pricing" aria-labelledby="pricing-title">
+      <section class="section pricing-section" id="pricing" aria-labelledby="pricing-title">
         <div class="page-wrap">
-          <div class="section-heading">
-            <div><p class="section-label">Цены</p><h2 id="pricing-title">Сначала разберись. Потом решай.</h2></div>
-            <p>Один пакет для одного резюме. Никакой подписки и отдельных платежей за каждый шаг.</p>
-          </div>
+          <h2 class="section-title" id="pricing-title">Цены</h2>
           <div class="price-grid">
-            <article class="price-card">
-              <p class="section-label">Бесплатно</p><div class="price"><strong>0 ₽</strong><span>без регистрации</span></div>
-              <p class="price-intro">Понять, что мешает откликам.</p>
-              <ul><li>Полный первый HR-разбор</li><li>Ещё один HR-взгляд</li><li>Замечания с опорой на текст резюме</li><li>Самостоятельный разбор вакансии</li></ul>
-              <a class="thr-btn thr-btn-line" href="#start">Начать бесплатно <span aria-hidden="true">↗</span></a>
-            </article>
-            <article class="price-card price-card-accent">
-              <p class="section-label">Пакет ToxicHR</p><div class="price"><strong>199 ₽</strong><span>за одно резюме</span></div>
-              <p class="price-intro">Применить замечания и собрать новую версию.</p>
-              <ul><li>Все четыре HR-взгляда</li><li>До 5 сопоставлений с вакансиями</li><li>Одно улучшение резюме</li><li>Одна адаптация под вакансию</li><li>До 5 повторных проверок новой версии</li></ul>
-              <a class="thr-btn thr-btn-tox" href="#start">Сначала получить бесплатный разбор <span aria-hidden="true">↗</span></a>
-            </article>
+            <article class="price-card"><h3>Бесплатно</h3><p class="price">0 ₽</p><ul><li>Полный первый HR-разбор</li><li>Ещё один HR-взгляд</li><li>Замечания с опорой на текст</li><li>Самостоятельный разбор вакансии</li></ul><a class="thr-btn thr-btn-line" href="#start">Начать бесплатно</a></article>
+            <article class="price-card price-card-accent"><h3>Пакет ToxicHR</h3><p class="price">199 ₽ <span>за одно резюме</span></p><ul><li>Все четыре HR-взгляда</li><li>До 5 сопоставлений с вакансиями</li><li>Одно улучшение резюме</li><li>Одна адаптация под вакансию</li><li>До 5 повторных проверок</li></ul><a class="thr-btn thr-btn-tox" href="#start">Начать с бесплатного разбора</a></article>
           </div>
-          <p class="pricing-note">Пакет покупается после бесплатного разбора и привязан к текущему резюме. На этой странице оплата не работает: это локальный макет.</p>
         </div>
       </section>
 
       <section class="final-cta page-wrap" aria-labelledby="final-title">
-        <p class="section-label">Пора проверить</p>
         <h2 id="final-title">Сколько офферов ты ещё хочешь <em>пропустить?</em></h2>
-        <p>Начни с бесплатного разбора. За пару минут станет понятнее, какие строки резюме мешают тебе сейчас.</p>
-        <a class="thr-btn thr-btn-tox" href="#start">Проверить резюме <span aria-hidden="true">↗</span></a>
+        <a class="thr-btn thr-btn-tox" href="#start">Проверить резюме</a>
       </section>
     </main>
-    <footer class="footer"><div class="page-wrap"><a class="brand" href="#top">TOXIC<i>HR</i></a><p>Локальный прототип главной. Файлы и текст не отправляются.</p><a href="#top">Наверх ↑</a></div></footer>
+    <footer class="footer"><div class="page-wrap"><a class="brand" href="#top">TOXIC<i>HR</i></a><p>Локальный прототип. Файлы и текст не отправляются.</p></div></footer>
   </body>
 </html>

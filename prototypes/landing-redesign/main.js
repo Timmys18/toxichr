@@ -1,11 +1,11 @@
 const people = {
-  vadik: { name: "Вадик", role: "Фаундер", focus: "Смотрит на самостоятельность, скорость и влияние на продукт." },
-  lera: { name: "Лера", role: "Бигтех", focus: "Смотрит на ясность опыта и соответствие роли." },
-  gleb: { name: "Глеб Аркадьевич", role: "Партнёр консалтинга", focus: "Смотрит на логику, факты и уровень заявленной роли." },
-  tamara: { name: "Тамара Петровна", role: "HR-директор из нефтегаза", focus: "Смотрит на масштаб, полномочия и стабильность." },
+  vadik: { name: "Вадик", role: "Фаундер", quote: "Ищет автора, не свидетеля" },
+  lera: { name: "Лера", role: "Бигтех", quote: "Свайпает карьеру влево" },
+  gleb: { name: "Глеб Аркадьевич", role: "Партнёр консалтинга", quote: "Профессионально игнорирует координаторов и фасилитаторов" },
+  tamara: { name: "Тамара Петровна", role: "HR-директор из нефтегаза", quote: "The kadrovik" },
 };
 
-function selectPerson(id) {
+function selectPerson(id, fromTeam) {
   const person = people[id];
   if (!person) return;
   const photo = document.getElementById("hero-photo");
@@ -13,41 +13,40 @@ function selectPerson(id) {
   photo.alt = `${person.name}, ${person.role}`;
   document.getElementById("hero-name").textContent = person.name;
   document.getElementById("hero-role").textContent = person.role;
-  document.getElementById("hero-focus").textContent = person.focus;
-  document.querySelectorAll(".hr-card").forEach((card) => card.classList.toggle("selected", card.dataset.hr === id));
-  document.querySelectorAll("[data-select]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.select === id)));
-  document.getElementById("top").scrollIntoView({ behavior: "smooth" });
+  document.getElementById("hero-quote").textContent = person.quote;
+  document.querySelectorAll("[data-select]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.select === id));
+  });
+  if (fromTeam) document.getElementById("top").scrollIntoView({ behavior: "smooth" });
 }
 
 document.querySelectorAll("[data-select]").forEach((button) => {
-  button.addEventListener("click", () => selectPerson(button.dataset.select));
+  button.addEventListener("click", () => selectPerson(button.dataset.select, button.classList.contains("team-card")));
 });
-document.querySelector('[data-hr="vadik"]').classList.add("selected");
-document.querySelector('[data-select="vadik"]').setAttribute("aria-pressed", "true");
 
 const fileInput = document.getElementById("resume-file");
-const dropZone = document.getElementById("drop-zone");
+const uploadRail = document.getElementById("start");
 const fileState = document.getElementById("upload-state");
 document.getElementById("choose-file").addEventListener("click", () => fileInput.click());
 
 function showFile(file) {
   if (!file) return;
   if (!/\.(pdf|docx)$/i.test(file.name)) {
-    fileState.textContent = "Выбери PDF или DOCX.";
+    fileState.textContent = "Нужен PDF или DOCX.";
     return;
   }
   if (file.size > 8 * 1024 * 1024) {
     fileState.textContent = "Файл больше 8 МБ.";
     return;
   }
-  fileState.textContent = `${file.name} выбран. В этом макете разбор не запускается.`;
+  fileState.textContent = `${file.name} выбран. В макете разбор не запускается.`;
 }
 fileInput.addEventListener("change", () => showFile(fileInput.files?.[0]));
-dropZone.addEventListener("dragover", (event) => { event.preventDefault(); dropZone.classList.add("drag"); });
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
-dropZone.addEventListener("drop", (event) => {
+uploadRail.addEventListener("dragover", (event) => { event.preventDefault(); uploadRail.classList.add("drag"); });
+uploadRail.addEventListener("dragleave", () => uploadRail.classList.remove("drag"));
+uploadRail.addEventListener("drop", (event) => {
   event.preventDefault();
-  dropZone.classList.remove("drag");
+  uploadRail.classList.remove("drag");
   showFile(event.dataTransfer?.files?.[0]);
 });
 
@@ -56,11 +55,12 @@ const pastePanel = document.getElementById("paste-panel");
 textToggle.addEventListener("click", () => {
   pastePanel.hidden = !pastePanel.hidden;
   textToggle.setAttribute("aria-expanded", String(!pastePanel.hidden));
+  textToggle.textContent = pastePanel.hidden ? "Нет файла? Вставить текст" : "Скрыть текстовое поле";
   if (!pastePanel.hidden) document.getElementById("resume-text").focus();
 });
 document.getElementById("resume-text").addEventListener("input", (event) => {
   const count = event.target.value.trim().length;
   document.getElementById("paste-state").textContent = count
-    ? `${count} символов. Текст остаётся только в этой вкладке; разбор в макете не запускается.`
+    ? `${count} символов. Текст остаётся только в этой вкладке.`
     : "Локальный макет: текст останется только в этой вкладке.";
 });
