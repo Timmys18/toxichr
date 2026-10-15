@@ -10,5 +10,5 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ ok: true, message: "Если аккаунт существует, ссылка готова." });
   const raw = randomBytes(32).toString("hex");
   await prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: createHash("sha256").update(raw).digest("hex"), expiresAt: new Date(Date.now() + 30 * 60_000) } });
-  return NextResponse.json({ ok: true, message: "Ссылка готова. Открой её в течение 30 минут.", resetToken: raw });
+  return NextResponse.json({ ok: true, message: "Если аккаунт существует, ссылка отправлена. Открой её в течение 30 минут.", ...(process.env.NODE_ENV !== "production" ? { resetToken: raw } : {}) });
 }

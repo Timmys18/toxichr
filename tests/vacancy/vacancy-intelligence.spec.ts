@@ -71,13 +71,30 @@ test("извлечение сохраняет каждую явно перечи
     { ...vacancyAssessment.requirements[0], id: "VR01", text: "Брать кровь", sourceQuote: "брать кровь" },
     { ...vacancyAssessment.requirements[0], id: "VR02", text: "Сертификат", sourceQuote: "Требуется сертификат" },
   ] };
-  expect(cleanAssessment(raw, source)).toBeNull();
+  const restored = cleanAssessment(raw, source);
+  expect(restored?.requirements).toHaveLength(4);
+  expect(restored?.requirements.slice(2).every((item) => source.includes(item.sourceQuote))).toBe(true);
   const complete = { ...raw, requirements: [
     ...raw.requirements,
     { ...raw.requirements[0], id: "VR03", text: "Вести журнал температур", sourceQuote: "вести журнал температур" },
     { ...raw.requirements[0], id: "VR04", text: "Контролировать укладки", sourceQuote: "контролировать укладки" },
   ] };
   expect(cleanAssessment(complete, source)?.requirements).toHaveLength(4);
+});
+
+test("дословно восстанавливает обязанности, которые Yandex пропустил при извлечении", () => {
+  const source = "Младший UX-исследователь. Проводить интервью и юзабилити-тесты, анализировать качественные данные. Нужен опыт самостоятельного выбора методологии и работы с мобильными продуктами.";
+  const named = "Нужен опыт самостоятельного выбора методологии и работы с мобильными продуктами";
+  const raw = { ...vacancyAssessment, vacancyFingerprint: vacancyFingerprint(source), requirements: [
+    { ...vacancyAssessment.requirements[0], id: "VR01", text: "Опыт самостоятельного выбора методологии", sourceQuote: named },
+    { ...vacancyAssessment.requirements[0], id: "VR02", text: "Опыт работы с мобильными продуктами", sourceQuote: named },
+  ] };
+  const result = cleanAssessment(raw, source);
+  expect(result).not.toBeNull();
+  expect(result?.requirements.map((item) => item.sourceQuote)).toContain("Проводить интервью и юзабилити-тесты");
+  expect(result?.requirements.map((item) => item.sourceQuote)).toContain("анализировать качественные данные.");
+  expect(result?.requirements.every((item) => source.includes(item.sourceQuote))).toBe(true);
+  expect(result?.requirements.slice(2).every((item) => item.priority === "secondary")).toBe(true);
 });
 
 test("косвенная финансовая метрика не подтверждает P&L", () => {
@@ -88,6 +105,20 @@ test("косвенная финансовая метрика не подтвер
   expect(validateMatchAssessment(pnlMatch, pnlVacancy, financialMetric)).toBeNull();
   const unknown = { ...pnlMatch, matches: [{ ...pnlMatch.matches[0], status: "unknown", resumeEvidenceIds: [], resumeQuotes: [], explanation: "Резюме этого не показывает." }], whyInviteRequirementIds: [], unknownRequirementIds: ["VR01"] };
   expect(validateMatchAssessment(unknown, pnlVacancy, resumeAssessment)?.matches[0].status).toBe("unknown");
+});
+
+test("английский без релевантных фактов остаётся unknown и ведёт к уточнению", () => {
+  const req = { ...vacancyAssessment.requirements[0], id: "VR01", text: "Английский язык не ниже B2", sourceQuote: "Английский язык не ниже B2", priority: "critical" as const };
+  const languageVacancy = { ...vacancyAssessment, requirements: [req] };
+  const contractors = { ...resumeAssessment, findings: [{ ...resumeAssessment.findings[0], sourceQuote: "Вёл переговоры с подрядчиками и согласовывал графики поставок." }], strengths: [] };
+  const skip = { ...matchAssessment, decision: { ...matchAssessment.decision, code: "skip" as const }, matches: [{ ...matchAssessment.matches[0], requirementId: "VR01", status: "gap" as const, resumeEvidenceIds: ["F01"], resumeQuotes: ["Вёл переговоры с подрядчиками и согласовывал графики поставок."], explanation: "Уровень английского не подтверждён." }], whyInviteRequirementIds: [], whyRejectRequirementIds: ["VR01"], unknownRequirementIds: [], preApplyFixes: [] };
+  const validated = validateMatchAssessment(skip, languageVacancy, contractors, "Опыт работы с подрядчиками. Вёл переговоры с подрядчиками и согласовывал графики поставок.\n\nДополнительные сведения: Английский язык не указан.");
+  expect(validated?.matches[0]).toMatchObject({ status: "unknown", resumeEvidenceIds: [], resumeQuotes: [] });
+  expect(validated?.decision.code).not.toBe("skip");
+  expect(validated?.unknownRequirementIds).toContain("VR01");
+  expect(validated?.candidateQuestions.join(" ")).toMatch(/английск/i);
+  const levelOutsideSample = validateMatchAssessment(skip, languageVacancy, contractors, "Вёл переговоры с подрядчиками. Дополнительные сведения: Английский язык — B2.");
+  expect(levelOutsideSample?.matches[0]).toMatchObject({ status: "unknown", resumeEvidenceIds: [], resumeQuotes: [] });
 });
 
 test("unknown не привязывает соседний факт как подтверждение требования", () => {

@@ -13,3 +13,4 @@ docs
 logs
 _diag
 *.tsbuildinfo
+*.tgz

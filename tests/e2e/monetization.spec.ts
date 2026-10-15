@@ -479,8 +479,8 @@ test("аудит: владельцы, повторный анализ и ист�
       await page.screenshot({ path: `tests/artifacts/audit/improvement-${width}.png`, fullPage: true });
       await page.goto(`/vacancy?analysisId=${analysisId}&vacancyId=${first.vacancyId}`);
       await expect(page.getByRole("button", { name: "Сравнить с другой вакансией" })).toBeVisible();
-      await expect(page.getByText("улучшений осталось", { exact: true })).toBeVisible();
-      await expect(page.getByText("адаптаций осталось", { exact: true })).toBeVisible();
+      await expect(page.getByText(/Адаптация (входит в пакет|уже использована)/)).toBeVisible();
+      await expect(page.getByRole("link", { name: /Адаптировать резюме под вакансию|Исправить резюме/ })).toBeVisible();
       await page.screenshot({ path: `tests/artifacts/audit/vacancy-${width}.png`, fullPage: true });
       await page.getByRole("button", { name: "Сравнить с другой вакансией" }).click();
       await expect(page.getByRole("textbox", { name: "Текст вакансии" })).toHaveValue("");

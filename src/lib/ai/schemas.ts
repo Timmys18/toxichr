@@ -101,6 +101,12 @@ export const GenerationMetaSchema = z.object({
   })),
   retryCount: z.number().int().nonnegative(),
   editorUsed: z.boolean(),
+  voice: z.object({
+    corpusVersion: z.string(), policyVersion: z.string(),
+    selectedIds: z.array(z.string()).max(3), contextHash: z.string(),
+    effectiveIntensity: z.number().int().min(0).max(3),
+    status: z.enum(["mock", "generated", "limited"]),
+  }).optional(),
 });
 
 export const AnalysisReportSchema = z.object({

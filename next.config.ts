@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  typescript: {
+    // CI and the deployment workflow run typecheck separately.
+    ignoreBuildErrors: process.env.SKIP_BUILD_TYPECHECK === "1",
+  },
   // Локальная инструкция использует 127.0.0.1:3100, а Next dev по умолчанию
   // считает своим origin только localhost и блокирует CSS/JS для второго адреса.
   allowedDevOrigins: ["127.0.0.1"],

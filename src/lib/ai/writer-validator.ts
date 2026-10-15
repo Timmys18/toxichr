@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { PersonaId } from "@/lib/personas";
+import { inspectVoiceProse } from "./voice/runtime";
 
 const UserFacingBlockSchema = z.object({
   type: z.enum(["finding", "strength", "observation", "question", "summary"]),
@@ -146,6 +147,7 @@ export function stripSensitiveShareText(textValue: string, privacy: SharePrivacy
   return compact.length >= 8 ? compact : null;
 }
 
+/** Historical lexical diagnostics only. Never used as a literary acceptance gate. */
 export function scorePersonaQuality(draft: PersonaDraft, findingIds: Set<string>, personaId?: PersonaId): PersonaQualityMetrics {
   const prose = [draft.verdict.title, draft.verdict.comment, ...draft.contentBlocks.map((b) => b.content)].join(" ");
   const linked = draft.contentBlocks.filter((block) => block.type === "summary" || block.findingIds.some((id) => findingIds.has(id))).length;
@@ -166,8 +168,8 @@ export function scorePersonaQuality(draft: PersonaDraft, findingIds: Set<string>
 export function validatePersonaDraft(
   input: unknown,
   findingIds: Set<string>,
-  options: { personaId?: PersonaId; privacy?: SharePrivacyContext; enforceVoice?: boolean; hasFindings?: boolean; metricIssueGrounded?: boolean; avoidMasculineSecondPerson?: boolean } = {},
-): { ok: boolean; draft?: PersonaDraft; errors: string[]; quality?: PersonaQualityMetrics } {
+  options: { personaId?: PersonaId; privacy?: SharePrivacyContext; enforceVoice?: boolean; hasFindings?: boolean; metricIssueGrounded?: boolean; avoidMasculineSecondPerson?: boolean; groundedText?: string } = {},
+): { ok: boolean; draft?: PersonaDraft; errors: string[]; warnings?: string[]; quality?: PersonaQualityMetrics } {
   const parsed = PersonaDraftSchema.safeParse(input);
   if (!parsed.success) return { ok: false, errors: ["неверная структура JSON"] };
   const draft = parsed.data;
@@ -180,8 +182,6 @@ export function validatePersonaDraft(
     if (/пусто по масштабу|сколько процедур|добав\w*.{0,35}(?:масштаб|конкретик)/iu.test(draft.verdict.comment)) errors.push("претензия к масштабу не основана на выявленной проблеме резюме");
   }
   if (options.enforceVoice && options.personaId === "lera" && /(?:^|\s)Лера\s*[,!]/u.test(draft.verdict.comment)) errors.push("персона обращается к себе вместо кандидата");
-  if (options.enforceVoice && /^резюме\s+(?:\S+\s+){0,2}(?:показывает|подтверждает|демонстрирует)/iu.test(draft.verdict.comment)) errors.push("вместо оптики персоны повторена общая оценка; начните с конкретной детали editorialFocus");
-  if (options.enforceVoice && options.personaId === "lera" && !/рекрутер|позиционир|специализац|перв.{0,12}(?:экран|строк)|заголов|отлич/iu.test(draft.verdict.comment)) errors.push("Лера должна выбрать заметный сигнал для рекрутера; общий вопрос о личном вкладе не раскрывает её оптику");
   if ([draft.verdict.title, draft.verdict.comment].some((value) => /^\s*\.{3,}\s*$/.test(value))) errors.push("оставлена служебная заглушка вместо текста");
   for (const block of draft.contentBlocks) {
     if (block.type !== "summary" && block.findingIds.length === 0) errors.push("содержательный блок без findingId");
@@ -191,10 +191,13 @@ export function validatePersonaDraft(
     if (priority.findingIds.some((id) => !findingIds.has(id))) errors.push("приоритет со ссылкой на несуществующий findingId");
   }
   if (draft.shareLines.some((line) => !stripSensitiveShareText(line, options.privacy))) errors.push("shareLines раскрывают идентификатор или слишком коротки");
-  if (!BRIGHT_MOMENT.test(allText)) errors.push("нет яркого авторского момента");
-  if (draft.contentBlocks.length >= 3 && new Set(draft.contentBlocks.map((block) => block.type)).size === 1) errors.push("механически одинаковая структура блоков");
+  // Voice is not established by punctuation, marker words, length or block types.
+  const inspection = options.groundedText !== undefined
+    ? inspectVoiceProse([draft.verdict.title, draft.verdict.comment, ...draft.contentBlocks.map(b => b.content), ...draft.priorities.map(p => p.action), ...draft.shareLines].join("\n"), {
+        groundedText: options.groundedText,
+        displayedBlocks: [draft.verdict.comment, ...draft.contentBlocks.map(b => b.content)],
+      }) : { blockers: [], warnings: [] };
+  errors.push(...inspection.blockers);
   const quality = scorePersonaQuality(draft, findingIds, options.personaId);
-  if (options.enforceVoice && quality.personaDistinctiveness < 4) errors.push("голос персоны недостаточно различим");
-  if (options.enforceVoice && (quality.professionalDepth < 4 || quality.specificity < 4 || quality.usefulness < 4)) errors.push("недостаточно профессиональной конкретики");
-  return errors.length ? { ok: false, errors: [...new Set(errors)], quality } : { ok: true, draft, errors: [], quality };
+  return errors.length ? { ok: false, errors: [...new Set(errors)], warnings: inspection.warnings, quality } : { ok: true, draft, errors: [], warnings: inspection.warnings, quality };
 }

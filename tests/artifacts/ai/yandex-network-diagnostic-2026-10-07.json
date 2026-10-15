@@ -1,0 +1,50 @@
+{
+  "scope": "unauthenticated-invalid-body-no-generation",
+  "nodeVersion": "v24.19.0",
+  "proxyConfigured": {
+    "HTTP_PROXY": true,
+    "HTTPS_PROXY": true,
+    "ALL_PROXY": true,
+    "NO_PROXY": true
+  },
+  "nodeEnvProxyEnabled": true,
+  "results": [
+    {
+      "host": "ai.api.cloud.yandex.net",
+      "dns": {
+        "error": "EAI_AGAIN"
+      },
+      "node": {
+        "httpStatus": 400,
+        "server": "ycalb",
+        "elapsedMs": 6081
+      },
+      "curl": {
+        "exitCode": 0,
+        "httpStatus": 400,
+        "proxyConnectStatus": 200,
+        "tcpSeconds": 0.000162,
+        "tlsSeconds": 5.117953
+      }
+    },
+    {
+      "host": "llm.api.cloud.yandex.net",
+      "dns": {
+        "error": "EAI_AGAIN"
+      },
+      "node": {
+        "httpStatus": 400,
+        "server": "ycalb",
+        "elapsedMs": 3820
+      },
+      "curl": {
+        "exitCode": 0,
+        "httpStatus": 400,
+        "proxyConnectStatus": 200,
+        "tcpSeconds": 0.00009,
+        "tlsSeconds": 3.042378
+      }
+    }
+  ],
+  "note": "HTTP response does not validate an API key, model or schema. DNS failure can coexist with HTTP success through a proxy. Compare the same command inside Codex and in a normal terminal before diagnosing the user's machine."
+}

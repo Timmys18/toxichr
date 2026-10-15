@@ -73,6 +73,7 @@ export async function GET(request: Request) {
     const questions = buildAdaptationQuestions(context.review.vacancyAssessment, context.review.matchAssessment!);
     const adaptation = context.adaptation;
     return NextResponse.json({
+      vacancyTitle: context.vacancy.title ?? context.review.vacancyAssessment.title,
       questions,
       adaptation: adaptation ? {
         id: adaptation.id,

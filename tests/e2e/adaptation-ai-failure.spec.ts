@@ -72,6 +72,20 @@ async function prepareAdaptation(request: APIRequestContext) {
   return { analysisId, vacancyId, resumeId, requirementId: preparedData.questions[0].requirementId as string };
 }
 
+async function prepareImprovement(request: APIRequestContext) {
+  const resumeText = `Анна Петрова\nМенеджер продукта\nProduct Manager, 2021–2025\nПроводила интервью с пользователями и готовила требования для команды.`;
+  const resumeResponse = await request.post("/api/resumes/text", { data: { text: resumeText } });
+  const { resumeId } = await resumeResponse.json();
+  const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
+  const { analysisId } = await analysisResponse.json();
+  await prisma.toxicHrPackage.create({ data: { resumeId, source: "test-improvement-ai-failure" } });
+  const questionsResponse = await request.get(`/api/improvements/${analysisId}`);
+  expect(questionsResponse.status()).toBe(200);
+  const questions = (await questionsResponse.json()).questions as Array<{ problemId: string }>;
+  expect(questions.length).toBeGreaterThan(0);
+  return { analysisId, resumeId, problemId: questions[0].problemId };
+}
+
 for (const scenario of [
   { name: "ошибка AI", marker: "[[TOXICHR_TEST_AI_ERROR]]" },
   { name: "невалидный JSON", marker: "[[TOXICHR_TEST_AI_INVALID_JSON]]" },
@@ -106,3 +120,17 @@ for (const scenario of [
     expect(await prisma.resumeVersion.count({ where: { resumeId: prepared.resumeId } })).toBe(versionsBefore);
   });
 }
+
+test("ошибка AI не сохраняет fallback улучшение и освобождает платную бронь", async ({ request }) => {
+  const prepared = await prepareImprovement(request);
+  const versionsBefore = await prisma.resumeVersion.count({ where: { resumeId: prepared.resumeId } });
+  const response = await request.post(`/api/improvements/${prepared.analysisId}`, {
+    data: { answers: [{ problemId: prepared.problemId, answer: "[[TOXICHR_TEST_AI_ERROR]] Лично провела восемь интервью с пользователями и проверила две гипотезы." }] },
+  });
+  expect(response.status()).toBe(502);
+  expect(await response.json()).toMatchObject({ retryable: true });
+  const packageRow = await prisma.toxicHrPackage.findUniqueOrThrow({ where: { resumeId: prepared.resumeId } });
+  expect(await prisma.packageUsage.count({ where: { packageId: packageRow.id, kind: "IMPROVEMENT" } })).toBe(0);
+  expect(await prisma.resumeImprovement.count({ where: { analysisId: prepared.analysisId, status: "ready" } })).toBe(0);
+  expect(await prisma.resumeVersion.count({ where: { resumeId: prepared.resumeId } })).toBe(versionsBefore);
+});

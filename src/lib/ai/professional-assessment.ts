@@ -44,7 +44,9 @@ export const ProfessionalAssessmentSchema = z.object({
 export type ProfessionalAssessment = z.infer<typeof ProfessionalAssessmentSchema>;
 
 const string = { type: "string" } as const;
-const stringArray = { type: "array", items: string } as const;
+const bounded = (minLength: number, maxLength: number) => ({ type: "string", minLength, maxLength });
+const minBounded = (minLength: number) => ({ type: "string", minLength });
+const stringArray = { type: "array", maxItems: 12, items: bounded(4, 500) } as const;
 
 export const PROFESSIONAL_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -63,8 +65,8 @@ export const PROFESSIONAL_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = {
       type: "object", additionalProperties: false,
       required: ["overallImpression", "strongestProfessionalSignal", "mainResumeProblem", "seniorityConsistency", "resumeVsExperienceGap"],
       properties: {
-        overallImpression: string, strongestProfessionalSignal: string, mainResumeProblem: string,
-        seniorityConsistency: string, resumeVsExperienceGap: string,
+        overallImpression: minBounded(20), strongestProfessionalSignal: minBounded(10), mainResumeProblem: minBounded(10),
+        seniorityConsistency: minBounded(10), resumeVsExperienceGap: minBounded(10),
       },
     },
     findings: {
@@ -73,9 +75,9 @@ export const PROFESSIONAL_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = {
         type: "object", additionalProperties: false,
         required: ["id", "sourceQuote", "interpretation", "whyItMatters", "severity", "confidence", "issueType"],
         properties: {
-          id: { type: "string", pattern: "^F[0-9]{2,}$" }, sourceQuote: string, interpretation: string, whyItMatters: string,
+          id: { type: "string", pattern: "^F[0-9]{2,}$" }, sourceQuote: bounded(8, 500), interpretation: bounded(10, 900), whyItMatters: bounded(10, 900),
           severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
-          confidence: { type: "string", enum: ["high", "medium", "low"] }, issueType: string,
+          confidence: { type: "string", enum: ["high", "medium", "low"] }, issueType: bounded(2, 120),
         },
       },
     },
@@ -84,10 +86,10 @@ export const PROFESSIONAL_ASSESSMENT_JSON_SCHEMA: Record<string, unknown> = {
       items: {
         type: "object", additionalProperties: false,
         required: ["id", "sourceQuote", "interpretation"],
-        properties: { id: { type: "string", pattern: "^S[0-9]{2,}$" }, sourceQuote: string, interpretation: string },
+        properties: { id: { type: "string", pattern: "^S[0-9]{2,}$" }, sourceQuote: bounded(8, 500), interpretation: bounded(10, 900) },
       },
     },
-    questionsCreatedByResume: stringArray,
+    questionsCreatedByResume: { type: "array", maxItems: 12, items: bounded(8, 500) },
     uncertainties: stringArray,
     claimsNotAllowed: stringArray,
   },
@@ -102,16 +104,24 @@ function groundedSourceQuote(quote: string, resumeText: string): string | null {
   if (needle.length < 8) return null;
   // Keep the actual span, never the containing line (which may be the entire CV).
   const pattern = needle.split(/\s+/u).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/"/g, '[«»“”„"]').replace(/[её]/g, "[её]")).join("\\s+");
-  return resumeText.match(new RegExp(pattern, "iu"))?.[0] ?? null;
+  const matched = resumeText.match(new RegExp(pattern, "iu"))?.[0];
+  // The model's quote is bounded, but the original span may contain much more
+  // whitespace (for example from a PDF). Keep an exact, bounded source span.
+  return matched ? matched.slice(0, 500).trimEnd() : null;
 }
 
 export function parseGroundedAssessment(input: unknown, resumeText: string): { assessment: ProfessionalAssessment | null; errors: string[] } {
   const parsed = ProfessionalAssessmentSchema.safeParse(input);
   if (!parsed.success) return { assessment: null, errors: ["неверная структура профессиональной оценки"] };
   const abilityJudgment = /(кандидат|человек|он|она|вы|ты).{0,32}(умеет|не умеет|может|не может|способен|неспособен)|(?:показывает|подтверждает|демонстрирует|признак)\s+(?:\S+\s+){0,2}способност/iu;
+  // A quote can be exact while a generic claim about absent skills, metrics or
+  // scale is still not entailed by it. Keep that uncertainty, not a defect card.
+  const genericAbsence = /(?:недостаточно|нет)\s+информации\s+о|не\s+указан[а-яё]*\s+(?:сведени|данны|информац)/iu;
+  const unrelatedChecklist = /теоретич|инструмент|масштаб|сложност|количествен|метрик|цифр/iu;
+  const downgraded = parsed.data.findings.filter(item => groundedSourceQuote(item.sourceQuote, resumeText) && genericAbsence.test(item.interpretation) && unrelatedChecklist.test(item.interpretation));
   const findings = parsed.data.findings.flatMap((item) => {
     const sourceQuote = groundedSourceQuote(item.sourceQuote, resumeText);
-    return sourceQuote && !abilityJudgment.test(`${item.interpretation} ${item.whyItMatters}`) ? [{ ...item, sourceQuote }] : [];
+    return sourceQuote && !downgraded.includes(item) && !abilityJudgment.test(`${item.interpretation} ${item.whyItMatters}`) ? [{ ...item, sourceQuote }] : [];
   });
   const strengths = parsed.data.strengths.flatMap((item) => {
     const sourceQuote = groundedSourceQuote(item.sourceQuote, resumeText);
@@ -120,10 +130,18 @@ export function parseGroundedAssessment(input: unknown, resumeText: string): { a
   const ids = [...findings.map((item) => item.id), ...strengths.map((item) => item.id)];
   const errors: string[] = [];
   if (new Set(ids).size !== ids.length) errors.push("повторяющиеся идентификаторы наблюдений");
-  const excluded = parsed.data.findings.length + parsed.data.strengths.length - ids.length;
+  const excluded = parsed.data.findings.length + parsed.data.strengths.length - ids.length - downgraded.length;
   if (excluded) errors.push(`исключено неподтверждённых наблюдений: ${excluded}`);
   if (ids.length === 0 || new Set(ids).size !== ids.length) return { assessment: null, errors };
-  return { assessment: { ...parsed.data, findings, strengths }, errors };
+  const uncertainties = [...parsed.data.uncertainties, ...downgraded.map(item => item.interpretation)].slice(0, 12);
+  const professionalAssessment = findings.length ? parsed.data.professionalAssessment : {
+    ...parsed.data.professionalAssessment,
+    mainResumeProblem: "По подтверждённым наблюдениям существенный недостаток описания не установлен.",
+  };
+  const grounded = ProfessionalAssessmentSchema.safeParse({ ...parsed.data, professionalAssessment, findings, strengths, uncertainties });
+  return grounded.success
+    ? { assessment: grounded.data, errors }
+    : { assessment: null, errors: [...errors, "подтверждённая оценка не прошла проверку структуры"] };
 }
 
 export async function runProfessionalAnalyst(resumeText: string) {

@@ -9,6 +9,7 @@ import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
 import { hasPaidPackageForResume } from "@/lib/package";
+import { analysisCostFields } from "@/lib/ai/run-analysis-cost";
 
 export const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
@@ -40,10 +41,14 @@ async function createFreePersonaAnalysis(
         resumeVersion: { resumeId },
         status: { in: ["RUNNING", "COMPLETED"] },
       },
-      select: { id: true, personaId: true, status: true },
+      select: { id: true, personaId: true, status: true, reportPayload: true },
+    });
+    const validExisting = existing.filter((item) => {
+      const report = item.reportPayload as { generationMeta?: { stages?: Array<{ name?: string }> } } | null;
+      return !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
     });
     const usedPersonaIds = new Set(
-      existing.map((item) => item.personaId).filter((value): value is string => Boolean(value)),
+      validExisting.map((item) => item.personaId).filter((value): value is string => Boolean(value)),
     );
 
     const packageOpen = await hasPaidPackageForResume(resumeId);
@@ -51,7 +56,7 @@ async function createFreePersonaAnalysis(
       throw new AnalysisInputError(
         "Бесплатный лимит исчерпан: первый разбор и один дополнительный HR-взгляд уже доступны. Остальные голоса открывает пакет ToxicHR.",
         403,
-        existing.find((item) => item.status === "COMPLETED")?.id,
+        validExisting.find((item) => item.status === "COMPLETED")?.id,
       );
     }
 
@@ -76,7 +81,7 @@ export async function findReusableAnalysis(
   const resume = await assertResumeAccess(resumeId, currentUserId);
   const latest = await prisma.resumeVersion.findFirst({ where: { resumeId: resume.id }, orderBy: { versionNumber: "desc" }, select: { id: true } });
   if (!latest) return null;
-  return prisma.analysis.findFirst({
+  const recent = await prisma.analysis.findMany({
     where: {
       status: { in: ["RUNNING", "COMPLETED"] },
       createdAt: {
@@ -86,8 +91,15 @@ export async function findReusableAnalysis(
       persona: { code: personaId },
     },
     orderBy: { createdAt: "desc" },
-    select: { id: true, status: true },
-  }) as Promise<{ id: string; status: "RUNNING" | "COMPLETED" } | null>;
+    take: 20,
+    select: { id: true, status: true, reportPayload: true },
+  });
+  const reusable = recent.find((item) => {
+    if (item.status === "RUNNING") return true;
+    const report = item.reportPayload as { generationMeta?: { stages?: Array<{ name?: string }> } } | null;
+    return !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
+  });
+  return reusable ? { id: reusable.id, status: reusable.status as "RUNNING" | "COMPLETED" } : null;
 }
 
 export async function waitForAnalysis(
@@ -146,12 +158,18 @@ export async function createAndRunAnalysis(
   try {
     const versionContent = version.structuredContent as { text?: string } | null;
     const resumeText = versionContent?.text?.trim() || resume.sanitizedText;
-    const previous = await prisma.analysis.findFirst({
+    const previous = await prisma.analysis.findMany({
       where: { resumeVersionId: version.id, status: "COMPLETED", reportPayload: { not: undefined } },
       orderBy: { createdAt: "desc" },
+      take: 20,
       select: { reportPayload: true },
     });
-    const previousReport = previous?.reportPayload as { professionalAssessment?: unknown } | null;
+    const previousReport = previous.map((item) => item.reportPayload as {
+      professionalAssessment?: unknown;
+      generationMeta?: { stages?: Array<{ name?: string }> };
+    } | null).find((report) => report?.generationMeta?.stages?.some((stage) =>
+      stage.name === "professional-analyst" || stage.name === "professional-analyst-reused",
+    ));
     const reused = ProfessionalAssessmentSchema.safeParse(previousReport?.professionalAssessment);
     const result = await runAnalysisPipeline({
       resumeText,
@@ -166,7 +184,7 @@ export async function createAndRunAnalysis(
         status: "COMPLETED",
         modelProvider: result.provider,
         modelName: result.model,
-        cost: result.costUsd,
+        ...analysisCostFields(result.cost, result.costUsd),
         scorePayload: result.report.score,
         reportPayload: result.report,
       },
@@ -191,7 +209,12 @@ export async function createAndRunAnalysis(
       },
     });
 
-    await trackServer("analysis_completed", { analysisId: analysis.id });
+    await trackServer("analysis_completed", {
+      analysisId: analysis.id,
+      costAmount: result.cost?.amount ?? result.costUsd,
+      costCurrency: result.cost?.currency ?? "USD",
+      costUsd: result.costUsd,
+    });
     return { analysisId: analysis.id };
   } catch (error) {
     await prisma.analysis.update({
