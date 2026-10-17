@@ -7,8 +7,8 @@
     <script>document.documentElement.dataset.view = new URLSearchParams(location.search).get("view") === "carousel" ? "carousel" : "equal";</script>
     <title>ToxicHR — сравнение главной</title>
     <link rel="stylesheet" href="./style.css?v=20261017" />
-    <link rel="stylesheet" href="./compare.css?v=20261017" />
-    <script defer src="./compare.js?v=20261017"></script>
+    <link rel="stylesheet" href="./compare.css?v=20261017b" />
+    <script defer src="./compare.js?v=20261017b"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">К содержанию</a>
@@ -54,14 +54,12 @@
         </div>
 
         <div class="carousel-view">
-          <div class="carousel-heading"><h2 class="choice-title">Выбери HR</h2><span id="carousel-count" aria-live="polite">01 / 04</span></div>
-          <div class="carousel-stage" aria-label="Карусель HR">
-            <button class="carousel-card" type="button" data-person="vadik" aria-label="Выбрать Вадика"><img src="./assets/vadik.jpg" alt="" /><span><b>Вадик</b><small>Фаундер</small><strong>Ищет автора, не свидетеля</strong></span></button>
-            <button class="carousel-card" type="button" data-person="lera" aria-label="Выбрать Леру"><img src="./assets/lera.jpg" alt="" /><span><b>Лера</b><small>Бигтех</small><strong>Свайпает карьеру влево</strong></span></button>
-            <button class="carousel-card" type="button" data-person="gleb" aria-label="Выбрать Глеба Аркадьевича"><img src="./assets/gleb.jpg" alt="" /><span><b>Глеб Аркадьевич</b><small>Партнёр консалтинга</small><strong>Профессионально игнорирует координаторов и фасилитаторов</strong></span></button>
-            <button class="carousel-card" type="button" data-person="tamara" aria-label="Выбрать Тамару Петровну"><img src="./assets/tamara.jpg" alt="" /><span><b>Тамара Петровна</b><small>HR-директор из нефтегаза</small><strong>The kadrovik</strong></span></button>
-            <button class="carousel-arrow carousel-prev" id="carousel-prev" type="button" aria-label="Предыдущий HR">←</button>
-            <button class="carousel-arrow carousel-next" id="carousel-next" type="button" aria-label="Следующий HR">→</button>
+          <h2 class="carousel-accessible-title">Выбери HR</h2>
+          <div class="carousel-stage" aria-label="Нажми на соседнюю карточку, чтобы выбрать HR" tabindex="0">
+            <button class="carousel-card" type="button" data-person="vadik" aria-label="Показать Вадика"><img src="./assets/vadik.jpg" alt="" /><span><b>Вадик</b><small>Фаундер</small><strong>Ищет автора, не свидетеля</strong></span></button>
+            <button class="carousel-card" type="button" data-person="lera" aria-label="Показать Леру"><img src="./assets/lera.jpg" alt="" /><span><b>Лера</b><small>Бигтех</small><strong>Свайпает карьеру влево</strong></span></button>
+            <button class="carousel-card" type="button" data-person="gleb" aria-label="Показать Глеба Аркадьевича"><img src="./assets/gleb.jpg" alt="" /><span><b>Глеб Аркадьевич</b><small>Партнёр консалтинга</small><strong>Профессионально игнорирует координаторов и фасилитаторов</strong></span></button>
+            <button class="carousel-card" type="button" data-person="tamara" aria-label="Показать Тамару Петровну"><img src="./assets/tamara.jpg" alt="" /><span><b>Тамара Петровна</b><small>HR-директор из нефтегаза</small><strong>The kadrovik</strong></span></button>
           </div>
         </div>
 

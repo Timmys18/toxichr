@@ -16,9 +16,10 @@ function showCarouselPosition() {
     if (index === activeIndex) card.classList.add("is-current");
     else if (index === previous) card.classList.add("is-prev");
     else if (index === next) card.classList.add("is-next");
-    card.tabIndex = index === activeIndex || index === previous || index === next ? 0 : -1;
+    const visible = index === activeIndex || index === previous || index === next;
+    card.tabIndex = visible ? 0 : -1;
+    card.setAttribute("aria-hidden", String(!visible));
   });
-  document.getElementById("carousel-count").textContent = `${String(activeIndex + 1).padStart(2, "0")} / 04`;
 }
 
 document.querySelectorAll(".equal-card").forEach((card) => {
@@ -33,13 +34,12 @@ carouselCards.forEach((card, index) => {
   });
 });
 
-document.getElementById("carousel-prev").addEventListener("click", () => {
-  activeIndex = (activeIndex + carouselCards.length - 1) % carouselCards.length;
+document.querySelector(".carousel-stage").addEventListener("keydown", (event) => {
+  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+  event.preventDefault();
+  activeIndex = (activeIndex + (event.key === "ArrowRight" ? 1 : carouselCards.length - 1)) % carouselCards.length;
   showCarouselPosition();
-});
-document.getElementById("carousel-next").addEventListener("click", () => {
-  activeIndex = (activeIndex + 1) % carouselCards.length;
-  showCarouselPosition();
+  carouselCards[activeIndex].focus();
 });
 showCarouselPosition();
 

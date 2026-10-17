@@ -25,8 +25,6 @@ html[data-view="equal"] .carousel-view,html[data-view="carousel"] .equal-view{di
 .equal-card b{font-size:24px;line-height:1.12;letter-spacing:-.035em}
 .equal-card small{margin-top:5px;color:var(--dim);font-size:16px}
 .equal-card strong{margin-top:auto;padding-top:12px;font-size:16px;font-weight:600;line-height:1.35}
-.carousel-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.carousel-heading>span{font-family:var(--font-jetbrains),monospace;color:var(--dim);font-size:16px}
 .carousel-stage{position:relative;height:405px;overflow:hidden}
 .carousel-card{display:none;position:absolute;top:0;width:52%;height:100%;padding:0;overflow:hidden;border:1px solid var(--hair2);background:var(--metal-1);color:var(--fg);text-align:left;transition:opacity .25s var(--ease),border-color .25s var(--ease),filter .25s var(--ease)}
 .carousel-card.is-prev,.carousel-card.is-current,.carousel-card.is-next{display:block}
@@ -41,10 +39,33 @@ html[data-view="equal"] .carousel-view,html[data-view="carousel"] .equal-view{di
 .carousel-card b{font-size:38px;line-height:1.08;letter-spacing:-.04em}
 .carousel-card small{margin-top:7px;color:rgba(242,244,245,.75);font-size:16px}
 .carousel-card strong{margin-top:8px;font-size:16px;font-weight:600;line-height:1.35}
-.carousel-arrow{position:absolute;z-index:3;top:calc(50% - 28px);width:56px;height:56px;border:1px solid var(--hair2);border-radius:50%;background:rgba(8,9,10,.85);color:var(--fg);font-size:25px;line-height:1}
-.carousel-arrow:hover{border-color:var(--tox);color:var(--tox)}
-.carousel-prev{left:18px}.carousel-next{right:18px}
 .comparison-paste{margin-top:24px}
 @media(max-width:1100px){.comparison-intro{grid-template-columns:minmax(0,1fr) minmax(380px,460px);gap:32px}.equal-card img{height:190px}.equal-card{min-height:370px}}
 @media(max-width:960px){.comparison-hero{padding-top:34px}.comparison-intro{grid-template-columns:1fr;gap:28px}.comparison-intro h1{font-size:clamp(48px,10vw,72px)}.comparison-upload{max-width:540px}.equal-view,.carousel-view{margin-top:46px}.equal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.carousel-stage{height:370px}.carousel-card{width:68%}.carousel-card.is-prev{left:-42%}.carousel-card.is-current{left:16%}.carousel-card.is-next{left:74%}}
-@media(max-width:620px){.comparison-hero{padding-bottom:65px}.comparison-intro>div:first-child>p{font-size:18px}.comparison-action{min-height:112px;padding:14px}.comparison-action b{font-size:16px}.equal-grid{gap:10px}.equal-card{min-height:285px}.equal-card img{height:160px}.equal-card>span{min-height:130px;padding:13px}.equal-card b{font-size:20px}.equal-card small,.equal-card strong{font-size:14px}.carousel-stage{height:330px}.carousel-card{width:80%}.carousel-card.is-prev{left:-58%}.carousel-card.is-current{left:10%}.carousel-card.is-next{left:78%}.carousel-card>span{right:18px;bottom:20px;left:18px}.carousel-card b{font-size:27px}.carousel-card strong{font-size:14px}.carousel-arrow{width:44px;height:44px;top:calc(50% - 22px)}.carousel-prev{left:8px}.carousel-next{right:8px}}
+@media(max-width:620px){.comparison-hero{padding-bottom:65px}.comparison-intro>div:first-child>p{font-size:18px}.comparison-action{min-height:112px;padding:14px}.comparison-action b{font-size:16px}.equal-grid{gap:10px}.equal-card{min-height:285px}.equal-card img{height:160px}.equal-card>span{min-height:130px;padding:13px}.equal-card b{font-size:20px}.equal-card small,.equal-card strong{font-size:14px}.carousel-stage{height:330px}.carousel-card{width:80%}.carousel-card.is-prev{left:-58%}.carousel-card.is-current{left:10%}.carousel-card.is-next{left:78%}.carousel-card>span{right:18px;bottom:20px;left:18px}.carousel-card b{font-size:27px}.carousel-card strong{font-size:14px}}
+
+/* Второй вариант: фотографическая колода в правой половине первого экрана. */
+html[data-view="carousel"] .comparison-hero{display:grid;grid-template-columns:minmax(0,.46fr) minmax(0,.54fr);align-items:stretch;padding-top:44px;padding-bottom:82px}
+html[data-view="carousel"] .comparison-intro{display:flex;min-height:590px;flex-direction:column;align-items:stretch;justify-content:space-between;gap:42px;padding:64px 44px 30px 0;border-top:1px solid var(--hair2);border-right:1px solid var(--hair2);border-bottom:1px solid var(--hair2)}
+html[data-view="carousel"] .comparison-intro h1{max-width:9ch;font-size:clamp(54px,5vw,76px)}
+html[data-view="carousel"] .comparison-intro>div:first-child>p{max-width:30ch;margin-top:29px}
+html[data-view="carousel"] .comparison-upload{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+html[data-view="carousel"] .comparison-action{min-height:116px}
+html[data-view="carousel"] .carousel-view{display:flex;min-width:0;align-items:stretch;margin:0;border-top:1px solid var(--hair2);border-bottom:1px solid var(--hair2)}
+.carousel-accessible-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+html[data-view="carousel"] .carousel-stage{isolation:isolate;width:100%;height:590px;overflow:hidden;perspective:1100px}
+html[data-view="carousel"] .carousel-card{display:block;top:35px;left:18%;width:64%;height:520px;border-radius:12px;opacity:0;filter:brightness(.75);pointer-events:none;transform:translateY(28px) rotate(0) scale(.76);transform-origin:center 82%;box-shadow:0 28px 70px rgba(0,0,0,.5);transition:transform .65s var(--ease),opacity .55s var(--ease),filter .55s var(--ease),border-color .25s var(--ease)}
+html[data-view="carousel"] .carousel-card.is-current,html[data-view="carousel"] .carousel-card.is-prev,html[data-view="carousel"] .carousel-card.is-next{pointer-events:auto}
+html[data-view="carousel"] .carousel-card.is-current{z-index:3;opacity:1;filter:none;transform:translateX(0) translateY(0) rotate(0) scale(1)}
+html[data-view="carousel"] .carousel-card.is-prev{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(-72%) translateY(24px) rotate(-8deg) scale(.87);animation:carousel-float 6.5s ease-in-out infinite alternate}
+html[data-view="carousel"] .carousel-card.is-next{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(72%) translateY(24px) rotate(8deg) scale(.87);animation:carousel-float 7.3s ease-in-out -2s infinite alternate-reverse}
+html[data-view="carousel"] .carousel-card.is-prev:hover{z-index:4;opacity:1;filter:none;transform:translateX(-63%) translateY(10px) rotate(-4deg) scale(.9)}
+html[data-view="carousel"] .carousel-card.is-next:hover{z-index:4;opacity:1;filter:none;transform:translateX(63%) translateY(10px) rotate(4deg) scale(.9)}
+html[data-view="carousel"] .carousel-card.is-current:hover{transform:translateY(-4px) scale(1.01)}
+html[data-view="carousel"] .carousel-card>span{right:26px;bottom:26px;left:26px}
+html[data-view="carousel"] .carousel-card b{font-size:32px}
+html[data-view="carousel"] .carousel-card.is-prev>span,html[data-view="carousel"] .carousel-card.is-next>span{display:none}
+@keyframes carousel-float{from{translate:0 0}to{translate:0 -8px}}
+@media(max-width:960px){html[data-view="carousel"] .comparison-hero{display:block;padding-top:20px}html[data-view="carousel"] .comparison-intro{min-height:0;gap:28px;padding:18px 0 25px;border-right:0}html[data-view="carousel"] .comparison-intro h1{font-size:clamp(48px,10vw,72px)}html[data-view="carousel"] .carousel-view{margin-top:22px}html[data-view="carousel"] .carousel-stage{height:520px}html[data-view="carousel"] .carousel-card{top:28px;height:460px}}
+@media(max-width:620px){html[data-view="carousel"] .carousel-stage{height:410px}html[data-view="carousel"] .carousel-card{top:24px;left:15%;width:70%;height:360px}html[data-view="carousel"] .carousel-card b{font-size:25px}html[data-view="carousel"] .carousel-card.is-prev b,html[data-view="carousel"] .carousel-card.is-next b{font-size:16px}}
+@media(prefers-reduced-motion:reduce){html[data-view="carousel"] .carousel-card{animation:none!important}}
