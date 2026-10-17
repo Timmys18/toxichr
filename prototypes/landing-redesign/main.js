@@ -55,7 +55,7 @@ const pastePanel = document.getElementById("paste-panel");
 textToggle.addEventListener("click", () => {
   pastePanel.hidden = !pastePanel.hidden;
   textToggle.setAttribute("aria-expanded", String(!pastePanel.hidden));
-  textToggle.textContent = pastePanel.hidden ? "Вставить текст" : "Скрыть текстовое поле";
+  document.getElementById("text-action-label").textContent = pastePanel.hidden ? "Вставить текст" : "Скрыть текст";
   if (!pastePanel.hidden) document.getElementById("resume-text").focus();
 });
 document.getElementById("resume-text").addEventListener("input", (event) => {
