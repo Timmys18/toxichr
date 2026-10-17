@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08090a" />
+    <script>document.documentElement.dataset.view = new URLSearchParams(location.search).get("view") === "carousel" ? "carousel" : "equal";</script>
+    <title>ToxicHR — сравнение главной</title>
+    <link rel="stylesheet" href="./style.css?v=20261017" />
+    <link rel="stylesheet" href="./compare.css?v=20261017" />
+    <script defer src="./compare.js?v=20261017"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">К содержанию</a>
+    <header class="topnav">
+      <a class="brand" href="#top" aria-label="ToxicHR, наверх">TOXIC<i>HR</i></a>
+      <nav class="nav-links" aria-label="Разделы страницы">
+        <a href="#how">Как это работает</a>
+        <a href="#pricing">Цены</a>
+        <a href="https://toxichr.ru/me" target="_blank" rel="noopener noreferrer">Личный кабинет</a>
+      </nav>
+      <a class="nav-action" href="https://toxichr.ru/auth" target="_blank" rel="noopener noreferrer">Войти</a>
+    </header>
+
+    <main id="main">
+      <section class="comparison-hero page-wrap" id="top" aria-labelledby="comparison-title">
+        <div class="comparison-intro">
+          <div>
+            <h1 id="comparison-title">Твоё резюме <em>не работает.</em></h1>
+            <p>Выбери своего HR и узнай почему</p>
+          </div>
+          <div class="comparison-upload" id="start">
+            <input id="resume-file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+            <button class="comparison-action comparison-action-primary" type="button" id="choose-file">
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+              <b>Кидай резюме</b>
+            </button>
+            <button class="comparison-action comparison-action-secondary" type="button" id="toggle-text" aria-expanded="false" aria-controls="paste-panel">
+              <small>Если нет файла</small>
+              <b id="text-action-label">Вставить текст</b>
+            </button>
+            <p class="comparison-state" id="upload-state" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="equal-view">
+          <h2 class="choice-title">Выбери HR</h2>
+          <div class="equal-grid" aria-label="Выбрать HR">
+            <button class="equal-card" type="button" data-person="vadik" aria-pressed="false"><img src="./assets/vadik.jpg" alt="" /><span><b>Вадик</b><small>Фаундер</small><strong>Ищет автора, не свидетеля</strong></span></button>
+            <button class="equal-card" type="button" data-person="lera" aria-pressed="false"><img src="./assets/lera.jpg" alt="" /><span><b>Лера</b><small>Бигтех</small><strong>Свайпает карьеру влево</strong></span></button>
+            <button class="equal-card" type="button" data-person="gleb" aria-pressed="false"><img src="./assets/gleb.jpg" alt="" /><span><b>Глеб Аркадьевич</b><small>Партнёр консалтинга</small><strong>Профессионально игнорирует координаторов и фасилитаторов</strong></span></button>
+            <button class="equal-card" type="button" data-person="tamara" aria-pressed="false"><img src="./assets/tamara.jpg" alt="" /><span><b>Тамара Петровна</b><small>HR-директор из нефтегаза</small><strong>The kadrovik</strong></span></button>
+          </div>
+        </div>
+
+        <div class="carousel-view">
+          <div class="carousel-heading"><h2 class="choice-title">Выбери HR</h2><span id="carousel-count" aria-live="polite">01 / 04</span></div>
+          <div class="carousel-stage" aria-label="Карусель HR">
+            <button class="carousel-card" type="button" data-person="vadik" aria-label="Выбрать Вадика"><img src="./assets/vadik.jpg" alt="" /><span><b>Вадик</b><small>Фаундер</small><strong>Ищет автора, не свидетеля</strong></span></button>
+            <button class="carousel-card" type="button" data-person="lera" aria-label="Выбрать Леру"><img src="./assets/lera.jpg" alt="" /><span><b>Лера</b><small>Бигтех</small><strong>Свайпает карьеру влево</strong></span></button>
+            <button class="carousel-card" type="button" data-person="gleb" aria-label="Выбрать Глеба Аркадьевича"><img src="./assets/gleb.jpg" alt="" /><span><b>Глеб Аркадьевич</b><small>Партнёр консалтинга</small><strong>Профессионально игнорирует координаторов и фасилитаторов</strong></span></button>
+            <button class="carousel-card" type="button" data-person="tamara" aria-label="Выбрать Тамару Петровну"><img src="./assets/tamara.jpg" alt="" /><span><b>Тамара Петровна</b><small>HR-директор из нефтегаза</small><strong>The kadrovik</strong></span></button>
+            <button class="carousel-arrow carousel-prev" id="carousel-prev" type="button" aria-label="Предыдущий HR">←</button>
+            <button class="carousel-arrow carousel-next" id="carousel-next" type="button" aria-label="Следующий HR">→</button>
+          </div>
+        </div>
+
+        <div class="paste-panel comparison-paste" id="paste-panel" hidden>
+          <label for="resume-text">Резюме без файла</label>
+          <textarea id="resume-text" rows="7" placeholder="Опыт, проекты, результаты, образование…" maxlength="60000"></textarea>
+          <p id="paste-state" aria-live="polite">Локальный макет: текст останется только в этой вкладке.</p>
+        </div>
+      </section>
+
+      <section class="section page-wrap" id="how" aria-labelledby="how-title">
+        <h2 class="section-title" id="how-title">Как это работает</h2>
+        <div class="steps">
+          <article><span>01</span><h3>Загружаешь резюме</h3><p>Файл или текст.</p></article>
+          <article><span>02</span><h3>Выбираешь HR</h3><p>Разбор с выбранным взглядом.</p></article>
+          <article><span>03</span><h3>Видишь замечания</h3><p>По конкретным строкам резюме.</p></article>
+          <article><span>04</span><h3>Исправляешь</h3><p>Собираешь новую версию.</p></article>
+        </div>
+      </section>
+
+      <section class="section pricing-section" id="pricing" aria-labelledby="pricing-title">
+        <div class="page-wrap">
+          <h2 class="section-title" id="pricing-title">Цены</h2>
+          <div class="price-grid">
+            <article class="price-card"><h3>Бесплатно</h3><p class="price">0 ₽</p><ul><li>Полный первый HR-разбор</li><li>Ещё один HR-взгляд</li><li>Замечания с опорой на текст</li><li>Самостоятельный разбор вакансии</li></ul><a class="thr-btn thr-btn-line" href="#start">Начать бесплатно</a></article>
+            <article class="price-card price-card-accent"><h3>Пакет ToxicHR</h3><p class="price">199 ₽ <span>за одно резюме</span></p><ul><li>Все четыре HR-взгляда</li><li>До 5 сопоставлений с вакансиями</li><li>Одно улучшение резюме</li><li>Одна адаптация под вакансию</li><li>До 5 повторных проверок</li></ul><a class="thr-btn thr-btn-tox" href="#start">Начать с бесплатного разбора</a></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta page-wrap" aria-labelledby="final-title">
+        <h2 id="final-title">Сколько офферов ты ещё хочешь <em>пропустить?</em></h2>
+        <a class="thr-btn thr-btn-tox" href="#start">Проверить резюме</a>
+      </section>
+    </main>
+    <footer class="footer"><div class="page-wrap"><a class="brand" href="#top">TOXIC<i>HR</i></a><p>Локальный макет. Файлы и текст не отправляются.</p></div></footer>
+  </body>
+</html>
