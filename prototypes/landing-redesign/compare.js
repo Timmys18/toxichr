@@ -50,7 +50,7 @@ fileInput.addEventListener("change", () => {
   const file = fileInput.files?.[0];
   if (!file) return;
   fileState.textContent = /\.(pdf|docx)$/i.test(file.name)
-    ? `${file.name} выбран. В макете разбор не запускается.`
+    ? `Выбран файл: ${file.name}`
     : "Нужен PDF или DOCX.";
 });
 
@@ -60,11 +60,16 @@ textToggle.addEventListener("click", () => {
   pastePanel.hidden = !pastePanel.hidden;
   textToggle.setAttribute("aria-expanded", String(!pastePanel.hidden));
   document.getElementById("text-action-label").textContent = pastePanel.hidden ? "Вставить текст" : "Скрыть текст";
-  if (!pastePanel.hidden) document.getElementById("resume-text").focus();
+  textToggle.querySelector("small").hidden = !pastePanel.hidden;
+  textToggle.querySelector(".comparison-action-arrow").textContent = pastePanel.hidden ? "↗" : "×";
+  if (!pastePanel.hidden) {
+    document.getElementById("resume-text").focus({ preventScroll: true });
+    pastePanel.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 });
 document.getElementById("resume-text").addEventListener("input", (event) => {
   const length = event.target.value.trim().length;
   document.getElementById("paste-state").textContent = length
-    ? `${length} символов. Текст остаётся только в этой вкладке.`
-    : "Локальный макет: текст останется только в этой вкладке.";
+    ? `${length} символов`
+    : "";
 });

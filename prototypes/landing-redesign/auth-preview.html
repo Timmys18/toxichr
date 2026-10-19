@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08090a" />
+    <script>document.documentElement.dataset.authMode = ["register", "reset"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "login";</script>
+    <title>ToxicHR — макет входа</title>
+    <link rel="stylesheet" href="./style.css?v=20261017" />
+    <link rel="stylesheet" href="./auth-preview.css?v=20261019" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">К содержанию</a>
+    <header class="topnav auth-topnav">
+      <a class="brand" href="./compare.html?view=carousel#top" aria-label="ToxicHR, главная">TOXIC<i>HR</i></a>
+      <a class="auth-back" href="./compare.html?view=carousel#top">На главную</a>
+    </header>
+
+    <main class="auth-main" id="main">
+      <section class="auth-panel auth-login" aria-labelledby="login-title">
+        <h1 id="login-title">Вход<span>.</span></h1>
+        <form class="auth-form" onsubmit="event.preventDefault()">
+          <div class="auth-field"><label for="login-email">Почта</label><input id="login-email" type="email" autocomplete="email" placeholder="name@example.com" /></div>
+          <div class="auth-field"><label for="login-password">Пароль</label><input id="login-password" type="password" autocomplete="current-password" /></div>
+          <button class="auth-submit" type="submit">Войти <span aria-hidden="true">↗</span></button>
+        </form>
+        <div class="auth-links"><a href="./auth-preview.html?mode=reset">Забыли пароль?</a><a href="./auth-preview.html?mode=register">Создать аккаунт</a></div>
+      </section>
+
+      <section class="auth-panel auth-register" aria-labelledby="register-title">
+        <h1 id="register-title">Регистрация<span>.</span></h1>
+        <form class="auth-form" onsubmit="event.preventDefault()">
+          <div class="auth-field"><label for="register-email">Почта</label><input id="register-email" type="email" autocomplete="email" placeholder="name@example.com" /></div>
+          <div class="auth-field"><label for="register-password">Пароль</label><input id="register-password" type="password" autocomplete="new-password" /></div>
+          <label class="auth-consent"><input type="checkbox" /> <span>Согласен на обработку резюме для работы сервиса</span></label>
+          <button class="auth-submit" type="submit">Создать аккаунт <span aria-hidden="true">↗</span></button>
+        </form>
+        <div class="auth-links"><a href="./auth-preview.html">Войти</a></div>
+      </section>
+
+      <section class="auth-panel auth-reset" aria-labelledby="reset-title">
+        <h1 id="reset-title">Сброс пароля<span>.</span></h1>
+        <form class="auth-form" onsubmit="event.preventDefault()">
+          <div class="auth-field"><label for="reset-email">Почта</label><input id="reset-email" type="email" autocomplete="email" placeholder="name@example.com" /></div>
+          <button class="auth-submit" type="submit">Получить ссылку <span aria-hidden="true">↗</span></button>
+        </form>
+        <div class="auth-links"><a href="./auth-preview.html">Вернуться ко входу</a></div>
+      </section>
+    </main>
+  </body>
+</html>

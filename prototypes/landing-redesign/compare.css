@@ -4,14 +4,20 @@ html[data-view="equal"] .carousel-view,html[data-view="carousel"] .equal-view{di
 .comparison-intro h1{max-width:11ch;font-size:clamp(58px,5.55vw,82px);font-weight:800;line-height:.96;letter-spacing:-.055em}
 .comparison-intro h1 em{color:var(--tox);font-style:normal}
 .comparison-intro>div:first-child>p{margin-top:24px;color:rgba(242,244,245,.78);font-size:21px;line-height:1.4}
-.comparison-upload{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-self:end}
-.comparison-action{display:flex;min-width:0;min-height:124px;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:18px;border:1px solid var(--hair2);border-radius:12px;background:var(--metal-0);color:var(--fg);text-align:left;transition:background .2s var(--ease),border-color .2s var(--ease)}
-.comparison-action-primary{border-color:rgba(44,224,139,.58);background:rgba(44,224,139,.055)}
-.comparison-action-primary svg{color:var(--tox)}
-.comparison-action-primary:hover{border-color:var(--tox);background:rgba(44,224,139,.1)}
-.comparison-action-secondary:hover{border-color:var(--dim);background:var(--metal-1)}
-.comparison-action b{font-size:18px;line-height:1.15;letter-spacing:-.02em}
-.comparison-action small{color:var(--dim);font-size:14px}
+.comparison-upload{display:grid;grid-template-columns:1fr;gap:10px;width:min(100%,500px);align-self:end}
+.comparison-action{display:flex;min-width:0;min-height:84px;align-items:center;gap:18px;padding:13px 18px;border:1px solid var(--hair2);border-radius:14px;background:var(--metal-0);color:var(--fg);text-align:left;transition:transform .25s var(--ease),background .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease)}
+.comparison-action:hover{transform:translateY(-2px)}
+.comparison-action:focus-visible{outline:2px solid var(--tox);outline-offset:3px}
+.comparison-action-primary{border-color:var(--tox);background:var(--tox);color:#06130c;box-shadow:0 12px 38px rgba(44,224,139,.12)}
+.comparison-action-primary:hover{border-color:var(--toxic-hot);background:var(--toxic-hot);box-shadow:0 16px 42px rgba(44,224,139,.2)}
+.comparison-action-secondary:hover{border-color:rgba(44,224,139,.65);background:var(--metal-1)}
+.comparison-action-icon{display:grid;flex:0 0 54px;width:54px;height:54px;place-items:center;border-radius:10px;background:rgba(6,19,12,.11)}
+.comparison-action-secondary .comparison-action-icon{border:1px solid rgba(44,224,139,.3);background:rgba(44,224,139,.07);color:var(--tox)}
+.comparison-action-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
+.comparison-action b{font-size:23px;line-height:1.12;letter-spacing:-.035em}
+.comparison-action small{color:var(--dim);font-size:16px;line-height:1.2}
+.comparison-action-arrow{margin-left:auto;font-size:27px;line-height:1}
+.comparison-action-secondary .comparison-action-arrow{color:var(--tox)}
 .comparison-state{grid-column:1/-1;color:var(--tox);font-size:16px}.comparison-state:empty{display:none}
 .choice-title{font-size:28px;line-height:1.1;font-weight:760;letter-spacing:-.035em}
 .equal-view,.carousel-view{margin-top:58px}
@@ -39,18 +45,20 @@ html[data-view="equal"] .carousel-view,html[data-view="carousel"] .equal-view{di
 .carousel-card b{font-size:38px;line-height:1.08;letter-spacing:-.04em}
 .carousel-card small{margin-top:7px;color:rgba(242,244,245,.75);font-size:16px}
 .carousel-card strong{margin-top:8px;font-size:16px;font-weight:600;line-height:1.35}
-.comparison-paste{margin-top:24px}
+.comparison-paste{grid-column:1/-1;margin-top:0}
 @media(max-width:1100px){.comparison-intro{grid-template-columns:minmax(0,1fr) minmax(380px,460px);gap:32px}.equal-card img{height:190px}.equal-card{min-height:370px}}
 @media(max-width:960px){.comparison-hero{padding-top:34px}.comparison-intro{grid-template-columns:1fr;gap:28px}.comparison-intro h1{font-size:clamp(48px,10vw,72px)}.comparison-upload{max-width:540px}.equal-view,.carousel-view{margin-top:46px}.equal-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.carousel-stage{height:370px}.carousel-card{width:68%}.carousel-card.is-prev{left:-42%}.carousel-card.is-current{left:16%}.carousel-card.is-next{left:74%}}
-@media(max-width:620px){.comparison-hero{padding-bottom:65px}.comparison-intro>div:first-child>p{font-size:18px}.comparison-action{min-height:112px;padding:14px}.comparison-action b{font-size:16px}.equal-grid{gap:10px}.equal-card{min-height:285px}.equal-card img{height:160px}.equal-card>span{min-height:130px;padding:13px}.equal-card b{font-size:20px}.equal-card small,.equal-card strong{font-size:14px}.carousel-stage{height:330px}.carousel-card{width:80%}.carousel-card.is-prev{left:-58%}.carousel-card.is-current{left:10%}.carousel-card.is-next{left:78%}.carousel-card>span{right:18px;bottom:20px;left:18px}.carousel-card b{font-size:27px}.carousel-card strong{font-size:14px}}
+@media(max-width:620px){.comparison-hero{padding-bottom:65px}.comparison-intro>div:first-child>p{font-size:18px}.comparison-action{min-height:72px;gap:12px;padding:10px 12px}.comparison-action-icon{flex-basis:46px;width:46px;height:46px}.comparison-action b{font-size:19px}.comparison-action-arrow{font-size:23px}.equal-grid{gap:10px}.equal-card{min-height:285px}.equal-card img{height:160px}.equal-card>span{min-height:130px;padding:13px}.equal-card b{font-size:20px}.equal-card small,.equal-card strong{font-size:14px}.carousel-stage{height:330px}.carousel-card{width:80%}.carousel-card.is-prev{left:-58%}.carousel-card.is-current{left:10%}.carousel-card.is-next{left:78%}.carousel-card>span{right:18px;bottom:20px;left:18px}.carousel-card b{font-size:27px}.carousel-card strong{font-size:14px}}
 
 /* Второй вариант: фотографическая колода в правой половине первого экрана. */
 html[data-view="carousel"] .comparison-hero{display:grid;grid-template-columns:minmax(0,.46fr) minmax(0,.54fr);align-items:stretch;padding-top:44px;padding-bottom:82px}
 html[data-view="carousel"] .comparison-intro{display:flex;min-height:590px;flex-direction:column;align-items:stretch;justify-content:space-between;gap:42px;padding:64px 44px 30px 0;border-top:1px solid var(--hair2);border-right:1px solid var(--hair2);border-bottom:1px solid var(--hair2)}
 html[data-view="carousel"] .comparison-intro h1{max-width:9ch;font-size:clamp(54px,5vw,76px)}
 html[data-view="carousel"] .comparison-intro>div:first-child>p{max-width:30ch;margin-top:29px}
-html[data-view="carousel"] .comparison-upload{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
-html[data-view="carousel"] .comparison-action{min-height:116px}
+html[data-view="carousel"] .comparison-upload{width:min(100%,500px);align-self:flex-start;grid-template-columns:1fr;gap:10px}
+html[data-view="carousel"] .comparison-action{min-height:84px}
+html[data-view="carousel"] .comparison-paste{width:min(100%,500px)}
+html[data-view="carousel"] .comparison-intro:has(.comparison-paste:not([hidden])){justify-content:flex-start;gap:24px}
 html[data-view="carousel"] .carousel-view{display:flex;min-width:0;align-items:stretch;margin:0;border-top:1px solid var(--hair2);border-bottom:1px solid var(--hair2)}
 .carousel-accessible-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 html[data-view="carousel"] .carousel-stage{isolation:isolate;width:100%;height:590px;overflow:hidden;perspective:1100px}
