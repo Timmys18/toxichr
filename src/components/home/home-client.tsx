@@ -2,18 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText } from "lucide-react";
+import { FileText, Upload } from "lucide-react";
 import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
-import { ROSTER } from "@/components/home/hr-roster";
+import { HrCarousel } from "@/components/ui/hr-carousel";
+import { OfferCard, PrimaryAction, SecondaryAction } from "@/components/ui/system";
 import { updateReferral } from "@/lib/referral-client";
 import { clearPendingResume, readPendingResume, savePendingResume } from "@/lib/pending-resume";
 import { requestErrorMessage } from "@/lib/user-facing-errors";
 import styles from "./home-client.module.css";
 
 const MAX_BYTES = 8 * 1024 * 1024;
+type Pending = { kind: "file"; file: File } | { kind: "text" };
 
-export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: PersonaId }) {
+export function HomeClient({ initialPersona = "vadik", priceRub }: { initialPersona?: PersonaId; priceRub: number }) {
   const router = useRouter();
   const [sel, setSel] = useState<PersonaId>(initialPersona);
   const [busy, setBusy] = useState(false);
@@ -22,7 +24,9 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
   const [showPaste, setShowPaste] = useState(false);
   const [pastedText, setPastedText] = useState("");
   const [draftRestored, setDraftRestored] = useState(false);
-  const [consent, setConsent] = useState(false);
+  const [consentApproved, setConsentApproved] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [pending, setPending] = useState<Pending | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,8 +47,6 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
     return () => window.clearTimeout(timer);
   }, [pastedText]);
 
-  const selected = ROSTER.find((person) => person.id === sel) ?? ROSTER[0];
-
   const select = useCallback((id: PersonaId) => {
     setSel(id);
     setError(null);
@@ -52,7 +54,6 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
   }, []);
 
   const upload = useCallback(async (file: File) => {
-    if (!consent) return setError("Подтверди согласие на обработку резюме.");
     const okType =
       file.type === "application/pdf" ||
       file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
@@ -76,10 +77,9 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       setError(requestErrorMessage(reason, "Не удалось загрузить файл. Попробуй ещё раз."));
       setBusy(false);
     }
-  }, [consent, router, sel]);
+  }, [router, sel]);
 
   const pasteResume = useCallback(async () => {
-    if (!consent) { setError("Подтверди согласие на обработку резюме."); return; }
     if (pastedText.trim().length < 80) return;
     setBusy(true);
     setError(null);
@@ -100,123 +100,74 @@ export function HomeClient({ initialPersona = "vadik" }: { initialPersona?: Pers
       setError(requestErrorMessage(reason, "Не удалось отправить текст. Черновик сохранён — попробуй ещё раз."));
       setBusy(false);
     }
-  }, [consent, pastedText, router, sel]);
+  }, [pastedText, router, sel]);
+
+  function requestUpload(file: File) {
+    if (consentApproved) void upload(file);
+    else setPending({ kind: "file", file });
+  }
+  function requestPaste() {
+    if (pastedText.trim().length < 80) return;
+    if (consentApproved) void pasteResume();
+    else setPending({ kind: "text" });
+  }
+  function continueAfterConsent() {
+    if (!consentChecked || !pending) return;
+    setConsentApproved(true);
+    setPending(null);
+    if (pending.kind === "file") void upload(pending.file);
+    else void pasteResume();
+  }
 
   const pastedLength = pastedText.trim().length;
   const missingPasteChars = Math.max(0, 80 - pastedLength);
 
-  return (
-    <section className={styles.home}>
-      <div className={styles.grid}>
-        <div className={styles.intro}>
-          <h1>Токсичный <em>HR</em></h1>
-          <p>Получи бесплатный разбор: что мешает откликам и как улучшить резюме. Выбери своего HR — регистрация не нужна.</p>
-        </div>
-
-        <div className={styles.personaPanel}>
-          <div
-            className={`${styles.portrait} thr-photo`}
-            style={{ backgroundImage: `url('${selected.img}')` }}
-            role="img"
-            aria-label={`${selected.name}, ${selected.role}`}
-          >
-            <div className={styles.portraitCopy}>
-              <b>{selected.name}</b>
-              <span>{selected.role}</span>
-              <p>{selected.quote}</p>
-            </div>
-          </div>
-        </div>
-
-        <div
-          id="resume-start"
-          className={`${styles.uploadRail} ${dragActive ? styles.drag : ""}`}
+  return <div className={styles.home}>
+    <section className={styles.hero} id="top" aria-labelledby="home-title">
+      <div className={styles.intro}>
+        <div><h1 id="home-title">Твоё резюме <em>не работает.</em></h1><p>Выбери своего HR и узнай почему</p></div>
+        <div id="resume-start" className={`${styles.actions} ${dragActive ? styles.drag : ""}`}
           onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
           onDragOver={(event) => event.preventDefault()}
           onDragLeave={() => setDragActive(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragActive(false);
-            const file = event.dataTransfer.files?.[0];
-            if (file) void upload(file);
-          }}
-        >
-          <label className={styles.consent}>
-            <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
-            <span>Согласен на обработку резюме для работы сервиса. <a href="/privacy" target="_blank">Условия</a></span>
-          </label>
-          <button type="button" className={styles.fileAction} onClick={() => fileRef.current?.click()} disabled={busy}>
-            <FileText size={26} strokeWidth={1.7} aria-hidden />
-            <span>
-              <b>{busy ? "Читаем резюме" : dragActive ? "Отпускай резюме" : "Кидай резюме"}</b>
-              <small>PDF или DOCX</small>
-            </span>
-            <i aria-hidden>→</i>
+          onDrop={(event) => { event.preventDefault(); setDragActive(false); const file = event.dataTransfer.files?.[0]; if (file) requestUpload(file); }}>
+          <button type="button" className={`${styles.action} ${styles.primary}`} onClick={() => fileRef.current?.click()} disabled={busy}>
+            <span className={styles.actionIcon}><Upload size={27} strokeWidth={1.8} aria-hidden /></span><span className={styles.actionCopy}><b>{busy ? "Читаем резюме…" : dragActive ? "Отпускай резюме" : "Кидай резюме"}</b></span><span className={styles.actionArrow} aria-hidden>↗</span>
           </button>
-          <button type="button" className={styles.textAction} onClick={() => setShowPaste((value) => !value)} disabled={busy}>
-            {showPaste ? "Скрыть текстовое поле" : "Нет файла? Вставить текст"}
+          <button type="button" className={`${styles.action} ${styles.secondary}`} onClick={() => setShowPaste((value) => !value)} disabled={busy} aria-expanded={showPaste} aria-controls="paste-panel">
+            <span className={styles.actionIcon}><FileText size={26} strokeWidth={1.7} aria-hidden /></span><span className={styles.actionCopy}><b>{showPaste ? "Скрыть текст" : "Вставить текст"}</b><small>Если нет файла</small></span><span className={styles.actionArrow} aria-hidden>↗</span>
           </button>
-          {error ? <p className={styles.error} role="alert">{error}</p> : null}
+          {error ? <p className={styles.actionError} role="alert">{error}</p> : null}
         </div>
-
-        <div className={styles.roster} aria-label="Выбрать HR">
-            {ROSTER.map((person) => (
-              <button
-                key={person.id}
-                type="button"
-                className={sel === person.id ? styles.selectedThumb : ""}
-                onClick={() => select(person.id)}
-                aria-pressed={sel === person.id}
-                aria-label={`${person.name} — ${person.role}`}
-              >
-                <span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
-                <span>
-                  <b>{person.name}</b>
-                  <small>{person.tag}</small>
-                </span>
-              </button>
-            ))}
-        </div>
+        {showPaste ? <div className={styles.pasteBox} id="paste-panel">
+          <label htmlFor="resume-text">Резюме без файла</label>
+          <textarea id="resume-text" value={pastedText} onChange={(event) => { setPastedText(event.target.value); setDraftRestored(false); }} placeholder="Опыт, проекты, результаты, образование…" rows={7} maxLength={60_000} aria-describedby="paste-requirement" />
+          <p id="paste-requirement" aria-live="polite">{draftRestored ? "Черновик восстановлен. Проверь текст и продолжай." : pastedLength === 0 ? "Нужно минимум 80 символов." : missingPasteChars > 0 ? `Добавь ещё ${missingPasteChars} символов.` : "Текста достаточно."}</p>
+          <button type="button" className="thr-btn thr-btn-tox" onClick={requestPaste} disabled={busy || pastedLength < 80}>{busy ? "Читаем текст…" : "Отдать текст HR"}</button>
+        </div> : null}
       </div>
-
-      {showPaste ? (
-        <div className={`${styles.pastePanel} thr-card`}>
-          <div><b>Резюме без файла</b><span className="thr-mono">{pastedLength} / 60 000</span></div>
-          <textarea
-            value={pastedText}
-            onChange={(event) => { setPastedText(event.target.value); setDraftRestored(false); }}
-            placeholder="Опыт, проекты, результаты, образование…"
-            rows={8}
-            aria-label="Текст резюме"
-            maxLength={60_000}
-            aria-describedby="paste-requirement"
-          />
-          <p id="paste-requirement" aria-live="polite">
-            {draftRestored
-              ? "Черновик восстановлен. Проверь текст и продолжай."
-              : pastedLength === 0
-              ? "Нужно минимум 80 символов — обычно это несколько строк об опыте."
-              : missingPasteChars > 0
-                ? `Добавьте ещё ${missingPasteChars} симв. — и можно запускать разбор.`
-                : "Текста достаточно. Можно отдавать HR."}
-          </p>
-          <button type="button" className="thr-btn thr-btn-tox" onClick={() => void pasteResume()} disabled={busy || pastedLength < 80}>
-            {busy ? "Читаем текст…" : `Отдать текст · ${selected.name}`}
-          </button>
-        </div>
-      ) : null}
-
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        hidden
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (file) void upload(file);
-          event.target.value = "";
-        }}
-      />
+      <div className={styles.carousel}><h2 className={styles.srOnly}>Выбери HR</h2><HrCarousel selected={sel} onSelect={select} /></div>
     </section>
-  );
+
+    <section className={styles.section} id="how" aria-labelledby="how-title"><h2 id="how-title">Как это работает</h2><div className={styles.steps}>
+      <article><span>01</span><h3>Загружаешь резюме</h3><p>Файл или текст.</p></article>
+      <article><span>02</span><h3>Выбираешь HR</h3><p>Разбор с выбранным взглядом.</p></article>
+      <article><span>03</span><h3>Видишь замечания</h3><p>По конкретным строкам резюме.</p></article>
+      <article><span>04</span><h3>Исправляешь</h3><p>Собираешь новую версию.</p></article>
+    </div></section>
+
+    <section className={styles.section} id="pricing" aria-labelledby="pricing-title"><h2 id="pricing-title">Цены</h2><div className={styles.prices}>
+      <OfferCard label="Бесплатно" price="0 ₽" priceNote="" items={["Полный первый HR-разбор", "Ещё один HR-взгляд", "Замечания с опорой на текст", "Самостоятельный разбор вакансии"]} action={<SecondaryAction href="#resume-start">Начать бесплатно</SecondaryAction>} />
+      <OfferCard highlighted label="Пакет ToxicHR" price={`${priceRub} ₽`} priceNote="за одно резюме" items={["Все четыре HR-взгляда", "До 5 сопоставлений с вакансиями", "Одно улучшение резюме", "Одна адаптация под вакансию", "До 5 повторных проверок"]} action={<PrimaryAction href="#resume-start">Начать с бесплатного разбора</PrimaryAction>} />
+    </div></section>
+
+    <section className={styles.finalCta} aria-labelledby="final-title"><h2 id="final-title">Сколько офферов ты ещё хочешь <em>пропустить?</em></h2><PrimaryAction href="#resume-start">Проверить резюме</PrimaryAction></section>
+
+    <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) requestUpload(file); event.target.value = ""; }} />
+    {pending ? <div className={styles.consentBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPending(null); }}><div className={styles.consentDialog} role="dialog" aria-modal="true" aria-labelledby="consent-title">
+      <h2 id="consent-title">Перед разбором</h2><p>Для разбора нужно обработать текст твоего резюме.</p>
+      <label><input type="checkbox" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} /><span>Согласен на обработку резюме для работы сервиса. <a href="/privacy" target="_blank" rel="noopener noreferrer">Условия</a></span></label>
+      <div><button type="button" className="thr-btn thr-btn-line" onClick={() => setPending(null)}>Отмена</button><button type="button" className="thr-btn thr-btn-tox" disabled={!consentChecked} onClick={continueAfterConsent}>Продолжить</button></div>
+    </div></div> : null}
+  </div>;
 }

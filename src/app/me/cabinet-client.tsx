@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { EmptyState, PageContainer, PageIntro, PrimaryAction, SecondaryAction, SurfacePanel } from "@/components/ui/system";
+import { EmptyState, HistoryRow, PageContainer, PageIntro, PrimaryAction, SecondaryAction, SurfacePanel } from "@/components/ui/system";
 
 export type CabItem = {
   id: string;
@@ -30,6 +30,7 @@ export type CabinetPackage = {
 };
 
 export type CabDocument = { id: string; kind: "improvement" | "adaptation"; analysisId: string; resumeId: string; title: string; detail: string; updatedAt: string; href: string };
+export type CabUpload = { id: string; filename: string; createdAt: string; href: string; analysed: boolean };
 export type CabDraftTarget = { analysisId: string; vacancyId: string; vacancyTitle: string };
 type ActiveDraft = { title: string; detail: string; href: string };
 
@@ -46,6 +47,7 @@ function timeAgo(iso: string): string {
 export function CabinetClient({
   name,
   items,
+  uploads,
   vacancyCount,
   packageStatus,
   documents,
@@ -53,6 +55,7 @@ export function CabinetClient({
 }: {
   name: string;
   items: CabItem[];
+  uploads: CabUpload[];
   vacancyCount: number;
   packageStatus: CabinetPackage;
   documents: CabDocument[];
@@ -96,6 +99,10 @@ export function CabinetClient({
       <PageIntro className="ds-cabinet-intro" label="Центр карьеры" title={<>{name}: <span>{pageState}</span></>} />
 
       {activeDraft ? <SurfacePanel className="cab-priority" label="Продолжить работу" action={<Link href={activeDraft.href}>открыть →</Link>}><h2>{activeDraft.title}</h2><p>{activeDraft.detail}</p><PrimaryAction href={activeDraft.href}>Продолжить с ответами</PrimaryAction></SurfacePanel> : latestDocument ? <SurfacePanel className="cab-priority" label="Последний релевантный документ" action={<Link href={latestDocument.href}>открыть →</Link>}><h2>{latestDocument.title}</h2><p>{latestDocument.detail} · сохранено {timeAgo(latestDocument.updatedAt)}.</p><PrimaryAction href={latestDocument.href}>Открыть готовый документ</PrimaryAction></SurfacePanel> : last ? <SurfacePanel className="cab-priority" label="Следующий шаг"><h2>Исходный разбор готов</h2><p>Оценка исходной версии: {last.score}/100. Ответы и новый документ будут привязаны к этому разбору.</p><PrimaryAction href={`/revenge?analysisId=${last.id}`}>Продолжить работу</PrimaryAction></SurfacePanel> : null}
+
+      {uploads.length ? <SurfacePanel className="cab-uploads" label="Загруженные резюме" action={<span>{uploads.length}</span>}>
+        <div className="cab-upload-list">{uploads.map((upload) => <HistoryRow key={upload.id} href={upload.href} status={upload.analysed ? "Готов" : "Загружено"} tone={upload.analysed ? "success" : "neutral"} title={upload.filename} meta={timeAgo(upload.createdAt)} aside="→" />)}</div>
+      </SurfacePanel> : null}
 
       {last ? (
         <div className="cab-grid">

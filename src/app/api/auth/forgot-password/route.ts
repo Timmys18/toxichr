@@ -4,6 +4,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Восстановление по почте пока недоступно." }, { status: 503 });
+  }
   const parsed = z.object({ email: z.string().email() }).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Укажи корректный email." }, { status: 400 });
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email.trim().toLowerCase() } });

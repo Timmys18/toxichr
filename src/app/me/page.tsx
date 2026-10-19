@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { PERSONAS } from "@/lib/personas";
-import { CabinetClient, type CabDocument, type CabDraftTarget, type CabItem, type CabinetPackage } from "./cabinet-client";
+import { CabinetClient, type CabDocument, type CabDraftTarget, type CabItem, type CabUpload, type CabinetPackage } from "./cabinet-client";
 
 export const metadata: Metadata = { title: "Центр карьеры" };
 
@@ -21,7 +21,7 @@ export default async function MePage() {
     redirect("/auth?next=/me");
   }
 
-  const [analyses, vacancyCount, packages, adaptations, matchTargets] = await Promise.all([
+  const [analyses, vacancyCount, packages, adaptations, matchTargets, resumes] = await Promise.all([
     prisma.analysis.findMany({
       where: { userId: session.user.id, status: "COMPLETED" },
       include: {
@@ -49,6 +49,12 @@ export default async function MePage() {
       include: { vacancy: true, analysis: { include: { resumeVersion: true } } },
       orderBy: { updatedAt: "desc" },
       take: 30,
+    }),
+    prisma.resume.findMany({
+      where: { userId: session.user.id, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: { id: true, originalFilename: true, mimeType: true, createdAt: true },
     }),
   ]);
 
@@ -110,6 +116,17 @@ export default async function MePage() {
     vacancyTitle: match.vacancy.title ?? "вакансию",
   }));
 
+  const uploads: CabUpload[] = resumes.map((resume) => {
+    const latestAnalysis = items.find((item) => item.resumeId === resume.id);
+    return {
+      id: resume.id,
+      filename: resume.mimeType === "text/plain" ? "Текст резюме" : resume.originalFilename ?? "Резюме",
+      createdAt: resume.createdAt.toISOString(),
+      href: latestAnalysis ? `/session?view=${latestAnalysis.id}` : `/session?resumeId=${resume.id}&personaId=vadik`,
+      analysed: Boolean(latestAnalysis),
+    };
+  });
+
   // The package panel must describe the same resume as the document promoted
   // above it. A user can have a newer analysis while their latest ready
   // document still belongs to an older resume.
@@ -128,7 +145,7 @@ export default async function MePage() {
   return (
     <>
       <main id="main" className="flex flex-1 flex-col">
-        <CabinetClient name={name} items={items} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} />
+        <CabinetClient name={name} items={items} uploads={uploads} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} />
       </main>
     </>
   );

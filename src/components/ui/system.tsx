@@ -163,11 +163,11 @@ export function InfoNote({ title, children, className }: { title: ReactNode; chi
   return <aside className={cn("ds-info-note", className)}><b>{title}</b><p>{children}</p></aside>;
 }
 
-export function FormCard({ label, title, description, children, footer, className }: { label: ReactNode; title: ReactNode; description: ReactNode; children: ReactNode; footer?: ReactNode; className?: string }) {
+export function FormCard({ label, title, description, children, footer, className }: { label?: ReactNode; title: ReactNode; description?: ReactNode; children: ReactNode; footer?: ReactNode; className?: string }) {
   return <section className={cn("ds-form-card", className)}>
-    <SectionLabel>{label}</SectionLabel>
+    {label ? <SectionLabel>{label}</SectionLabel> : null}
     <h1>{title}</h1>
-    <LeadText>{description}</LeadText>
+    {description ? <LeadText>{description}</LeadText> : null}
     {children}
     {footer ? <footer>{footer}</footer> : null}
   </section>;
