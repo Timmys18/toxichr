@@ -6,8 +6,8 @@ import type { PersonaId } from "@/lib/personas";
 import { ROSTER } from "@/components/home/hr-roster";
 import styles from "./hr-carousel.module.css";
 
-export function HrCarousel({ selected, onSelect }: { selected: PersonaId; onSelect: (id: PersonaId) => void }) {
-  const current = ROSTER.findIndex((person) => person.id === selected);
+export function HrCarousel({ selected, featured = "vadik", onSelect }: { selected: PersonaId | null; featured?: PersonaId; onSelect: (id: PersonaId) => void }) {
+  const current = ROSTER.findIndex((person) => person.id === (selected ?? featured));
   const active = current < 0 ? 0 : current;
 
   return (
@@ -23,10 +23,10 @@ export function HrCarousel({ selected, onSelect }: { selected: PersonaId; onSele
         return <button
           key={person.id}
           type="button"
-          className={`${styles.card} ${styles[position]}`}
+          className={`${styles.card} ${styles[position]} ${selected === person.id ? styles.chosen : ""}`}
           onClick={() => onSelect(person.id)}
-          aria-label={`${person.name}, ${person.role}. ${position === "current" ? "Выбран" : "Выбрать"}`}
-          aria-pressed={position === "current"}
+          aria-label={`${person.name}, ${person.role}. ${selected === person.id ? "Выбран" : "Выбрать"}`}
+          aria-pressed={selected === person.id}
           tabIndex={position === "hidden" ? -1 : 0}
         >
           <Image src={person.img} alt="" fill sizes="(max-width: 620px) 70vw, (max-width: 960px) 55vw, 34vw" priority={position === "current"} />

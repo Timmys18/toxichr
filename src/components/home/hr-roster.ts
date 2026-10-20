@@ -12,7 +12,7 @@ export type RosterEntry = {
   pick: string;
 };
 
-/** Порядок и подача карточек на главной. Вадик первый — его рекомендуем. */
+/** Порядок карточек на главной; первая карточка не означает выбор HR. */
 export const ROSTER: RosterEntry[] = [
   {
     id: "vadik",

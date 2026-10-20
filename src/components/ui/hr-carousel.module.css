@@ -4,7 +4,7 @@
 .card::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(5,7,7,.92))}
 .copy{position:absolute;z-index:1;right:26px;bottom:26px;left:26px;display:flex;flex-direction:column;align-items:flex-start}
 .copy b{font-size:32px;line-height:1.08;letter-spacing:-.04em}.copy small{margin-top:7px;color:rgba(242,244,245,.75);font-size:16px}.copy strong{margin-top:8px;font-size:16px;font-weight:600;line-height:1.35}
-.current{z-index:3;opacity:1;filter:none;transform:translateX(0) translateY(0) rotate(0) scale(1);border-color:var(--tox)}
+.current{z-index:3;opacity:1;filter:none;transform:translateX(0) translateY(0) rotate(0) scale(1)}.chosen{border-color:var(--tox)}
 .prev{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(-72%) translateY(24px) rotate(-8deg) scale(.87);animation:float 6.5s ease-in-out infinite alternate}
 .next{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(72%) translateY(24px) rotate(8deg) scale(.87);animation:float 7.3s ease-in-out -2s infinite alternate-reverse}
 .hidden{opacity:0;pointer-events:none;transform:translateY(28px) scale(.76)}

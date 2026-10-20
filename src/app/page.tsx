@@ -11,7 +11,7 @@ type HomePageProps = {
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const requested = (await searchParams).persona;
-  const initialPersona = typeof requested === "string" && PERSONAS.has(requested as PersonaId) ? requested as PersonaId : "vadik";
+  const initialPersona = typeof requested === "string" && PERSONAS.has(requested as PersonaId) ? requested as PersonaId : undefined;
   return (
     <LandingPage>
       <HomeClient initialPersona={initialPersona} priceRub={TOXICHR_PACKAGE_PRICE_RUB} />
