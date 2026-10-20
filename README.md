@@ -17,22 +17,18 @@
 
 ## Local
 
-```bash
-cp .env.example .env
-npm install
+Используй отдельный `.env.development.local`: `DATABASE_URL=file:./.data/toxichr-dev.db`, `AI_PROVIDER=mock`, `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3100`, `STORAGE_DRIVER=local`, `BETA_PAYWALL_ENABLED=false`, пустые реквизиты YooKassa и отдельный локальный `AUTH_SECRET`. Файл уже создан на рабочем компьютере и не попадает в Git. Не используй production-базу и боевые интеграции для предпросмотра.
+
+На Windows один раз создай отдельную базу и запусти предпросмотр:
+
+```powershell
+$env:DATABASE_URL='file:./.data/toxichr-dev.db'
+node scripts/ensure-sqlite-file.mjs
 npm run db:push
-npm run dev -- --port 3100
+npm run dev -- --hostname 127.0.0.1 --port 3100
 ```
 
-По умолчанию `DATABASE_URL=file:./.data/toxichr.db` (SQLite, без Docker).
-
-Открой [http://localhost:3100](http://localhost:3100).
-
-Для безопасной локальной проверки без внешнего AI-ключа укажи в `.env`:
-
-```dotenv
-AI_PROVIDER=mock
-```
+Открой [http://127.0.0.1:3100](http://127.0.0.1:3100). При последующих правках достаточно обновить страницу.
 
 На Windows важно дождаться полного завершения `npm install`: в этот момент собирается нативный SQLite-модуль. Если установка была прервана и запуск сообщает об отсутствии `better_sqlite3.node`, выполни `npm rebuild better-sqlite3`, затем снова `npm run db:push`.
 
