@@ -6,7 +6,6 @@ import { FileText, Upload } from "lucide-react";
 import type { PersonaId } from "@/lib/personas";
 import { track } from "@/lib/analytics";
 import { HrCarousel } from "@/components/ui/hr-carousel";
-import { ROSTER } from "@/components/home/hr-roster";
 import { OfferCard, PrimaryAction, SecondaryAction } from "@/components/ui/system";
 import { updateReferral } from "@/lib/referral-client";
 import { clearPendingResume, readPendingResume, savePendingResume } from "@/lib/pending-resume";
@@ -130,7 +129,6 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
   const pastedLength = pastedText.trim().length;
   const missingPasteChars = Math.max(0, 80 - pastedLength);
   const resumeReady = showPaste ? pastedLength >= 80 : selectedFile !== null;
-  const selectedName = ROSTER.find((person) => person.id === sel)?.name;
 
   return <div className={styles.home}>
     <section className={styles.hero} id="top" aria-labelledby="home-title">
@@ -156,7 +154,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
         </div> : null}
       </div>
       <div className={styles.carousel}><h2 className={styles.srOnly}>Выбери HR</h2><HrCarousel selected={sel} featured={initialPersona ?? "vadik"} onSelect={select} /></div>
-      {selectedFile || showPaste ? <div className={styles.launch} aria-live="polite"><PrimaryAction onClick={requestAnalysis} disabled={!resumeReady || !sel || busy} className={styles.launchButton}>{busy ? "Начинаем разбор…" : !resumeReady ? "Добавь текст резюме" : !sel ? "Выбери HR" : `Начать разбор — ${selectedName}`}</PrimaryAction></div> : null}
+      <div className={styles.launch} aria-live="polite"><PrimaryAction onClick={requestAnalysis} disabled={!resumeReady || !sel || busy} className={styles.launchButton}>{busy ? "Начинаем разбор…" : "Начать разбор"}</PrimaryAction></div>
     </section>
 
     <section className={styles.section} id="how" aria-labelledby="how-title"><h2 id="how-title">Как это работает</h2><div className={styles.steps}>
