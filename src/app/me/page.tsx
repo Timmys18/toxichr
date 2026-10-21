@@ -4,7 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { AnalysisReport } from "@/lib/ai/schemas";
 import { PERSONAS } from "@/lib/personas";
-import { CabinetClient, type CabDocument, type CabDraftTarget, type CabItem, type CabUpload, type CabinetPackage } from "./cabinet-client";
+import { CabinetClient } from "./cabinet-view";
+import type { CabDocument, CabDraftTarget, CabItem, CabUpload, CabinetPackage } from "./cabinet-client";
 
 export const metadata: Metadata = { title: "Центр карьеры" };
 
