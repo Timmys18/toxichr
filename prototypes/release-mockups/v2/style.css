@@ -9,7 +9,17 @@
 .report-findings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 40px; }
 .finding-card { min-height: 195px; padding: 26px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .finding-card p { margin-top: 18px; color: var(--muted); }
-.report-next { margin-top: 30px; }
+.fix-section { margin-top: 62px; }
+.fix-list { display: grid; gap: 12px; margin-top: 22px; }
+.fix-item { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.fix-item summary { display: flex; min-height: 76px; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 26px; list-style: none; cursor: pointer; font-weight: 700; }
+.fix-item summary::-webkit-details-marker { display: none; }
+.fix-item summary::after { content: '+'; flex: 0 0 auto; color: var(--muted); font-size: var(--type-heading); font-weight: 400; line-height: 1; }
+.fix-item[open] summary::after { content: '−'; }
+.fix-body { max-width: 850px; padding: 0 26px 26px; color: var(--muted); }
+.fix-body p + p { margin-top: 16px; }
+.fix-body strong { color: var(--fg); font-weight: 700; }
+.report-next { margin-top: 34px; }
 .report-next .button { min-width: 260px; }
 .cabinet-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); width: min(1480px, 100%); min-height: calc(100vh - 72px); margin: auto; }
 .side-nav { display: flex; min-height: 900px; flex-direction: column; padding: 38px 17px; border-right: 1px solid var(--border); background: var(--surface); }
@@ -63,6 +73,9 @@
   .report-intro .lead { margin-top: 20px; }
   .report-findings { grid-template-columns: 1fr; margin-top: 32px; }
   .finding-card { min-height: 0; padding: 24px; }
+  .fix-section { margin-top: 52px; }
+  .fix-item summary { min-height: 70px; padding: 18px 22px; }
+  .fix-body { padding: 0 22px 22px; }
   .report-next .button { width: 100%; }
   .cabinet-layout { display: block; }
   .side-nav { min-height: 0; padding: 12px 18px; border-right: 0; border-bottom: 1px solid var(--border); }
