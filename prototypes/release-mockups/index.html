@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ToxicHR — макеты кабинета и разбора</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="preview-bar" aria-label="Переключение макетов">
+    <span>МАКЕТЫ TOXICHR</span>
+    <nav>
+      <a href="#cabinet" data-view="cabinet">Кабинет</a>
+      <a href="#editorial" data-view="editorial">Разбор · вариант А</a>
+      <a href="#annotated" data-view="annotated">Разбор · вариант Б</a>
+    </nav>
+    <span class="preview-note">Только дизайн · без отправки данных</span>
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="#cabinet">TOXIC<span>HR</span></a>
+    <nav class="site-nav" aria-label="Меню сайта"><span>Как это работает</span><span>Цены</span><span>Личный кабинет</span></nav>
+    <span class="header-action">Кабинет</span>
+  </header>
+
+  <main>
+    <section class="screen" data-screen="cabinet" aria-label="Макет личного кабинета">
+      <div class="page cabinet-page">
+        <div class="page-heading">
+          <p class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</p>
+          <h1>Мои резюме<span class="period">.</span></h1>
+        </div>
+
+        <div class="section-label-row"><span class="eyebrow">ПРОДОЛЖИТЬ РАБОТУ</span><span class="subtle">Последнее действие</span></div>
+        <div class="continue-card">
+          <div class="continue-copy">
+            <span class="status"><i></i> Разбор готов</span>
+            <h2>Что стоит уточнить<br>в резюме</h2>
+            <p>Главное замечание и исходный текст — в разборе.</p>
+            <div class="person-inline"><img src="../../public/hr/lera.jpg" alt=""><span><b>Лера</b><small>Бигтех · 21 октября</small></span></div>
+            <span class="button green">Открыть разбор <span aria-hidden="true">↗</span></span>
+          </div>
+          <div class="continue-portrait"><img src="../../public/hr/lera.jpg" alt="Лера — HR из бигтеха"><span>Лера <small>Бигтех</small></span></div>
+        </div>
+
+        <div class="section-label-row resumes-heading"><h2>История</h2><span class="button outline">+ Добавить резюме</span></div>
+        <div class="resume-group">
+          <div class="resume-topline"><div><p class="eyebrow">РЕЗЮМЕ 01</p><h3>Исходная версия резюме</h3><p>Добавлено 21 октября · PDF</p></div><span class="resume-arrow">↗</span></div>
+          <div class="resume-progress">
+            <div><span class="progress-dot complete"></span><b>Резюме</b><small>Загружено</small></div>
+            <div><span class="progress-dot complete"></span><b>Разборы HR</b><small>Лера · готов</small></div>
+            <div><span class="progress-dot"></span><b>Новая версия</b><small>Пока нет</small></div>
+            <div><span class="progress-dot"></span><b>Вакансии</b><small>Пока нет</small></div>
+          </div>
+          <div class="resume-bottom"><span class="text-link">Открыть историю ↗</span></div>
+        </div>
+        <div class="cabinet-footer"><span>Приватность и удаление данных</span><span>Выйти</span></div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="editorial" aria-label="Редакционный макет страницы разбора">
+      <div class="page report-page">
+        <div class="report-top"><span class="eyebrow">РАЗБОР РЕЗЮМЕ <span class="dot-separator">·</span> ЛЕРА</span><span class="back-link">← Все резюме</span></div>
+        <div class="report-hero">
+          <div class="report-hero-copy">
+            <span class="test-pill">Тестовый ответ <small>· пример оформления</small></span>
+            <p class="eyebrow green-text">ЗАКЛЮЧЕНИЕ</p>
+            <h1>Что стоит уточнить<br>в резюме<span class="period">.</span></h1>
+            <p class="hero-summary">Нашёл то, что уже видно в тексте. Недостаточно конкретики, чтобы оценить масштаб и вклад.</p>
+            <div class="hero-actions"><span class="button green">Исправить резюме <span aria-hidden="true">↗</span></span><span class="text-link">Другой HR</span></div>
+          </div>
+          <div class="report-portrait"><img src="../../public/hr/lera.jpg" alt="Лера — HR из бигтеха"><div><b>Лера</b><span>Бигтех</span><strong>Свайпает карьеру влево</strong></div></div>
+        </div>
+        <div class="report-divider"><h2>Главное замечание</h2><span>01 / 01</span></div>
+        <article class="finding-row">
+          <div class="finding-index">01</div>
+          <div class="finding-body"><h3>Недостаточно конкретики, чтобы оценить масштаб и вклад.</h3><p>В тексте есть описание работы, но результат и твоя роль остаются неясными.</p><blockquote>«Договор реализации туристического продукта №5480…»</blockquote><div class="fix-line"><b>Что уточнить</b><span>Какую задачу ты решал и что изменилось благодаря твоей работе.</span></div></div>
+        </article>
+        <div class="report-bottom"><span class="text-link">Показать полный комментарий Леры ↓</span><span class="subtle">Вакансию можно разобрать отдельно</span></div>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="annotated" aria-label="Макет разбора рядом с резюме">
+      <div class="page annotated-page">
+        <div class="report-top"><span class="eyebrow">РАЗБОР РЕЗЮМЕ <span class="dot-separator">·</span> ЛЕРА</span><span class="back-link">← Все резюме</span></div>
+        <div class="annotated-heading"><div><span class="test-pill">Тестовый ответ <small>· пример оформления</small></span><h1>Смотри, где теряется смысл<span class="period">.</span></h1></div><p>Замечание HR связано с конкретной строкой резюме. Видно, что именно нужно прояснить.</p></div>
+        <div class="compare-layout">
+          <div class="document-panel"><div class="panel-head"><span class="eyebrow">ИСХОДНОЕ РЕЗЮМЕ</span><span>PDF</span></div><div class="document-sheet"><span class="doc-kicker">ОПЫТ РАБОТЫ</span><div class="doc-line long"></div><div class="doc-line medium"></div><div class="doc-gap"></div><div class="doc-line short"></div><div class="highlighted-excerpt"><span>01</span><p>Договор реализации туристического продукта №5480…</p></div><div class="doc-line medium"></div><div class="doc-line long"></div><div class="doc-gap"></div><span class="doc-kicker">ДОПОЛНИТЕЛЬНО</span><div class="doc-line long"></div><div class="doc-line short"></div></div></div>
+          <div class="annotation-panel"><div class="annotation-person"><img src="../../public/hr/lera.jpg" alt=""><span><b>Лера</b><small>Бигтех</small></span></div><p class="eyebrow green-text">ЗАКЛЮЧЕНИЕ</p><h2>Что стоит уточнить в резюме</h2><p class="annotation-summary">Недостаточно конкретики, чтобы оценить масштаб и вклад.</p><div class="annotation-divider"></div><span class="eyebrow">ЗАМЕЧАНИЕ 01</span><h3>Здесь неясен результат твоей работы.</h3><p>Покажи свою роль и конкретное изменение, которое можно подтвердить.</p><div class="annotation-tip"><b>Связано с выделенной строкой</b><span>← смотри фрагмент в резюме</span></div><span class="button green">Исправить резюме <span aria-hidden="true">↗</span></span><span class="text-link other-hr-link">Посмотреть взгляд другого HR</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    function showView() {
+      const requested = location.hash.slice(1);
+      const view = ['cabinet', 'editorial', 'annotated'].includes(requested) ? requested : 'cabinet';
+      document.querySelectorAll('[data-screen]').forEach((node) => node.classList.toggle('active', node.dataset.screen === view));
+      document.querySelectorAll('[data-view]').forEach((node) => node.classList.toggle('active', node.dataset.view === view));
+      document.title = `ToxicHR — макет ${view === 'cabinet' ? 'кабинета' : view === 'editorial' ? 'разбора А' : 'разбора Б'}`;
+      window.scrollTo(0, 0);
+    }
+    addEventListener('hashchange', showView);
+    showView();
+  </script>
+</body>
+</html>
