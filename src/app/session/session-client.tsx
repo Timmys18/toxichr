@@ -10,7 +10,7 @@ import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
 import { readPendingVacancy } from "@/lib/pending-vacancy";
 import { ANALYSIS_RETRY_MESSAGE, requestErrorMessage } from "@/lib/user-facing-errors";
-import { CollapsibleSection, EditorialSection, EmptyState, EvidenceItem, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel, VerdictBlock } from "@/components/ui/system";
+import { CollapsibleSection, EmptyState, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel } from "@/components/ui/system";
 
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
@@ -200,6 +200,10 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
 
   const speaking = phase === "analyzing";
 
+  if (phase === "verdict" && report) {
+    return <PageContainer className="session-result"><Verdict report={report} hrName={hr.name} hrImage={hr.img} analysisId={analysisId} resumeId={activeResumeId} personaCode={personaCode} resultMode={resultMode} /></PageContainer>;
+  }
+
   return (
     <PageContainer className="session">
       <aside className="presence min-w-0">
@@ -241,24 +245,15 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
           <EmptyState className="errbox" action={<div>{purchaseAnalysisId ? <PrimaryAction href={`/revenge?analysisId=${encodeURIComponent(purchaseAnalysisId)}`}>Открыть пакет ToxicHR · 199 ₽</PrimaryAction> : null}<PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></div>}>{error}</EmptyState>
         ) : null}
 
-        {phase === "verdict" && report ? (
-          <Verdict
-            report={report}
-            hrName={hr.name}
-            analysisId={analysisId}
-            resumeId={activeResumeId}
-            personaCode={personaCode}
-            resultMode={resultMode}
-          />
-        ) : null}
       </div>
     </PageContainer>
   );
 }
 
-function Verdict({ report, hrName, analysisId, resumeId, personaCode, resultMode }: {
+function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, resultMode }: {
   report: AnalysisReport;
   hrName: string;
+  hrImage: string;
   analysisId: string | null;
   resumeId: string | null;
   personaCode: PersonaId | null;
@@ -329,86 +324,49 @@ function Verdict({ report, hrName, analysisId, resumeId, personaCode, resultMode
   }
 
   const r = report;
-  const problemCount = Math.max(1, r.topProblems.length);
-  const featuredProblems = r.topProblems.filter((problem, index) => index < 3 || problem.severity === "critical");
-  const additionalProblems = r.topProblems.filter((problem) => !featuredProblems.includes(problem));
+  const featuredProblems = r.topProblems.slice(0, 3);
+  const additionalProblems = r.topProblems.slice(3);
+  const highlights = [
+    ...r.strengths.slice(0, 1).map((strength) => ({ id: strength.id, title: strength.title, text: strength.comment })),
+    ...r.topProblems.slice(0, r.strengths.length ? 2 : 3).map((problem) => ({ id: problem.id, title: problem.title, text: problem.diagnosis })),
+  ];
+  const feminineVoice = personaCode === "lera" || personaCode === "tamara";
+  const issue = (problem: AnalysisReport["topProblems"][number], index: number) => (
+    <CollapsibleSection key={problem.id} title={problem.title} defaultOpen={index === 0} className="result-issue">
+      <div className="result-issue-body">
+        <div><strong>Что вижу</strong><p>{problem.diagnosis}</p>{problem.quote ? <blockquote>«{problem.quote}»</blockquote> : null}</div>
+        <div><strong>Как исправить</strong><p>{problem.recommendation}</p></div>
+      </div>
+    </CollapsibleSection>
+  );
 
   return (
-    <div className="verdict">
+    <div className="result-view">
       {resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это демонстрация интерфейса, а не полноценная профессиональная оценка резюме.</span></div> : null}
       {resultMode !== "test" && r.generationMeta?.voice?.status === "limited" ? <div className="ds-result-mode" role="status"><b>Ограниченный разбор</b><span>Полный комментарий HR сейчас недоступен. Показаны наблюдения разбора и следующие шаги.</span></div> : null}
-      <VerdictBlock className="diag" label="Заключение" title={r.verdict.title} summary={r.verdict.comment} />
-
-      {analysisId ? (
-        <Link
-          href={`/revenge?analysisId=${analysisId}`}
-          className="conversion-band"
-          onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}
-        >
-          <span className="eyebrow thr-mono">Главный следующий шаг</span>
-          <b>{hasPackage === true ? "Продолжить работу с резюме · пакет открыт" : hasPackage === false ? "Исправить резюме · пакет ToxicHR 199 ₽" : "Исправить резюме"}</b>
-          <span>{problemCount === 1 ? "Разберём одно слабое место" : `Разберём слабые места: ${problemCount}`}, зададим вопросы по фактам и соберём новую версию.</span>
-          <strong>Начать исправление →</strong>
-        </Link>
-      ) : null}
-
-      {featuredProblems.length ? (
-        <EditorialSection title={featuredProblems.length === 1 ? "Главное замечание" : "Главные замечания"}><div className="probs">{featuredProblems.map((problem) => (
-          <EvidenceItem key={problem.id} title={problem.roast} description={problem.recommendation ?? "Нужен подтверждённый факт вместо общего заявления."} quote={`«${problem.quote}»`} />
-        ))}</div></EditorialSection>
-      ) : null}
-
-      {additionalProblems.length ? (
-        <CollapsibleSection title={`Остальные замечания · ${additionalProblems.length}`}>
-          <div className="probs">{additionalProblems.map((problem) => (
-            <EvidenceItem key={problem.id} title={problem.roast} description={problem.recommendation ?? "Нужен подтверждённый факт вместо общего заявления."} quote={`«${problem.quote}»`} />
-          ))}</div>
-        </CollapsibleSection>
-      ) : null}
-
-      {r.hrReview?.deepDive ? (
-        <CollapsibleSection title={`Полный разбор от ${hrName}`}>{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</CollapsibleSection>
-      ) : null}
-
-      {r.hrReview?.hiringTake ? <SurfacePanel className="hiring" label="Решение HR">{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</SurfacePanel> : null}
-
-      <div className="sec-h next-h"><h3>Ещё можно</h3></div>
-      <div className="next-actions">
-        <Link
-          href={`/vacancy?analysisId=${analysisId ?? ""}`}
-          className={`next-card ${hasPendingVacancy ? "pending" : ""}`}
-          onClick={() => analysisId && track("result_vacancy_cta_clicked", { analysisId, source: "result" })}
-        >
-          <span className="nk thr-mono">Под конкретный отклик</span>
-          <b>{hasPendingVacancy ? "Сопоставить с вакансией" : "Разобрать вакансию"}</b>
-          <span>{hasPendingVacancy ? "Текст на месте — повторно вставлять ничего не нужно." : "Узнать, каким требованиям соответствует резюме и чего в нём не хватает."}</span>
-        </Link>
+      <div className="result-hero">
+        <div className="result-intro"><h1>Я <em>{feminineVoice ? "разобрала" : "разобрал"}</em> твоё резюме<span>.</span></h1><p>{r.verdict.comment}</p></div>
+        <div className="result-portrait thr-photo" style={{ backgroundImage: `url('${hrImage}')` }} role="img" aria-label={hrName}><b>{hrName}</b></div>
       </div>
 
-      {resumeId ? (
-        <div className="opinion">
-          <div className="hook-t">Одно резюме. Четыре разных фильтра.</div>
-          <div className="hook-s">Один дополнительный взгляд бесплатный. Остальные голоса входят в пакет ToxicHR — файл загружать повторно не нужно.</div>
-          <div className="others">
-            {ROSTER.filter((person) => person.id !== personaCode).map((person) => (
-              <Link
-                key={person.id}
-                href={`/session?resumeId=${resumeId}&personaId=${person.id}`}
-                className="other"
-                onClick={() => analysisId && track("second_opinion_opened", { analysisId, persona: person.id })}
-              >
-                <span className="oph thr-photo" style={{ backgroundImage: `url('${person.img}')` }} />
-                <span><b>{person.name}</b><small>{person.role}</small></span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {highlights.length ? <div className="result-highlights">{highlights.map((item) => <SurfacePanel key={item.id} className="result-highlight"><h2>{item.title}</h2><p>{item.text}</p></SurfacePanel>)}</div> : null}
 
-      <div className="secondary-actions">
+      {featuredProblems.length ? <section className="result-issues" aria-labelledby="result-issues-heading"><h2 id="result-issues-heading">Что я отметила</h2><div className="result-issue-list">{featuredProblems.map(issue)}</div></section> : null}
+      {additionalProblems.length ? <CollapsibleSection className="result-extra" title={`Остальные замечания · ${additionalProblems.length}`}><div className="result-issue-list">{additionalProblems.map((problem, index) => issue(problem, index + 3))}</div></CollapsibleSection> : null}
+
+      {r.hrReview?.deepDive ? <CollapsibleSection className="result-extra" title={`Подробный разбор ${hrName}`}><div className="result-review">{paras(r.hrReview.firstImpression).map((paragraph, index) => <p key={`first-${index}`}>{paragraph}</p>)}{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={`deep-${index}`}>{paragraph}</p>)}{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={`take-${index}`}>{paragraph}</p>)}{paras(r.hrReview.fixPriority).map((paragraph, index) => <p key={`fix-${index}`}>{paragraph}</p>)}</div></CollapsibleSection> : null}
+
+      {analysisId ? <Link href={`/revenge?analysisId=${analysisId}`} className="result-next" onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}><strong>Соберём новую версию резюме</strong><span>{hasPackage === true ? "Продолжить работу →" : "Исправить · 199 ₽ →"}</span></Link> : null}
+
+      <div className="result-bottom">
+        <Link href={`/vacancy?analysisId=${analysisId ?? ""}`} className="result-vacancy" onClick={() => analysisId && track("result_vacancy_cta_clicked", { analysisId, source: "result" })}>{hasPendingVacancy ? "Сопоставить с вакансией" : "Разобрать вакансию"} ↗</Link>
+        {resumeId ? <section className="result-other-hr"><h2>Другой взгляд на резюме</h2><div>{ROSTER.filter((person) => person.id !== personaCode).map((person) => <Link key={person.id} href={`/session?resumeId=${resumeId}&personaId=${person.id}`} onClick={() => analysisId && track("second_opinion_opened", { analysisId, persona: person.id })}><span className="thr-photo" style={{ backgroundImage: `url('${person.img}')` }} /><b>{person.name}</b></Link>)}</div></section> : null}
+      </div>
+
+      <div className="result-actions">
         <SecondaryAction type="button" onClick={doShare} disabled={sharing || !analysisId}>{sharing ? "Создаём ссылку…" : shareUrl ? "Ссылка готова" : "Поделиться"}</SecondaryAction>
         {status === "authenticated" ? <SecondaryAction href="/me">В кабинет</SecondaryAction> : <SecondaryAction href={`/auth?analysisId=${analysisId ?? ""}&next=/me`}>Сохранить</SecondaryAction>}
-        <Link href="/" className="new-analysis">Новый разбор</Link>
+        <Link href="/">Новый разбор</Link>
         {shareErr ? <p role="alert">{shareErr}</p> : null}
         {shareUrl ? <div className="sharelink"><span>{shareUrl}</span>{typeof navigator !== "undefined" && "share" in navigator ? <button type="button" onClick={() => void nativeShare()}>Поделиться…</button> : null}<button type="button" onClick={copyLink}>{copied ? "Скопировано" : "Копировать"}</button><a href={shareUrl} target="_blank" rel="noreferrer">Открыть</a></div> : null}
       </div>

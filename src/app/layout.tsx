@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./conversion.css";
 import "@/components/ui/product-flows.css";
+import "@/components/ui/analysis-result.css";
 
 export const metadata: Metadata = {
   title: {
