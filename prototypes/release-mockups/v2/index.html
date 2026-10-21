@@ -3,44 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ToxicHR — новые макеты</title>
+  <title>ToxicHR — разбор резюме</title>
+  <link rel="stylesheet" href="system.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="preview-bar"><span>МАКЕТЫ TOXICHR</span><nav aria-label="Выбор макета"><a href="#report" data-view="report">Разбор резюме</a><a href="#cabinet" data-view="cabinet">Личный кабинет</a></nav><small>Локальный дизайн · без подключения к сервису</small></div>
-  <header class="site-header"><a class="brand" href="#report">TOXIC<span>HR</span></a><div class="site-links"><span>HR-состав</span><span>Разобрать вакансию</span><span>Цены</span></div><span class="header-cabinet">Кабинет</span></header>
+  <header class="site-header"><a class="brand" href="#report">TOXIC<span>HR</span></a><div class="site-links"><span>HR-состав</span><span>Разобрать вакансию</span><span>Цены</span></div><a class="header-cabinet" href="#cabinet">Кабинет</a></header>
   <main>
-    <section class="screen report-screen" data-screen="report" aria-label="Новый макет разбора резюме">
+    <section class="screen report-screen" data-screen="report" aria-label="Разбор резюме">
       <div class="report-wrap">
         <div class="report-hero">
           <div class="report-intro">
-            <div class="topline"><span class="eyebrow">РАЗБОР РЕЗЮМЕ · ЛЕРА</span><span class="test-badge">Тестовый ответ</span></div>
             <h1>Что стоит <em>уточнить</em><br>в резюме<span class="fullstop">.</span></h1>
             <p class="lead">Опыт виден. Но по текущему тексту трудно понять, какую часть работы сделал именно ты и что получилось в итоге.</p>
-            <div class="report-meta"><span class="pulse"></span><span>Лера · Бигтех</span><span class="meta-line"></span><span>Разбор готов</span></div>
+            <div class="report-meta"><span class="pulse"></span><span>Лера · разбор готов</span></div>
           </div>
           <div class="hr-portrait"><img src="../../../public/hr/lera.jpg" alt="Лера, HR из бигтеха"><div><b>Лера</b><span>Свайпает карьеру влево</span></div></div>
         </div>
 
         <div class="assessment" aria-label="Главное по результату">
-          <div class="assessment-item good"><span class="assessment-mark">✓</span><div><span class="eyebrow">УЖЕ ЕСТЬ</span><b>Опыт и сфера работы понятны</b></div></div>
-          <div class="assessment-item concern"><span class="assessment-mark">!</span><div><span class="eyebrow">ТРЕБУЕТ УТОЧНЕНИЯ</span><b>Личный вклад и результат</b></div></div>
+          <div class="assessment-item good"><span class="assessment-mark">✓</span><div><span class="assessment-label">Уже есть</span><b>Опыт и сфера работы понятны</b></div></div>
+          <div class="assessment-item concern"><span class="assessment-mark">!</span><div><span class="assessment-label">Нужно уточнить</span><b>Личный вклад и результат</b></div></div>
         </div>
 
-        <div class="content-heading"><div><span class="eyebrow">ГЛАВНОЕ ЗАМЕЧАНИЕ</span><h2>Что мешает отклику</h2></div><span class="heading-side">01 / 01</span></div>
-        <article class="issue-card"><span class="issue-number">01</span><div class="issue-copy"><div class="issue-top"><h3>Непонятен результат твоей работы</h3><span class="issue-tag">Нужно уточнить</span></div><p>В резюме описан процесс, но не показано, к чему он привёл и за что отвечал именно ты.</p><div class="issue-action"><span class="eyebrow">ЧТО ДОБАВИТЬ</span><strong>Задачу, своё действие и конкретный итог.</strong></div></div></article>
+        <div class="content-heading"><h2>Что мешает отклику</h2></div>
+        <article class="issue-card"><div class="issue-copy"><h3>Непонятен результат твоей работы</h3><p>В резюме описан процесс, но не показано, к чему он привёл и за что отвечал именно ты.</p><div class="issue-action"><strong>Добавь задачу, своё действие и конкретный итог.</strong></div></div></article>
 
         <div class="more-review"><span>Полный комментарий Леры</span><span>Показать ↓</span></div>
-        <div class="improve-band"><div><span class="eyebrow">СЛЕДУЮЩИЙ ШАГ</span><h2>Соберём новую версию резюме</h2><p>Уточним факты и перепишем слабое место без выдуманных достижений.</p></div><div class="improve-action"><strong>199 ₽</strong><span class="button dark">Исправить резюме ↗</span></div></div>
+        <div class="improve-band"><div><h2>Соберём новую версию резюме</h2><p>Уточним факты и перепишем слабое место без выдуманных достижений.</p></div><div class="improve-action"><strong>199 ₽</strong><span class="button dark">Исправить резюме ↗</span></div></div>
         <div class="report-footer"><span>Другой взгляд на это резюме</span><div class="mini-people"><span><img src="../../../public/hr/vadik.jpg" alt="">Вадик</span><span><img src="../../../public/hr/gleb.jpg" alt="">Глеб Аркадьевич</span><span><img src="../../../public/hr/tamara.jpg" alt="">Тамара Петровна</span></div></div>
       </div>
     </section>
 
-    <section class="screen cabinet-screen" data-screen="cabinet" aria-label="Новый макет личного кабинета">
+    <section class="screen cabinet-screen" data-screen="cabinet" aria-label="Личный кабинет">
       <div class="cabinet-layout">
-        <aside class="side-nav"><span class="eyebrow side-heading">ЛИЧНЫЙ КАБИНЕТ</span><nav aria-label="Разделы кабинета"><span class="side-item active"><i class="side-icon">▤</i> Мои резюме</span><span class="side-item"><i class="side-icon">⌕</i> Вакансии</span><span class="side-item"><i class="side-icon">▣</i> Готовые документы</span></nav><div class="side-bottom"><span class="side-item"><i class="side-icon">⚙</i> Настройки</span><span class="account"><b>Мой аккаунт</b><small>Приватность и данные</small></span></div></aside>
-        <div class="cabinet-main"><div class="cabinet-head"><div><span class="eyebrow">КАБИНЕТ / РЕЗЮМЕ</span><h1>Мои резюме<span class="fullstop">.</span></h1></div><span class="button outline">+ Добавить резюме</span></div>
-          <div class="section-title"><span class="eyebrow">ПРОДОЛЖИТЬ РАБОТУ</span><span>21 октября</span></div>
+        <aside class="side-nav"><nav aria-label="Разделы кабинета"><span class="side-item active"><i class="side-icon">▤</i> Мои резюме</span><span class="side-item"><i class="side-icon">⌕</i> Вакансии</span><span class="side-item"><i class="side-icon">▣</i> Готовые документы</span></nav><div class="side-bottom"><span class="side-item"><i class="side-icon">⚙</i> Настройки</span><span class="account"><b>Мой аккаунт</b><small>Приватность и данные</small></span></div></aside>
+        <div class="cabinet-main"><div class="cabinet-head"><h1>Мои резюме<span class="fullstop">.</span></h1><span class="button outline">+ Добавить резюме</span></div>
+          <div class="section-title"><h2>Продолжить работу</h2><span>21 октября</span></div>
           <div class="resume-feature"><div class="feature-copy"><span class="ready"><i></i> Разбор готов</span><h2>Что стоит уточнить<br>в резюме</h2><p>Лера отметила один главный вопрос к исходной версии.</p><span class="button green">Открыть разбор ↗</span></div><div class="feature-photo"><img src="../../../public/hr/lera.jpg" alt="Лера, HR из бигтеха"><div><b>Лера</b><span>Бигтех</span></div></div></div>
           <div class="section-title history-title"><h2>История по резюме</h2><span>1 резюме</span></div>
           <div class="history-card"><div class="history-head"><div class="file-icon">▤</div><div><b>Резюме · 21 октября</b><span>Исходный файл · PDF</span></div><span class="history-arrow">↗</span></div><div class="history-entries"><div class="history-entry"><i></i><div><b>Исходное резюме добавлено</b><span>21 октября</span></div></div><div class="history-entry"><i></i><div><b>Лера · разбор готов</b><span>Что стоит уточнить в резюме</span></div><span class="entry-action">Открыть ↗</span></div></div></div>
@@ -49,7 +48,7 @@
     </section>
   </main>
   <script>
-    function showView(){const key=location.hash==='#cabinet'?'cabinet':'report';document.querySelectorAll('[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen===key));document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===key));document.title=`ToxicHR — макет ${key==='cabinet'?'кабинета':'разбора'}`;scrollTo(0,0)}
+    function showView(){const key=location.hash==='#cabinet'?'cabinet':'report';document.querySelectorAll('[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen===key));document.title=`ToxicHR — ${key==='cabinet'?'личный кабинет':'разбор резюме'}`;scrollTo(0,0)}
     addEventListener('hashchange',showView);showView();
   </script>
 </body>
