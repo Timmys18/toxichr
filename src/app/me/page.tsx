@@ -146,9 +146,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
 
   return (
     <>
-      <main id="main" className="flex flex-1 flex-col">
-        <CabinetClient name={name} items={items} uploads={uploads} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} initialView={tab === "documents" ? "documents" : "resumes"} />
-      </main>
+      <CabinetClient name={name} items={items} uploads={uploads} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} initialView={tab === "documents" ? "documents" : "resumes"} />
     </>
   );
 }

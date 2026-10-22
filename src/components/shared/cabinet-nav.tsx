@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 type Section = "resumes" | "vacancies" | "documents" | "settings";
 
-export function CabinetNav({ active }: { active: Section }) {
+export function CabinetNav() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const active: Section = pathname === "/vacancies" ? "vacancies" : pathname === "/settings" ? "settings" : searchParams.get("tab") === "documents" ? "documents" : "resumes";
   const links: { href: string; label: string; section: Section }[] = [
     { href: "/me", label: "Мои резюме", section: "resumes" },
     { href: "/vacancies", label: "Вакансии", section: "vacancies" },
-    { href: "/me?tab=documents", label: "Готовые документы", section: "documents" },
+    { href: "/me?tab=documents", label: "Документы", section: "documents" },
     { href: "/settings", label: "Настройки", section: "settings" },
   ];
 

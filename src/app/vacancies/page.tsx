@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { VacancyReview } from "@/lib/vacancy";
-import { ServicePage } from "@/components/ui/page-templates";
-import { CabinetNav } from "@/components/shared/cabinet-nav";
-import { EmptyState, HistoryRow, PageContainer, PrimaryAction } from "@/components/ui/system";
+import { EmptyState, HistoryRow, PrimaryAction } from "@/components/ui/system";
 
 export const metadata: Metadata = { title: "Мои вакансии" };
 
@@ -36,11 +34,7 @@ export default async function VacanciesPage() {
   });
 
   return (
-    <ServicePage>
-      <main id="main">
-        <PageContainer className="cabinet-view">
-          <CabinetNav active="vacancies" />
-          <div className="cabinet-content cabinet-vacancies">
+    <div className="cabinet-vacancies">
           <header className="cabinet-header"><h1>Вакансии<span>.</span></h1><PrimaryAction href="/vacancy">Разобрать вакансию</PrimaryAction></header>
 
           {vacancies.length ? (
@@ -60,9 +54,6 @@ export default async function VacanciesPage() {
           ) : (
             <EmptyState>Разборов вакансий пока нет.</EmptyState>
           )}
-          </div>
-        </PageContainer>
-      </main>
-    </ServicePage>
+    </div>
   );
 }
