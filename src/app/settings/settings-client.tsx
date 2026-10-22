@@ -56,9 +56,6 @@ export function SettingsClient() {
           >
             Выйти
           </button>
-          <Link href="/me" className="thr-btn thr-btn-line">
-            В кабинет
-          </Link>
           <Link href="/privacy" className="thr-btn thr-btn-line">
             Правила приватности
           </Link>
@@ -96,9 +93,7 @@ export function SettingsClient() {
       <style jsx>{`
         .settings {
           max-width: 560px;
-          margin: 0 auto;
-          padding: 44px 20px 80px;
-          animation: thr-fade 0.6s var(--ease);
+          padding: 0 0 80px;
         }
         .over {
           font-size: 11px;

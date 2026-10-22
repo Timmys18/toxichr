@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { CabinetNav } from "@/components/shared/cabinet-nav";
+import { PageContainer } from "@/components/ui/system";
 import { SettingsClient } from "./settings-client";
 
 export const metadata: Metadata = {
@@ -16,7 +18,10 @@ export default async function SettingsPage() {
   return (
     <>
       <main id="main" className="flex flex-1 flex-col">
-        <SettingsClient />
+        <PageContainer className="cabinet-view">
+          <CabinetNav active="settings" />
+          <div className="cabinet-content"><SettingsClient /></div>
+        </PageContainer>
       </main>
     </>
   );

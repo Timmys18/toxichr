@@ -7,6 +7,10 @@ export function RouteTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const reducedMotion = useReducedMotion();
 
+  if (pathname === "/me" || pathname === "/vacancies" || pathname === "/settings") {
+    return <div className="route-content">{children}</div>;
+  }
+
   return (
     <motion.div key={pathname} className="route-content" initial={reducedMotion ? false : { opacity: 0.94, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}>
       {children}

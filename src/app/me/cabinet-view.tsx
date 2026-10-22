@@ -2,19 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
-import { EmptyState, PageContainer, PrimaryAction, SurfacePanel } from "@/components/ui/system";
+import { CabinetNav } from "@/components/shared/cabinet-nav";
+import { CollapsibleSection, EmptyState, PageContainer, PrimaryAction, SurfacePanel } from "@/components/ui/system";
 import type { CabDocument, CabDraftTarget, CabItem, CabUpload, CabinetPackage } from "./cabinet-client";
 
-type Props = { name: string; items: CabItem[]; uploads: CabUpload[]; vacancyCount: number; packageStatus: CabinetPackage; documents: CabDocument[]; draftTargets: CabDraftTarget[] };
+type Props = { name: string; items: CabItem[]; uploads: CabUpload[]; vacancyCount: number; packageStatus: CabinetPackage; documents: CabDocument[]; draftTargets: CabDraftTarget[]; initialView: "resumes" | "documents" };
 type Priority = { status: string; title: string; href: string; action: string; image?: string; persona?: string };
 
 function date(iso: string) {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 }
 
-export function CabinetClient({ items, uploads, documents, draftTargets }: Props) {
-  const [view, setView] = useState<"resumes" | "documents">("resumes");
+export function CabinetClient({ items, uploads, documents, draftTargets, initialView: view }: Props) {
   const [draft, setDraft] = useState<Priority | null>(null);
   const last = items[0];
   const latestDocument = documents[0];
@@ -53,12 +52,7 @@ export function CabinetClient({ items, uploads, documents, draftTargets }: Props
     : last ? { status: "Разбор готов", title: `${last.personaName} ${verb} твоё резюме`, href: `/session?view=${last.id}`, action: "Смотреть разбор", image: last.img, persona: last.personaName } : null);
 
   return <PageContainer className="cabinet-view">
-    <aside className="cabinet-side"><nav aria-label="Личный кабинет">
-      <button type="button" className={view === "resumes" ? "active" : ""} onClick={() => setView("resumes")}>Мои резюме</button>
-      <Link href="/vacancies">Вакансии</Link>
-      <button type="button" className={view === "documents" ? "active" : ""} onClick={() => setView("documents")}>Готовые документы</button>
-      <Link href="/settings">Настройки</Link>
-    </nav><button type="button" className="cabinet-signout" onClick={() => signOut({ callbackUrl: "/" })}>Выйти</button></aside>
+    <CabinetNav active={view} />
 
     <div className="cabinet-content">
       {view === "resumes" ? <>
@@ -68,11 +62,12 @@ export function CabinetClient({ items, uploads, documents, draftTargets }: Props
           {uploads.length ? <div className="cabinet-resumes">{uploads.map((upload) => {
             const analyses = items.filter((item) => item.resumeId === upload.id);
             const readyDocuments = documents.filter((document) => document.resumeId === upload.id);
-            return <SurfacePanel key={upload.id} className="cabinet-resume-card"><header><strong>{upload.filename}</strong><span>{date(upload.createdAt)}</span></header><div className="cabinet-events">
-              <div className="cabinet-event"><div><b>Исходное резюме</b><span>{date(upload.createdAt)}</span></div></div>
+            const latest = analyses[0];
+            return <CollapsibleSection key={upload.id} className="cabinet-resume-card" title={<span className="cabinet-resume-summary"><strong>Резюме от {date(upload.createdAt)}</strong><span>{latest ? `Последний разбор: ${latest.personaName}` : "Ещё без разбора"}</span></span>}><div className="cabinet-events">
+              <div className="cabinet-event"><div><b>Исходное резюме</b><span className="cabinet-filename" title={upload.filename}>{upload.filename}</span></div></div>
               {analyses.map((item) => <Link key={item.id} className="cabinet-event" href={`/session?view=${item.id}`}><div><b>Разбор {item.personaName}</b><span>Готов · {date(item.createdAt)}</span></div><strong>Смотреть ↗</strong></Link>)}
               {readyDocuments.map((document) => <Link key={document.id} className="cabinet-event" href={document.href}><div><b>{document.title}</b><span>Готово · {date(document.updatedAt)}</span></div><strong>Открыть ↗</strong></Link>)}
-            </div></SurfacePanel>;
+            </div></CollapsibleSection>;
           })}</div> : <EmptyState action={<PrimaryAction href="/">Добавить резюме</PrimaryAction>}>Резюме пока нет.</EmptyState>}
         </section>
       </> : <>

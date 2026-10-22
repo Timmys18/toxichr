@@ -16,7 +16,8 @@ const IMG: Record<string, string> = {
   tamara: "/hr/tamara.jpg",
 };
 
-export default async function MePage() {
+export default async function MePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/auth?next=/me");
@@ -146,7 +147,7 @@ export default async function MePage() {
   return (
     <>
       <main id="main" className="flex flex-1 flex-col">
-        <CabinetClient name={name} items={items} uploads={uploads} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} />
+        <CabinetClient name={name} items={items} uploads={uploads} vacancyCount={vacancyCount} packageStatus={packageStatus} documents={documents} draftTargets={draftTargets} initialView={tab === "documents" ? "documents" : "resumes"} />
       </main>
     </>
   );

@@ -4,7 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { VacancyReview } from "@/lib/vacancy";
 import { ServicePage } from "@/components/ui/page-templates";
-import { EmptyState, HistoryRow, PageContainer, PageIntro, PrimaryAction } from "@/components/ui/system";
+import { CabinetNav } from "@/components/shared/cabinet-nav";
+import { EmptyState, HistoryRow, PageContainer, PrimaryAction } from "@/components/ui/system";
 
 export const metadata: Metadata = { title: "Мои вакансии" };
 
@@ -36,9 +37,11 @@ export default async function VacanciesPage() {
 
   return (
     <ServicePage>
-      <main id="main" className="ds-history-page">
-        <PageContainer>
-          <PageIntro label="Центр карьеры · вакансии" title="Сохранённые вакансии" lead="Возвращайся к требованиям, решению по отклику и вопросам для интервью — повторно вставлять текст не нужно." />
+      <main id="main">
+        <PageContainer className="cabinet-view">
+          <CabinetNav active="vacancies" />
+          <div className="cabinet-content cabinet-vacancies">
+          <header className="cabinet-header"><h1>Вакансии<span>.</span></h1><PrimaryAction href="/vacancy">Разобрать вакансию</PrimaryAction></header>
 
           {vacancies.length ? (
             <div className="ds-history-list">
@@ -55,8 +58,9 @@ export default async function VacanciesPage() {
               })}
             </div>
           ) : (
-            <EmptyState action={<PrimaryAction href="/vacancy">Разобрать первую вакансию</PrimaryAction>}>Здесь появятся разобранные и сопоставленные вакансии.</EmptyState>
+            <EmptyState>Разборов вакансий пока нет.</EmptyState>
           )}
+          </div>
         </PageContainer>
       </main>
     </ServicePage>
