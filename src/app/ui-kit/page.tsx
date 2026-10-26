@@ -81,7 +81,7 @@ export default function UiKitPage() {
         <section className="ui-block">
           <SectionLabel>Карточка HR</SectionLabel>
           <div className="ds-persona-grid">
-            <PersonaCard name={ROSTER[0].name} role={ROSTER[0].role} tag={ROSTER[0].tag} image={ROSTER[0].img} quote={ROSTER[0].quote} focus={ROSTER[0].focus} lenses={ROSTER[0].lenses} description={ROSTER[0].pick} href={`/?persona=${ROSTER[0].id}#resume-start`} />
+            <PersonaCard name={ROSTER[0].name} role={ROSTER[0].role} image={ROSTER[0].img} quote={ROSTER[0].quote} href={`/?persona=${ROSTER[0].id}#resume-start`} />
           </div>
         </section>
 

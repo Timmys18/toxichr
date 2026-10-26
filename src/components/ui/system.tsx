@@ -133,18 +133,11 @@ export function InlineLink({ href, children, className }: { href: string; childr
   return <Link href={href} className={cn("ds-inline-link", className)}>{children}</Link>;
 }
 
-export function PersonaCard({ name, role, tag, image, quote, focus, lenses, description, href }: { name: string; role: string; tag: string; image: string; quote: string; focus: string; lenses: string[]; description: string; href: string }) {
-  return <article className="ds-persona-card">
-    <div className="ds-persona-card-photo thr-photo" style={{ backgroundImage: `url('${image}')` }} role="img" aria-label={`${name}, ${role}`}><SectionLabel className="ds-persona-card-tag">{tag}</SectionLabel></div>
-    <div className="ds-persona-card-body">
-      <div><h2>{name}</h2><p>{role}</p></div>
-      <blockquote>{quote}</blockquote>
-      <p>{focus}</p>
-      <ul aria-label="Фокус разбора">{lenses.map((lens) => <li key={lens}>{lens}</li>)}</ul>
-      <p>{description}</p>
-      <PrimaryAction href={href}>Выбрать этого HR</PrimaryAction>
-    </div>
-  </article>;
+export function PersonaCard({ name, role, image, quote, href }: { name: string; role: string; image: string; quote: string; href: string }) {
+  return <Link className="ds-persona-card" href={href} aria-label={`Выбрать HR: ${name}`}>
+    <span className="ds-persona-card-photo thr-photo" style={{ backgroundImage: `url('${image}')` }} role="img" aria-label={`${name}, ${role}`} />
+    <span className="ds-persona-card-body"><strong>{name}</strong><span>{role}</span><span className="ds-persona-card-quote">{quote}</span></span>
+  </Link>;
 }
 
 export function OfferCard({ label, badge, price, priceNote, description, items, action, highlighted = false }: { label: ReactNode; badge?: ReactNode; price: ReactNode; priceNote: ReactNode; description?: ReactNode; items: ReactNode[]; action: ReactNode; highlighted?: boolean }) {
@@ -154,7 +147,7 @@ export function OfferCard({ label, badge, price, priceNote, description, items, 
       <div className="ds-offer-card-price"><b>{price}</b><span>{priceNote}</span></div>
     </div>
     {description ? <p className="ds-offer-card-description">{description}</p> : null}
-    <ul>{items.map((item, index) => <li key={index}><span aria-hidden>{highlighted ? "+" : "✓"}</span>{item}</li>)}</ul>
+    <ul>{items.map((item, index) => <li key={index}>{item}</li>)}</ul>
     <div className="ds-offer-card-action">{action}</div>
   </article>;
 }

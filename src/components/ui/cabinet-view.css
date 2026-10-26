@@ -1,12 +1,13 @@
-.cabinet-main{flex:1;min-width:0}
-.cabinet-view.ds-page-container{display:grid;grid-template-columns:250px minmax(0,1fr);width:min(1480px,100%);max-width:none;min-height:calc(100dvh - 78px)}
-.cabinet-side{position:sticky;top:78px;align-self:start;display:flex;height:calc(100dvh - 78px);flex-direction:column;padding:38px 17px;border-right:1px solid var(--hair);background:var(--metal-0)}
+.cabinet-route{height:calc(100dvh - 78px);flex:0 0 auto;overflow:hidden}
+.cabinet-main{height:100%;min-height:0;min-width:0}
+.cabinet-view.ds-page-container{display:grid;grid-template-columns:250px minmax(0,1fr);width:min(1480px,100%);max-width:none;height:100%;min-height:0}
+.cabinet-side{display:flex;height:100%;min-height:0;flex-direction:column;padding:38px 17px;border-right:1px solid var(--hair);background:var(--metal-0)}
 .cabinet-side nav{display:flex;flex-direction:column;gap:5px}
 .cabinet-side nav>*{display:flex;min-height:48px;align-items:center;padding:0 18px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dim);font:650 16px/1.2 var(--font-sans);text-align:left;text-decoration:none;cursor:pointer}
 .cabinet-side nav>*.active{border-color:var(--tox);color:var(--tox)}
 .cabinet-side nav>*:hover{color:var(--fg)}
 .cabinet-signout{align-self:flex-start;margin:auto 18px 0;padding:20px 0 0;border:0;background:transparent;color:var(--dim);font:inherit;cursor:pointer}
-.cabinet-content{min-width:0;padding:52px clamp(28px,5vw,76px) 100px}
+.cabinet-content{min-width:0;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:52px clamp(28px,5vw,76px) 100px}
 .cabinet-header{display:flex;align-items:end;justify-content:space-between;gap:20px}
 .cabinet-header h1{font-size:clamp(44px,5vw,72px);line-height:1.02;letter-spacing:-.055em;font-weight:800}
 .cabinet-header h1 span{color:var(--tox)}
@@ -45,4 +46,4 @@
 .cabinet-vacancies>.ds-empty-state{margin-top:48px}
 .cabinet-loading-rows{display:grid;gap:14px;margin-top:48px}.cabinet-loading-rows span{display:block;height:76px;background:var(--metal-0)}
 @media(max-width:1050px){.cabinet-view.ds-page-container{grid-template-columns:215px minmax(0,1fr)}.cabinet-side{padding-right:10px;padding-left:10px}.cabinet-content{padding-right:30px;padding-left:30px}.cabinet-feature{grid-template-columns:minmax(0,1fr) 210px}}
-@media(max-width:700px){.cabinet-view.ds-page-container{display:block;min-height:0}.cabinet-side{position:static;height:auto;padding:12px 18px;border-right:0;border-bottom:1px solid var(--hair)}.cabinet-side nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.cabinet-side nav>*{min-height:42px;padding:0 12px}.cabinet-signout{margin:8px 12px 0;padding:4px 0}.cabinet-content{padding:36px 18px 70px}.cabinet-header{align-items:flex-start;flex-direction:column}.cabinet-header h1{font-size:44px}.cabinet-section{margin-top:34px}.cabinet-feature{grid-template-columns:minmax(0,1fr) 120px;min-height:144px;height:auto;margin-top:30px}.cabinet-feature-copy{padding:20px}.cabinet-feature-copy strong{font-size:21px}.cabinet-history{margin-top:38px}.cabinet-resume-card>summary,.cabinet-resume-card.ds-collapsible>div{padding-right:16px;padding-left:16px}.cabinet-event strong{font-size:14px}}
+@media(max-width:700px){.cabinet-route{height:auto;min-height:calc(100dvh - 62px);flex:1;overflow:visible}.cabinet-main{height:auto}.cabinet-view.ds-page-container{display:block;height:auto;min-height:0}.cabinet-side{height:auto;padding:12px 18px;border-right:0;border-bottom:1px solid var(--hair)}.cabinet-side nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.cabinet-side nav>*{min-height:42px;padding:0 12px}.cabinet-signout{margin:8px 12px 0;padding:4px 0}.cabinet-content{overflow:visible;padding:36px 18px 70px}.cabinet-header{align-items:flex-start;flex-direction:column}.cabinet-header h1{font-size:44px}.cabinet-section{margin-top:34px}.cabinet-feature{grid-template-columns:minmax(0,1fr) 120px;min-height:144px;height:auto;margin-top:30px}.cabinet-feature-copy{padding:20px}.cabinet-feature-copy strong{font-size:21px}.cabinet-history{margin-top:38px}.cabinet-resume-card>summary,.cabinet-resume-card.ds-collapsible>div{padding-right:16px;padding-left:16px}.cabinet-event strong{font-size:14px}}
