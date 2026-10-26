@@ -9,41 +9,41 @@ export function TopNav() {
   const { data: session } = useSession();
   const inCabinet = pathname === "/me" || pathname === "/vacancies" || pathname === "/settings";
   const authed = inCabinet || Boolean(session?.user?.id);
-  const isHome = pathname === "/";
-  const isAuth = pathname === "/auth";
-
   return (
     <nav className="topnav" data-path={pathname}>
       <Link href="/" className="brand">TOXIC<i>HR</i></Link>
 
-      {!isAuth ? <div className="links desktop-links">
-        {isHome ? <><Link href="/#how">Как это работает</Link><Link href="/#pricing">Цены</Link><Link href="/me">Личный кабинет</Link></> : <><Link href="/hr">HR-состав</Link><Link href="/vacancy">Разобрать вакансию</Link><Link href="/pricing">Цены</Link></>}
-      </div> : null}
+      <div className="links desktop-links">
+        <Link href="/#how">Как это работает</Link>
+        <Link href="/hr">HR-состав</Link>
+        <Link href="/vacancy">Разобрать вакансию</Link>
+        <Link href="/pricing">Цены</Link>
+      </div>
 
       <div className="right">
-        {isAuth ? <Link href="/" className="auth-back">На главную</Link> : <><Link href="/vacancy" className="mobile-vacancy" aria-label="Разобрать вакансию">Вакансия</Link>
+        <Link href="/vacancy" className="mobile-vacancy" aria-label="Разобрать вакансию">Вакансия</Link>
         <Link href={authed ? "/me" : "/auth"} className="login">{authed ? "Кабинет" : "Войти"}</Link>
         <details className="mobile-menu">
           <summary aria-label="Открыть меню"><span /><span /><span /></summary>
           <div className="mobile-panel">
             <Link href="/">Разобрать резюме</Link>
-            {isHome ? <Link href="/#how">Как это работает</Link> : null}
+            <Link href="/#how">Как это работает</Link>
             <Link href="/vacancy">Разобрать вакансию</Link>
             <Link href="/hr">HR-состав</Link>
-            <Link href="/pricing">Цена</Link>
+            <Link href="/pricing">Цены</Link>
           </div>
-        </details></>}
+        </details>
       </div>
 
       <style>{`
         .topnav{height:78px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;background:rgba(8,9,10,.9);backdrop-filter:blur(20px);padding:0 44px;border-bottom:1px solid var(--hair)}
         .brand{font-weight:800;font-size:18px;letter-spacing:.01em;color:var(--fg);text-decoration:none}.brand i{font-style:normal;color:var(--tox)}
-        .links{display:flex;gap:38px}.links a{font-size:16px;font-weight:650;color:rgba(242,244,245,.78);text-decoration:none;transition:color .18s var(--ease)}.links a:hover{color:var(--fg)}.topnav[data-path="/hr"] .desktop-links a[href="/hr"],.topnav[data-path^="/vacancy"] .desktop-links a[href="/vacancy"],.topnav[data-path^="/vacancies"] .desktop-links a[href="/vacancy"],.topnav[data-path="/pricing"] .desktop-links a[href="/pricing"]{color:var(--tox)}
+        .links{display:flex;gap:26px}.links a{font-size:16px;font-weight:650;color:rgba(242,244,245,.78);text-decoration:none;transition:color .18s var(--ease)}.links a:hover{color:var(--fg)}.topnav[data-path="/hr"] .desktop-links a[href="/hr"],.topnav[data-path^="/vacancy"] .desktop-links a[href="/vacancy"],.topnav[data-path^="/vacancies"] .desktop-links a[href="/vacancy"],.topnav[data-path="/pricing"] .desktop-links a[href="/pricing"]{color:var(--tox)}
         .right{display:flex;align-items:center;gap:10px}.login{display:inline-flex;min-width:110px;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--fg);text-decoration:none;border:1px solid rgba(242,244,245,.42);padding:12px 23px;border-radius:12px;background:rgba(255,255,255,.025);transition:.2s}.login:hover{border-color:rgba(242,244,245,.62);background:rgba(255,255,255,.07)}
-        .auth-back{color:var(--dim);font-size:16px;font-weight:650;text-decoration:none}.auth-back:hover{color:var(--fg)}
         .mobile-vacancy,.mobile-menu{display:none}.mobile-menu{position:relative}.mobile-menu summary{width:42px;height:42px;display:grid;place-content:center;gap:4px;border:1px solid var(--hair2);border-radius:12px;cursor:pointer;list-style:none}.mobile-menu summary::-webkit-details-marker{display:none}.mobile-menu summary span{display:block;width:16px;height:1px;background:var(--fg)}
         .mobile-panel{position:absolute;right:0;top:50px;width:min(260px,calc(100vw - 36px));padding:10px;border:1px solid var(--hair2);border-radius:16px;background:rgba(14,16,18,.98);box-shadow:0 24px 70px rgba(0,0,0,.45)}.mobile-panel a{display:block;padding:12px 13px;border-radius:10px;color:var(--dim);font-size:16px;text-decoration:none}.mobile-panel a:hover{color:var(--fg);background:rgba(255,255,255,.05)}
-        @media(max-width:720px){.topnav{height:62px;padding:0 18px;gap:10px}.desktop-links{display:none}.right{gap:7px}.mobile-menu{display:block}.mobile-vacancy{display:block;color:var(--dim);font-size:16px;text-decoration:none}.login{min-width:72px;padding:9px 11px;font-size:16px}}
+        @media(max-width:900px){.topnav{padding:0 18px;gap:10px}.desktop-links{display:none}.right{gap:7px}.mobile-menu{display:block}.mobile-vacancy{display:block;color:var(--dim);font-size:16px;text-decoration:none}.login{min-width:72px;padding:9px 11px;font-size:16px}}
+        @media(max-width:700px){.topnav{height:62px}}
         @media(max-width:390px){.mobile-vacancy{display:none}}
       `}</style>
     </nav>

@@ -133,7 +133,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
   return <div className={styles.home}>
     <section className={styles.hero} id="top" aria-labelledby="home-title">
       <div className={styles.intro}>
-        <div><h1 id="home-title">Твоё резюме <em>не работает.</em></h1><p>Выбери своего HR и узнай почему</p></div>
+        <div><h1 id="home-title">Твоё резюме <em>не работает?</em></h1><p>Выбери своего HR и узнай почему</p></div>
         <div id="resume-start" className={`${styles.actions} ${dragActive ? styles.drag : ""}`}
           onDragEnter={(event) => { event.preventDefault(); setDragActive(true); }}
           onDragOver={(event) => event.preventDefault()}
