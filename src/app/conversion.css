@@ -9,7 +9,7 @@
   }
 
   .hr-tag {
-    font-size: 9px !important;
+    font-size: var(--text-body) !important;
     letter-spacing: 0.08em !important;
   }
 }

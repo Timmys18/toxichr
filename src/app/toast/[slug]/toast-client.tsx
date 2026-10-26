@@ -4,6 +4,7 @@ import { useEffect, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PublicSharePayload } from "@/lib/public-share";
+import { PageContainer, PageIntro, PrimaryAction } from "@/components/ui/system";
 import {
   getOrCreateVisitorId,
   rememberReferral,
@@ -56,131 +57,21 @@ export function ToastClient({ slug, payload }: Props) {
     router.push(`/?ref=${encodeURIComponent(slug)}`);
   }
 
-  const sub = [payload.roleLabel, payload.levelLabel]
-    .filter(Boolean)
-    .join(" · ");
-
   return (
-    <main id="main" className="toast">
-      <div className="wrap">
-        <div className="over thr-mono">
-          Публичная карточка · {payload.personaName}
-        </div>
-        <h1>«{payload.verdictTitle}»</h1>
-        <div className="score thr-mono">
-          Оценка {payload.personaName}: <b>{payload.scoreTotal}/100</b>
-        </div>
+    <main id="main">
+      <PageContainer className="ds-toast-page">
+        <PageIntro title={payload.verdictTitle} lead={`Разбор от ${payload.personaName}`} />
         <blockquote>{payload.quote}</blockquote>
-        {sub ? <div className="sub thr-mono">{sub}</div> : null}
-
-        <div className="card">
+        <div className="ds-toast-image">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/api/cards/${slug}?format=og`}
-            alt={`Карточка разбора · ${payload.verdictTitle}`}
-            loading="lazy"
-          />
+          <img src={`/api/cards/${slug}?format=og`} alt={`Карточка разбора · ${payload.verdictTitle}`} loading="lazy" />
         </div>
-
-        <Link href="/" className="thr-btn thr-btn-tox cta" onClick={trackCta}>
-          А моё резюме? Проверить →
-        </Link>
-        <p className="note">
-          Полный текст резюме не публикуется — только вердикт и метрики.
-        </p>
-        <Link href="/" className="what">
-          Что такое ToxicHR
-        </Link>
-      </div>
-
-      <style jsx>{`
-        .toast {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 40px 20px 70px;
-        }
-        .wrap {
-          width: 100%;
-          max-width: 560px;
-          animation: thr-fade 0.6s var(--ease);
-        }
-        .over {
-          font-size: 11px;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: var(--faint);
-        }
-        h1 {
-          font-weight: 800;
-          font-size: clamp(28px, 5vw, 40px);
-          line-height: 1.08;
-          letter-spacing: -0.035em;
-          margin-top: 16px;
-        }
-        .score {
-          margin-top: 12px;
-          font-size: 12.5px;
-          letter-spacing: 0.06em;
-          color: var(--dim);
-        }
-        .score b {
-          color: var(--tox);
-        }
-        blockquote {
-          margin: 20px 0 0;
-          border-left: 2px solid var(--tox);
-          padding-left: 16px;
-          font-size: 16px;
-          line-height: 1.6;
-          color: var(--dim);
-          font-style: italic;
-        }
-        .sub {
-          margin-top: 14px;
-          font-size: 11px;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--faint);
-        }
-        .card {
-          margin-top: 26px;
-          border: 1px solid var(--hair2);
-          border-radius: 16px;
-          overflow: hidden;
-          background: var(--metal-1);
-        }
-        .card :global(img) {
-          display: block;
-          width: 100%;
-          height: auto;
-        }
-        .cta {
-          margin-top: 26px;
-          width: 100%;
-          height: 56px;
-          justify-content: center;
-          text-decoration: none;
-          font-size: 15.5px;
-        }
-        .note {
-          margin-top: 14px;
-          text-align: center;
-          font-family: var(--font-mono);
-          font-size: 11px;
-          color: var(--faint);
-        }
-        .what {
-          display: block;
-          margin-top: 12px;
-          text-align: center;
-          font-size: 13.5px;
-          color: var(--dim);
-          text-decoration: underline;
-          text-underline-offset: 3px;
-        }
-      `}</style>
+        <PrimaryAction href="/" onClick={trackCta}>Проверить моё резюме</PrimaryAction>
+        <div className="ds-toast-links">
+          <span>Полный текст резюме не публикуется.</span>
+          <Link href="/">Что такое ToxicHR</Link>
+        </div>
+      </PageContainer>
     </main>
   );
 }

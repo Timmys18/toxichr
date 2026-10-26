@@ -1,0 +1,102 @@
+/* Shared visual roles for every product route. The tokens live in globals.css. */
+.ds-plain-page{max-width:960px;padding:var(--space-8) 0 var(--space-9)}
+.ds-plain-sections{margin-top:var(--space-7)}
+.ds-plain-sections>section{padding:var(--space-5) 0;border-top:1px solid var(--hair2)}
+.ds-plain-sections h2{font-size:28px;line-height:1.2;letter-spacing:-.035em}
+.ds-plain-sections p{max-width:70ch;margin-top:var(--space-3);color:var(--dim);font-size:var(--text-body);line-height:1.6}
+.ds-plain-actions{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-6)}
+
+/* The improvement flow uses the same heading, question, and action hierarchy as the landing page. */
+.revenge.ds-page-container{width:min(960px,calc(100% - (var(--page-gutter) * 2)));padding:var(--space-8) 0 var(--space-9)}
+.revenge .questions{max-width:800px;margin-top:var(--space-7);gap:var(--space-4)}
+.revenge .progress-head{align-items:center;color:var(--dim);font-size:var(--text-body)}
+.revenge .progress-head .ds-section-label{color:var(--tox);font-family:var(--font-sans),sans-serif;font-size:var(--text-body);font-weight:700;letter-spacing:0;text-transform:none}
+.revenge .progress{height:2px;border-radius:0}
+.revenge .questions article{padding:var(--space-6);border-color:var(--hair2);border-radius:12px;background:var(--metal-0)}
+.revenge .questions h2{margin:0;font-size:clamp(28px,3vw,36px);line-height:1.17;letter-spacing:-.035em}
+.revenge .ask{margin-top:var(--space-4);color:var(--dim);font-size:var(--text-body);font-weight:400;line-height:1.6}
+.revenge .questions .ds-collapsible{margin-top:var(--space-5);padding:var(--space-4) 0;border-top:1px solid var(--hair2);border-bottom:1px solid var(--hair2)}
+.revenge .questions .ds-collapsible summary{font-size:var(--text-body);font-weight:700}
+.revenge .questions .ds-collapsible>div{padding-top:var(--space-3)}
+.revenge .questions blockquote{margin:0;padding-left:var(--space-3);border-color:var(--hair2);font-size:var(--text-body);font-style:normal}
+.revenge .questions ul{margin:var(--space-3) 0 0 var(--space-5);color:var(--dim);font-size:var(--text-body);line-height:1.6}
+.revenge .questions .ds-question-field{margin-top:var(--space-5);padding:0;border:0}
+.revenge .questions .ds-question-field>b{font-size:var(--text-body)}
+.revenge .questions .ds-question-field textarea{min-height:150px;margin-top:var(--space-3);padding:var(--space-4);border-radius:12px;background:var(--metal-1);font-size:var(--text-body)}
+.revenge .step-actions{margin-top:var(--space-2)}
+.revenge .step-actions .thr-btn{min-height:52px;border-radius:12px;font-size:var(--text-body)}
+.revenge .restored{border-radius:12px;color:var(--fg);font-size:var(--text-body)}
+.revenge .paywall{max-width:800px;margin-top:var(--space-6);padding:var(--space-6);border-radius:12px;background:var(--metal-0);box-shadow:none}
+.revenge .pw-top span,.revenge .pw-proof b,.revenge .pw-proof span,.revenge .later{font-family:var(--font-sans),sans-serif;font-size:var(--text-body);letter-spacing:0;text-transform:none}
+.revenge .paywall h2{font-size:28px;line-height:1.2}
+.revenge .paywall>p{font-size:var(--text-body)}
+.revenge .pw-proof{padding:0;border:0;background:transparent}
+.revenge .pay{border-radius:12px;font-size:var(--text-body)}
+.revenge .result-head h2{font-size:28px}
+.revenge .result-head p,.revenge .save-state,.revenge .compare-label,.revenge .editor-meta>span,.revenge .reset{font-family:var(--font-sans),sans-serif;font-size:var(--text-body);letter-spacing:0;text-transform:none}
+.revenge .save-state{border-radius:12px}
+.revenge .result-tabs{border-radius:12px}.revenge .result-tabs button{font-size:var(--text-body)}
+.revenge .replacements article,.revenge .compare article,.revenge .editor{border-radius:12px}
+.revenge .compare pre,.revenge .editor textarea{font:var(--text-body)/1.6 var(--font-sans),sans-serif}
+.revenge .exports .thr-btn{border-radius:12px;font-size:var(--text-body)}
+
+/* Secondary flows share the same readable body and concise label scale. */
+.session .feed-head,.session .st,.session .rl,.session .meta div,.session .new-analysis,.session .finding,.session .share-hook span,.verdict .lab,.verdict .num,.verdict .pq,.verdict .pf,.verdict .hook-s,.verdict .other b,.verdict .other small,.verdict .secondary-actions .new-analysis{font-family:var(--font-sans),sans-serif;font-size:var(--text-body);letter-spacing:0;text-transform:none}
+.session .st{font-weight:700}.session .nm{font-size:28px}.session .feed-head{color:var(--tox);font-weight:700}
+.verdict .conversion-band .eyebrow,.verdict .next-card .nk{font-family:var(--font-sans),sans-serif;font-size:var(--text-body);font-weight:700;letter-spacing:0;text-transform:none}
+.verdict .other small,.verdict .next-card>span:last-child,.verdict .conversion-band>span:nth-child(3){font-size:var(--text-body)}
+.ds-comparison-intro .over,.ds-comparison-intro-top>a,.ds-comparison-input-meta,.ds-comparison-input-meta b,.ds-comparison-stale-note,.ds-adaptation-progress>span{font-family:var(--font-sans),sans-serif;font-size:var(--text-body);letter-spacing:0;text-transform:none}
+.ds-status-pill{font:700 var(--text-body)/1.3 var(--font-sans),sans-serif;letter-spacing:0;text-transform:none}
+.ds-inline-link,.ds-history-row-content small,.ds-history-row-aside,.ds-form-card footer{font-size:var(--text-body)}
+.ds-persona-card-body,.ds-offer-card,.ds-form-card,.ds-history-row,.ds-surface-panel{border-radius:12px}
+
+/* Account and public-result pages use the same primitives and spacing. */
+.ds-settings-page{width:100%;max-width:960px;padding:0 0 var(--space-9)}
+.ds-settings-page .ds-page-intro{padding-top:0}
+.ds-settings-page .ds-surface-panel{margin-top:var(--space-6);border-radius:12px}
+.ds-settings-page .ds-surface-panel h2{font-size:28px;line-height:1.2;letter-spacing:-.035em}
+.ds-settings-page .ds-surface-panel p{max-width:65ch;margin-top:var(--space-3);color:var(--dim);font-size:var(--text-body);line-height:1.6}
+.ds-settings-page .ds-plain-actions{margin-top:var(--space-5)}
+.ds-settings-page .ds-delete-label{display:block;margin-top:var(--space-5);font-size:var(--text-body);font-weight:700}
+.ds-settings-page .ds-delete-label input{display:block;width:100%;height:52px;margin-top:var(--space-3);padding:0 var(--space-4);border:1px solid var(--hair2);border-radius:12px;background:var(--metal-1);color:var(--fg);font:inherit}
+.ds-settings-page .ds-delete-label input:focus{outline:1px solid var(--crit)}
+.ds-settings-page .ds-delete-action{margin-top:var(--space-5);padding:0 var(--space-5);background:var(--crit);color:var(--fg);font-size:var(--text-body)}
+.ds-settings-page .ds-form-error{margin-top:var(--space-3)}
+.ds-toast-page{max-width:960px;padding:var(--space-8) 0 var(--space-9)}
+.ds-toast-page .ds-page-intro{max-width:760px}
+.ds-toast-page blockquote{max-width:65ch;margin-top:var(--space-5);color:var(--dim);font-size:var(--text-body);line-height:1.6}
+.ds-toast-page .ds-toast-image{max-width:760px;overflow:hidden;margin-top:var(--space-6);border:1px solid var(--hair2);border-radius:12px}
+.ds-toast-page .ds-toast-image img{display:block;width:100%;height:auto}
+.ds-toast-page .ds-primary-action{margin-top:var(--space-6)}
+.ds-toast-page .ds-toast-links{display:flex;flex-wrap:wrap;gap:var(--space-5);margin-top:var(--space-5);color:var(--dim);font-size:var(--text-body)}
+.ds-toast-page .ds-toast-links a{color:var(--tox);text-decoration:none}
+
+.ops{width:min(var(--page-max),calc(100% - (var(--page-gutter) * 2)));margin:0 auto;padding:var(--space-8) 0 var(--space-9)}
+.ops .head,.ops .section-title{display:flex;align-items:end;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap}
+.ops .periods{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.ops .periods a{min-height:48px;display:inline-flex;align-items:center;padding:0 var(--space-4);border:1px solid var(--hair2);border-radius:12px;color:var(--dim);font-size:var(--text-body);text-decoration:none}
+.ops .periods a.active{border-color:var(--tox);color:var(--tox)}
+.ops .commercial,.ops .secondary-grid{margin-top:var(--space-7)}
+.ops .section-title{margin-bottom:var(--space-4)}.ops .section-title h2{font-size:28px;line-height:1.2}
+.ops .section-title span{color:var(--dim);font-size:var(--text-body)}
+.ops .funnel,.ops .mini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}
+.ops .mini{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ops .funnel article,.ops .mini article{display:flex;min-height:160px;min-width:0;flex-direction:column;padding:var(--space-5);border:1px solid var(--hair2);border-radius:12px;background:var(--metal-0)}
+.ops .funnel article.money{border-color:var(--tox)}
+.ops .funnel strong,.ops .mini strong{color:var(--tox);font-size:40px;line-height:1.1}
+.ops .funnel span,.ops .mini span{margin-top:auto;font-size:var(--text-body)}
+.ops .funnel small,.ops .mini small{margin-top:var(--space-2);color:var(--dim);font-size:var(--text-body)}
+.ops .secondary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-6)}
+
+@media(max-width:700px){
+  .ds-plain-page,.ds-toast-page{padding:var(--space-6) 0 var(--space-8)}
+  .revenge.ds-page-container{padding:var(--space-6) 0 var(--space-8)}
+  .revenge .questions article,.revenge .paywall{padding:var(--space-5)}
+  .revenge .progress-head{align-items:flex-start;flex-direction:column;gap:var(--space-2)}
+  .revenge .result-head{align-items:flex-start;flex-direction:column}
+  .ds-plain-actions .thr-btn,.revenge .step-actions .thr-btn{flex:1}
+  .ops{padding:var(--space-6) 0 var(--space-8)}
+  .ops .funnel,.ops .mini,.ops .secondary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ops .secondary-grid{gap:var(--space-5)}
+}
+@media(max-width:500px){.ops .secondary-grid{grid-template-columns:1fr}}

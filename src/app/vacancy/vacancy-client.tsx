@@ -9,6 +9,7 @@ import {
   EmptyState,
   EvidenceItem,
   PageContainer,
+  PageIntro,
   PaymentPrompt,
   PrimaryAction,
   SectionLabel,
@@ -198,12 +199,8 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   const resultCommand = review ? <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : packageState?.adaptationAvailable && savedVacancyId ? <Link href={`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(savedVacancyId)}`}>Адаптировать резюме под вакансию →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? `Адаптация входит в пакет · сопоставлений осталось ${packageState.matchesRemaining} из 5.` : `Адаптация уже использована · повторных проверок осталось ${packageState?.rechecksRemaining ?? 0} из 5.` : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setText(""); setSavedVacancyId(""); setMatchPaywall(null); setResultStale(false); setError(null); clearPendingVacancy(); window.history.replaceState(window.history.state, "", analysisId ? `/vacancy?analysisId=${encodeURIComponent(analysisId)}` : "/vacancy"); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} /> : null;
 
   return <PageContainer className="ds-comparison">
-    <div className="ds-comparison-intro">
-      <div className="ds-comparison-intro-top"><p className="over thr-mono">Вакансия без корпоративного тумана</p><Link href="/vacancies">История вакансий →</Link></div>
-      <h1>{analysisId ? "Подходишь ли ты на эту роль?" : "Что здесь на самом деле хотят?"}</h1>
-      <p>{analysisId ? "Сопоставим требования только с сохранённой профессиональной оценкой и точными цитатами из резюме." : "Разберём реальную роль, приоритеты и то, что стоит проверить до отклика."}</p>
-      {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
-    </div>
+    <PageIntro label="Разбор вакансии" action={<Link className="ds-inline-link" href="/vacancies">История вакансий</Link>} title={analysisId ? "Подходишь ли ты на эту роль?" : "Что здесь на самом деле хотят?"} lead={analysisId ? "Сопоставим требования с фактами из твоего резюме." : "Разберём роль и требования до отклика."} />
+    {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
 
     {review ? <SummaryRail title={normalizeTitle(review.assessment.title)} meta={<>Вакансия сохранена · {textLength} знаков</>} action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>} /> : null}
     {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={10} placeholder="Вставь сюда текст вакансии целиком…" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} /><div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span><b className="thr-mono">{textLength} / 30 000</b></div></div> : null}

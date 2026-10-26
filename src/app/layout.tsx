@@ -7,6 +7,7 @@ import "./conversion.css";
 import "@/components/ui/product-flows.css";
 import "@/components/ui/analysis-result.css";
 import "@/components/ui/cabinet-view.css";
+import "@/components/ui/unified-pages.css";
 
 export const metadata: Metadata = {
   title: {

@@ -11,7 +11,7 @@ export default function GlobalError({
       <body style={{ margin: 0, background: "#08090a", color: "#f2f4f5", fontFamily: "system-ui, sans-serif" }}>
         <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
           <div style={{ maxWidth: 560, textAlign: "center" }}>
-            <p style={{ color: "#2ce08b", fontSize: 12, letterSpacing: ".16em", textTransform: "uppercase" }}>
+            <p style={{ color: "#2ce08b", fontSize: 16 }}>
               ToxicHR · критический сбой
             </p>
             <h1 style={{ margin: "14px 0 0", fontSize: "clamp(34px,6vw,58px)" }}>

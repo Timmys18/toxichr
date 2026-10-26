@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageIntro } from "@/components/ui/system";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -109,12 +110,9 @@ export default async function FunnelPage({
 
   return (
     <>
-      <main className="ops">
+      <main id="main" className="ops">
         <div className="head">
-          <div>
-            <p className="over thr-mono">Закрытая аналитика · уникальные посетители</p>
-            <h1>Воронка ToxicHR</h1>
-          </div>
+          <PageIntro title="Воронка ToxicHR." />
           <nav className="periods" aria-label="Период">
             <Link href="/ops/funnel?days=7" className={days === 7 ? "active" : ""}>7 дней</Link>
             <Link href="/ops/funnel?days=30" className={days === 30 ? "active" : ""}>30 дней</Link>
@@ -140,14 +138,14 @@ export default async function FunnelPage({
 
         <div className="secondary-grid">
           <section>
-            <div className="section-title"><h2>Вакансии</h2><span>retention loop</span></div>
+            <div className="section-title"><h2>Вакансии</h2></div>
             <div className="mini">
               {vacancyFunnel.map(([label, value], index) => <article key={label}><strong>{value}</strong><span>{label}</span><small>{index ? `${pct(value, vacancyFunnel[index - 1][1])} завершили` : "уникальные"}</small></article>)}
             </div>
           </section>
 
           <section>
-            <div className="section-title"><h2>Вирусность</h2><span>public share loop</span></div>
+            <div className="section-title"><h2>Вирусность</h2></div>
             <div className="mini">
               <article><strong>{shares}</strong><span>Создали карточку</span><small>все карточки</small></article>
               <article><strong>{shareViews.length}</strong><span>Уникально открыли</span><small>{pct(shareViews.length, shares)} view/share</small></article>
@@ -156,15 +154,7 @@ export default async function FunnelPage({
             </div>
           </section>
         </div>
-
-        <p className="note">Основные продуктовые шаги считаются по уникальному visitorId, а checkout и оплаты — по уникальному analysisId. Повторные открытия и повторные клики больше не раздувают конверсию.</p>
       </main>
-      <style>{`
-        .ops{width:min(1180px,calc(100% - 36px));margin:0 auto;padding:48px 0 80px}.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}.ops .over{color:var(--tox);font-size:11px;letter-spacing:.18em;text-transform:uppercase}.ops h1{margin-top:12px;font-size:clamp(32px,5vw,56px);letter-spacing:-.04em}.periods{display:flex;gap:5px;padding:4px;border:1px solid var(--hair);border-radius:12px;background:var(--metal-0)}.periods a{padding:8px 11px;border-radius:9px;color:var(--faint);font-size:11.5px;text-decoration:none}.periods a.active{background:var(--metal-2);color:var(--fg)}
-        .commercial{margin-top:38px}.section-title{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px}.section-title h2{font-size:18px}.section-title span{color:var(--faint);font-size:11.5px}.funnel{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.funnel article,.mini article{min-height:142px;padding:20px;border:1px solid var(--hair);border-radius:16px;background:var(--metal-0);display:flex;flex-direction:column}.funnel article.money{border-color:rgba(44,224,139,.38);background:linear-gradient(145deg,rgba(44,224,139,.08),var(--metal-0))}.funnel strong,.mini strong{font-size:36px;color:var(--tox);letter-spacing:-.04em}.funnel span,.mini span{margin-top:auto;color:var(--dim);font-size:13px}.funnel small,.mini small{margin-top:5px;color:var(--faint);font-size:10.5px}.secondary-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:36px}.mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}.note{max-width:74ch;margin-top:28px;color:var(--faint);font-size:11.5px;line-height:1.6}
-        @media(max-width:900px){.funnel{grid-template-columns:repeat(2,1fr)}.secondary-grid{grid-template-columns:1fr}}
-        @media(max-width:520px){.ops{padding-top:32px}.funnel,.mini{grid-template-columns:1fr 1fr}.funnel article,.mini article{min-height:124px;padding:16px}.funnel strong,.mini strong{font-size:30px}.section-title{align-items:flex-start;flex-direction:column;gap:4px}}
-      `}</style>
     </>
   );
 }

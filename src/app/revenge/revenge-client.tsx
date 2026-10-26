@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { track } from "@/lib/analytics";
-import { EvidenceQuote, InfoNote, PageContainer, PageIntro, PrimaryAction, QuestionField, SecondaryAction, SectionLabel, SurfacePanel } from "@/components/ui/system";
+import { CollapsibleSection, EvidenceQuote, PageContainer, PageIntro, PrimaryAction, QuestionField, SecondaryAction, SectionLabel, SurfacePanel } from "@/components/ui/system";
 import { requestErrorMessage } from "@/lib/user-facing-errors";
 
 type Question = {
@@ -401,28 +401,28 @@ export function RevengeClient({ analysisId }: { analysisId: string }) {
 
   return (
     <PageContainer className="revenge">
-      <PageIntro label="Реванш" title={result ? "Резюме готово" : "Теперь исправим то, что HR разнёс."} lead={result ? "Готовая версия сохранена. Скачай документ или проверь, что именно изменилось." : "Ответь только фактами. Если точной цифры не помнишь — не придумывай: сервис соберёт честную формулировку без неё."} />
-      {!result ? <InfoNote className="deal" title={`Новая версия входит в пакет ToxicHR за ${access.priceRub} ₽.`}>{access.improvementUsed ? "Улучшение уже использовано для этого резюме." : "Одно улучшение, без подписки и доплат."}</InfoNote> : null}
+      <PageIntro label="Исправление резюме" title={result ? "Резюме готово." : "Сделаем резюме сильнее."} lead={result ? "Скачай новую версию или посмотри, что изменилось." : "Ответь на несколько вопросов о своём опыте. Только факты."} />
       {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
 
       {restoredAnswersCount > 0 && !result ? (
-        <div className="restored" role="status"><b>Черновик на месте.</b> Вернули ответов: {restoredAnswersCount}. Продолжаем с первого незаполненного вопроса.</div>
+        <div className="restored" role="status">Ответы сохранены. Продолжим с вопроса {currentStep + 1}.</div>
       ) : null}
 
       {current && !result ? (
         <div className="questions">
           <div className="progress-head">
             <SectionLabel>Вопрос {currentStep + 1} из {questions.length}</SectionLabel>
-            <span>{answeredCount} заполнено · черновик сохраняется</span>
+            <span>{answeredCount} заполнено</span>
           </div>
           <div className="progress" aria-hidden><i style={{ width: `${((currentStep + 1) / questions.length) * 100}%` }} /></div>
           <article key={current.problemId}>
-            <div className="qnum thr-mono">{String(currentStep + 1).padStart(2, "0")}</div>
             <h2>{current.title}</h2>
-            <EvidenceQuote>«{current.quote}»</EvidenceQuote>
             <p className="ask">{current.question}</p>
-            <ul>{current.prompts.map((prompt) => <li key={prompt}>{prompt}</li>)}</ul>
-            <QuestionField id={`answer-${current.problemId}`} label={`Ответ: ${current.title}`} value={answers[current.problemId] ?? ""} onChange={(value) => setAnswers((stored) => ({ ...stored, [current.problemId]: value }))} placeholder="Напиши факты обычными словами — литературный стиль не нужен." />
+            <CollapsibleSection title="Посмотреть фрагмент резюме и подсказки">
+              <EvidenceQuote>«{current.quote}»</EvidenceQuote>
+              <ul>{current.prompts.map((prompt) => <li key={prompt}>{prompt}</li>)}</ul>
+            </CollapsibleSection>
+            <QuestionField id={`answer-${current.problemId}`} label="Твой ответ" value={answers[current.problemId] ?? ""} onChange={(value) => setAnswers((stored) => ({ ...stored, [current.problemId]: value }))} placeholder="Напиши, что ты сделал и какой был результат" />
           </article>
           <div className="step-actions">
             <SecondaryAction type="button" onClick={() => setCurrentStep((step) => Math.max(0, step - 1))} disabled={currentStep === 0}>Назад</SecondaryAction>
