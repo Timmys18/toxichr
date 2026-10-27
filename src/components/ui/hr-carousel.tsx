@@ -29,7 +29,7 @@ export function HrCarousel({ selected, featured = "vadik", onSelect }: { selecte
           aria-pressed={selected === person.id}
           tabIndex={position === "hidden" ? -1 : 0}
         >
-          <Image src={person.img} alt="" fill sizes="(max-width: 620px) 70vw, (max-width: 960px) 55vw, 34vw" priority={position === "current"} />
+          <Image src={person.img} alt="" fill unoptimized sizes="(max-width: 620px) 70vw, (max-width: 960px) 55vw, 34vw" priority={position === "current"} />
           <span className={styles.copy}><b>{person.name}</b><small>{person.role}</small><strong>{person.quote}</strong></span>
         </button>;
       })}

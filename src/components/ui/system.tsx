@@ -58,7 +58,13 @@ export function MetricStrip({ items, className }: { items: Metric[]; className?:
 }
 
 export function VerdictBlock({ label = "Вердикт", title, summary, metrics, className }: { label?: ReactNode; title: ReactNode; summary: ReactNode; metrics?: Metric[]; className?: string }) {
-  return <section className={cn("ds-verdict", className)}><div><SectionLabel>{label}</SectionLabel><h2>{title}</h2><p>{summary}</p></div>{metrics?.length ? <MetricStrip items={metrics} /> : null}</section>;
+  return <section className={cn("ds-verdict", !metrics?.length && "ds-verdict-no-metrics", className)}><div><SectionLabel>{label}</SectionLabel><h2>{title}</h2><p>{summary}</p></div>{metrics?.length ? <MetricStrip items={metrics} /> : null}</section>;
+}
+
+export function ResultSummary({ groups, className }: { groups: { label: string; items: { title: string; explanation: string }[] }[]; className?: string }) {
+  const filled = groups.filter((group) => group.items.length);
+  if (!filled.length) return null;
+  return <section className={cn("ds-result-summary", className)} aria-label="Главные основания вывода">{filled.map((group) => <div key={group.label}><h3>{group.label}</h3>{group.items.slice(0, 2).map((item) => <article key={item.title}><b>{item.title}</b><p>{item.explanation}</p></article>)}</div>)}</section>;
 }
 
 export function EditorialSection({ title, children, label, className }: { title: ReactNode; children: ReactNode; label?: ReactNode; className?: string }) {

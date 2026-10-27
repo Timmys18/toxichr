@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { SessionClient } from "@/app/session/session-client";
 import { AnalysisResultPage } from "@/components/ui/page-templates";
 import type { PersonaId } from "@/lib/personas";
+import { TOXICHR_PACKAGE_PRICE_RUB } from "@/lib/package";
 
 const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
@@ -20,7 +21,7 @@ export default async function SessionPage({ searchParams }: Props) {
   if (view) {
     return (
       <AnalysisResultPage>
-        <SessionClient key={`view:${view}`} viewId={view} />
+        <SessionClient key={`view:${view}`} viewId={view} priceRub={TOXICHR_PACKAGE_PRICE_RUB} />
       </AnalysisResultPage>
     );
   }
@@ -35,6 +36,7 @@ export default async function SessionPage({ searchParams }: Props) {
         key={`${resumeId}:${personaId}`}
         resumeId={resumeId!}
         personaId={personaId as PersonaId}
+        priceRub={TOXICHR_PACKAGE_PRICE_RUB}
       />
     </AnalysisResultPage>
   );

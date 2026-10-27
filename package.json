@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "check:ui": "node scripts/check-ui-system.mjs",
     "test:safety": "playwright test --config=playwright.safety.config.ts",
     "test:persona": "playwright test --config=playwright.persona.config.ts",
     "test:vacancy": "playwright test --config=playwright.vacancy.config.ts",

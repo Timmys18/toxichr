@@ -16,6 +16,7 @@ import {
   PersonaCard,
   PrimaryAction,
   QuestionField,
+  ResultSummary,
   SectionLabel,
   SecondaryAction,
   SummaryRail,
@@ -65,6 +66,8 @@ export default function UiKitPage() {
         </section>
 
         <VerdictBlock label="Вердикт" title="Есть за что цепляться" summary="Опыт в аналитике виден, но связь с продуктовой работой ещё нужно доказать реальными деталями." metrics={metrics} />
+
+        <ResultSummary groups={[{ label: "Подтверждено", items: [{ title: "Опыт аналитики", explanation: "Есть конкретный пример в резюме." }] }, { label: "Стоит усилить", items: [{ title: "Результат проекта", explanation: "Пока не указан измеримый итог." }] }]} />
 
         <section className="ui-block">
           <SectionLabel>Редакционная сетка</SectionLabel>

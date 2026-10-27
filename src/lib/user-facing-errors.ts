@@ -7,7 +7,7 @@ export function analysisErrorMessage(error: unknown): string {
 }
 
 const TECHNICAL_FAILURE =
-  /failed to fetch|networkerror|network request failed|load failed|vpn|openai|anthropic|api[_ -]?key|fetch failed|econn|socket|сервер провайдера/i;
+  /failed to fetch|networkerror|network request failed|load failed|vpn|openai|anthropic|api[_ -]?key|fetch failed|econn|socket|сервер провайдера|^(forbidden|unauthorized|internal server error|not found|bad request|403|401|500)$/i;
 
 export function requestErrorMessage(error: unknown, fallback: string): string {
   if (!(error instanceof Error) || !error.message.trim() || TECHNICAL_FAILURE.test(error.message)) {

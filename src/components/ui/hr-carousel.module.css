@@ -1,16 +1,15 @@
 .stage{position:relative;isolation:isolate;width:100%;height:590px;overflow:hidden;perspective:1100px}
-.card{position:absolute;top:35px;left:18%;width:64%;height:520px;padding:0;overflow:hidden;border:1px solid var(--hair2);border-radius:12px;background:var(--metal-1);color:var(--fg);text-align:left;cursor:pointer;transform-origin:center 82%;box-shadow:0 28px 70px rgba(0,0,0,.5);transition:transform .65s var(--ease),opacity .55s var(--ease),filter .55s var(--ease),border-color .25s var(--ease)}
+.card{position:absolute;top:35px;left:18%;width:64%;height:520px;padding:0;overflow:hidden;border:1px solid var(--hair2);border-radius:12px;background:var(--metal-1);color:var(--fg);text-align:left;cursor:pointer;transform-origin:center 82%;box-shadow:0 28px 70px rgba(0,0,0,.5);transition:transform var(--motion-standard) var(--ease),opacity var(--motion-standard) var(--ease),filter var(--motion-standard) var(--ease),border-color var(--motion-fast) var(--ease)}
 .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 21%}
 .card::after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,rgba(5,7,7,.92))}
 .copy{position:absolute;z-index:1;right:26px;bottom:26px;left:26px;display:flex;flex-direction:column;align-items:flex-start}
-.copy b{font-size:32px;line-height:1.08;letter-spacing:-.04em}.copy small{margin-top:7px;color:rgba(242,244,245,.75);font-size:16px}.copy strong{margin-top:8px;font-size:16px;font-weight:600;line-height:1.35}
+.copy b{font-size:var(--text-section);line-height:1.08;letter-spacing:-.04em}.copy small{margin-top:7px;color:rgba(242,244,245,.75);font-size:var(--text-body)}.copy strong{margin-top:8px;font-size:var(--text-body);font-weight:600;line-height:1.35}
 .current{z-index:3;opacity:1;filter:none;transform:translateX(0) translateY(0) rotate(0) scale(1)}.chosen{border-color:var(--tox)}
-.prev{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(-72%) translateY(24px) rotate(-8deg) scale(.87);animation:float 6.5s ease-in-out infinite alternate}
-.next{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(72%) translateY(24px) rotate(8deg) scale(.87);animation:float 7.3s ease-in-out -2s infinite alternate-reverse}
+.prev{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(-72%) translateY(24px) rotate(-8deg) scale(.87)}
+.next{z-index:2;opacity:.88;filter:brightness(.78);transform:translateX(72%) translateY(24px) rotate(8deg) scale(.87)}
 .hidden{opacity:0;pointer-events:none;transform:translateY(28px) scale(.76)}
 .prev .copy,.next .copy{display:none}.prev:hover,.next:hover{z-index:4;opacity:1;filter:none}.prev:hover{transform:translateX(-63%) translateY(10px) rotate(-4deg) scale(.9)}.next:hover{transform:translateX(63%) translateY(10px) rotate(4deg) scale(.9)}.current:hover{transform:translateY(-4px) scale(1.01)}
 .card:focus-visible{outline:2px solid var(--tox);outline-offset:-4px}
-@keyframes float{from{translate:0 0}to{translate:0 -8px}}
 @media(max-width:960px){.stage{height:520px}.card{top:28px;height:460px}}
-@media(max-width:620px){.stage{height:410px}.card{top:24px;left:15%;width:70%;height:360px}.copy{right:18px;bottom:20px;left:18px}.copy b{font-size:25px}}
+@media(max-width:620px){.stage{height:410px}.card{top:24px;left:15%;width:70%;height:360px}.copy{right:18px;bottom:20px;left:18px}.copy b{font-size:var(--text-section)}}
 @media(prefers-reduced-motion:reduce){.card{animation:none!important;transition:none}}

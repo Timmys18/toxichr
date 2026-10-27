@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { CollapsibleSection, EmptyState, PrimaryAction } from "@/components/ui/system";
 import type { CabDocument, CabDraftTarget, CabItem, CabUpload, CabinetPackage } from "./cabinet-client";
@@ -16,37 +16,36 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
 }
 
-export function CabinetClient({ items, uploads, documents, draftTargets, initialView: view }: Props) {
-  const [draft, setDraft] = useState<Priority | null>(null);
+function subscribeDrafts(listener: () => void) {
+  window.addEventListener("storage", listener);
+  return () => window.removeEventListener("storage", listener);
+}
+
+export function CabinetClient({ items, uploads, documents, draftTargets, packageStatus, initialView: view }: Props) {
   const last = items[0];
   const latestDocument = documents[0];
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      for (const item of items) {
-        if (documents.some((document) => document.kind === "improvement" && document.analysisId === item.id)) continue;
-        try {
-          const answers = JSON.parse(window.localStorage.getItem(`toxichr:revenge:${item.id}`) ?? "{}") as Record<string, unknown>;
-          if (Object.values(answers).some((answer) => typeof answer === "string" && answer.trim())) {
-            setDraft({ title: "Продолжить исправление резюме", href: `/revenge?analysisId=${item.id}`, image: item.img, persona: item.personaName });
-            return;
-          }
-        } catch { /* повреждённый черновик пропускаем */ }
+  const draftSnapshot = useSyncExternalStore(subscribeDrafts, () => JSON.stringify([
+    ...items.map((item) => [item.id, window.localStorage.getItem(`toxichr:revenge:${item.id}`)]),
+    ...draftTargets.map((target) => [`${target.analysisId}:${target.vacancyId}`, window.localStorage.getItem(`toxichr:adaptation:${target.analysisId}:${target.vacancyId}`)]),
+  ]), () => "[]");
+  const draft: Priority | null = (() => {
+    const stored = new Map<string, string | null>(JSON.parse(draftSnapshot) as [string, string | null][]);
+    const hasAnswers = (key: string) => {
+      try { return Object.values(JSON.parse(stored.get(key) ?? "{}") as Record<string, unknown>).some((answer) => typeof answer === "string" && answer.trim()); }
+      catch { return false; }
+    };
+    for (const item of items) {
+      if (documents.some((document) => document.kind === "improvement" && document.analysisId === item.id)) continue;
+      if (hasAnswers(item.id)) return { title: "Продолжить исправление резюме", href: `/revenge?analysisId=${item.id}`, image: item.img, persona: item.personaName };
+    }
+    for (const target of draftTargets) {
+      if (hasAnswers(`${target.analysisId}:${target.vacancyId}`)) {
+        const person = items.find((item) => item.id === target.analysisId);
+        return { title: `Продолжить адаптацию под «${target.vacancyTitle}»`, href: `/adaptation?analysisId=${target.analysisId}&vacancyId=${target.vacancyId}`, image: person?.img, persona: person?.personaName };
       }
-      for (const target of draftTargets) {
-        try {
-          const answers = JSON.parse(window.localStorage.getItem(`toxichr:adaptation:${target.analysisId}:${target.vacancyId}`) ?? "{}") as Record<string, unknown>;
-          if (Object.values(answers).some((answer) => typeof answer === "string" && answer.trim())) {
-            const person = items.find((item) => item.id === target.analysisId);
-            setDraft({ title: `Продолжить адаптацию под «${target.vacancyTitle}»`, href: `/adaptation?analysisId=${target.analysisId}&vacancyId=${target.vacancyId}`, image: person?.img, persona: person?.personaName });
-            return;
-          }
-        } catch { /* повреждённый черновик пропускаем */ }
-      }
-      setDraft(null);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [items, documents, draftTargets]);
+    }
+    return null;
+  })();
 
   const documentPerson = latestDocument ? items.find((item) => item.id === latestDocument.analysisId) : null;
   const verb = last && /^(Лера|Тамара)/.test(last.personaName) ? "разобрала" : "разобрал";
@@ -58,6 +57,7 @@ export function CabinetClient({ items, uploads, documents, draftTargets, initial
       {view === "resumes" ? <>
         <header className="cabinet-header"><h1>Мои резюме<span>.</span></h1><Link href="/" className="cabinet-add">Добавить резюме</Link></header>
         {priority ? <Link href={priority.href} className="cabinet-feature"><span className="cabinet-feature-copy"><strong>{priority.title}</strong><span aria-hidden="true">Открыть ↗</span></span>{priority.image ? <span className="cabinet-feature-photo thr-photo" style={{ backgroundImage: `url('${priority.image}')` }} aria-hidden="true" /> : null}</Link> : null}
+        {packageStatus.active ? <p className="cabinet-package">Пакет ToxicHR · сопоставлений осталось {packageStatus.matchesRemaining}</p> : null}
         <section className="cabinet-section cabinet-history"><h2>История</h2>
           {uploads.length ? <div className="cabinet-resumes">{uploads.map((upload) => {
             const analyses = items.filter((item) => item.resumeId === upload.id);

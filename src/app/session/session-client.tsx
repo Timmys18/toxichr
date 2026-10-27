@@ -10,7 +10,7 @@ import { ROSTER } from "@/components/home/hr-roster";
 import { updateReferral } from "@/lib/referral-client";
 import { readPendingVacancy } from "@/lib/pending-vacancy";
 import { ANALYSIS_RETRY_MESSAGE, requestErrorMessage } from "@/lib/user-facing-errors";
-import { CollapsibleSection, EmptyState, PageContainer, PrimaryAction, SecondaryAction, SectionLabel, SurfacePanel } from "@/components/ui/system";
+import { CollapsibleSection, EmptyState, PageContainer, PrimaryAction, SecondaryAction, SectionLabel } from "@/components/ui/system";
 
 type StreamEvent =
   | { type: "stage"; stage: string; status: "start" | "done" }
@@ -20,7 +20,7 @@ type StreamEvent =
   | { type: "error"; message: string; purchaseAnalysisId?: string };
 
 type Phase = "analyzing" | "verdict" | "error";
-type Props = { resumeId?: string; personaId?: PersonaId; viewId?: string };
+type Props = { resumeId?: string; personaId?: PersonaId; viewId?: string; priceRub: number };
 
 let FINDING_SEQ = 0;
 
@@ -34,7 +34,7 @@ function paras(text: string): string[] {
   return text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
 }
 
-export function SessionClient({ resumeId, personaId, viewId }: Props) {
+export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) {
   const [personaCode, setPersonaCode] = useState<PersonaId | null>(personaId ?? null);
   const hr = ROSTER.find((item) => item.id === personaCode) ?? ROSTER[0];
   const [phase, setPhase] = useState<Phase>("analyzing");
@@ -102,7 +102,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         settled = true;
         window.clearTimeout(watch);
         setPurchaseAnalysisId(event.purchaseAnalysisId ?? null);
-        setError(event.message);
+        setError(requestErrorMessage(new Error(event.message), ANALYSIS_RETRY_MESSAGE));
         setPhase("error");
       }
     }
@@ -201,7 +201,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   const speaking = phase === "analyzing";
 
   if (phase === "verdict" && report) {
-    return <PageContainer className="session-result"><Verdict report={report} hrName={hr.name} hrImage={hr.img} analysisId={analysisId} resumeId={activeResumeId} personaCode={personaCode} resultMode={resultMode} /></PageContainer>;
+    return <PageContainer className="session-result"><Verdict report={report} hrName={hr.name} hrImage={hr.img} analysisId={analysisId} resumeId={activeResumeId} personaCode={personaCode} resultMode={resultMode} priceRub={priceRub} /></PageContainer>;
   }
 
   return (
@@ -242,7 +242,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
         ) : null}
 
         {phase === "error" ? (
-          <EmptyState className="errbox" action={<div>{purchaseAnalysisId ? <PrimaryAction href={`/revenge?analysisId=${encodeURIComponent(purchaseAnalysisId)}`}>Открыть пакет ToxicHR · 199 ₽</PrimaryAction> : null}<PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></div>}>{error}</EmptyState>
+          <EmptyState className="errbox" action={<div>{purchaseAnalysisId ? <PrimaryAction href={`/revenge?analysisId=${encodeURIComponent(purchaseAnalysisId)}`}>Открыть пакет ToxicHR · {priceRub} ₽</PrimaryAction> : null}<PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></div>}>{error}</EmptyState>
         ) : null}
 
       </div>
@@ -250,7 +250,7 @@ export function SessionClient({ resumeId, personaId, viewId }: Props) {
   );
 }
 
-function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, resultMode }: {
+function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, resultMode, priceRub }: {
   report: AnalysisReport;
   hrName: string;
   hrImage: string;
@@ -258,6 +258,7 @@ function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, r
   resumeId: string | null;
   personaCode: PersonaId | null;
   resultMode: "live" | "test";
+  priceRub: number;
 }) {
   const { status } = useSession();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -326,10 +327,6 @@ function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, r
   const r = report;
   const featuredProblems = r.topProblems.slice(0, 3);
   const additionalProblems = r.topProblems.slice(3);
-  const highlights = [
-    ...r.strengths.slice(0, 1).map((strength) => ({ id: strength.id, title: strength.title, text: strength.comment })),
-    ...r.topProblems.slice(0, r.strengths.length ? 2 : 3).map((problem) => ({ id: problem.id, title: problem.title, text: problem.diagnosis })),
-  ];
   const feminineVoice = personaCode === "lera" || personaCode === "tamara";
   const issue = (problem: AnalysisReport["topProblems"][number], index: number) => (
     <CollapsibleSection key={problem.id} title={problem.title} defaultOpen={index === 0} className="result-issue">
@@ -345,18 +342,15 @@ function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, r
       {resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это демонстрация интерфейса, а не полноценная профессиональная оценка резюме.</span></div> : null}
       {resultMode !== "test" && r.generationMeta?.voice?.status === "limited" ? <div className="ds-result-mode" role="status"><b>Ограниченный разбор</b><span>Полный комментарий HR сейчас недоступен. Показаны наблюдения разбора и следующие шаги.</span></div> : null}
       <div className="result-hero">
-        <div className="result-intro"><h1>Я <em>{feminineVoice ? "разобрала" : "разобрал"}</em> твоё резюме<span>.</span></h1><p>{r.verdict.comment}</p></div>
+        <div className="result-intro"><SectionLabel>{hrName} {feminineVoice ? "разобрала" : "разобрал"} твоё резюме</SectionLabel><h1>{r.verdict.title}</h1><p>{r.verdict.comment}</p></div>
         <div className="result-portrait thr-photo" style={{ backgroundImage: `url('${hrImage}')` }} role="img" aria-label={hrName}><b>{hrName}</b></div>
       </div>
 
-      {highlights.length ? <div className="result-highlights">{highlights.map((item) => <SurfacePanel key={item.id} className="result-highlight"><h2>{item.title}</h2><p>{item.text}</p></SurfacePanel>)}</div> : null}
-
-      {featuredProblems.length ? <section className="result-issues" aria-labelledby="result-issues-heading"><h2 id="result-issues-heading">Что я отметила</h2><div className="result-issue-list">{featuredProblems.map(issue)}</div></section> : null}
+      {featuredProblems.length ? <section className="result-issues" aria-labelledby="result-issues-heading"><h2 id="result-issues-heading">Что важно исправить</h2><div className="result-issue-list">{featuredProblems.map(issue)}</div></section> : null}
+      {analysisId ? <Link href={`/revenge?analysisId=${analysisId}`} className="result-next" onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}><strong>Собрать новую версию резюме</strong><span>{hasPackage === true ? "Продолжить работу →" : `Исправить · ${priceRub} ₽ →`}</span></Link> : null}
       {additionalProblems.length ? <CollapsibleSection className="result-extra" title={`Остальные замечания · ${additionalProblems.length}`}><div className="result-issue-list">{additionalProblems.map((problem, index) => issue(problem, index + 3))}</div></CollapsibleSection> : null}
 
       {r.hrReview?.deepDive ? <CollapsibleSection className="result-extra" title={`Подробный разбор ${hrName}`}><div className="result-review">{paras(r.hrReview.firstImpression).map((paragraph, index) => <p key={`first-${index}`}>{paragraph}</p>)}{paras(r.hrReview.deepDive).map((paragraph, index) => <p key={`deep-${index}`}>{paragraph}</p>)}{paras(r.hrReview.hiringTake).map((paragraph, index) => <p key={`take-${index}`}>{paragraph}</p>)}{paras(r.hrReview.fixPriority).map((paragraph, index) => <p key={`fix-${index}`}>{paragraph}</p>)}</div></CollapsibleSection> : null}
-
-      {analysisId ? <Link href={`/revenge?analysisId=${analysisId}`} className="result-next" onClick={() => track("result_fix_cta_clicked", { analysisId, source: "mid_report" })}><strong>Соберём новую версию резюме</strong><span>{hasPackage === true ? "Продолжить работу →" : "Исправить · 199 ₽ →"}</span></Link> : null}
 
       <div className="result-bottom">
         <Link href={`/vacancy?analysisId=${analysisId ?? ""}`} className="result-vacancy" onClick={() => analysisId && track("result_vacancy_cta_clicked", { analysisId, source: "result" })}>{hasPendingVacancy ? "Сопоставить с вакансией" : "Разобрать вакансию"} ↗</Link>

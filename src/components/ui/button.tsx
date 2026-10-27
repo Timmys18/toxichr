@@ -3,23 +3,21 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-[transform,background-color,box-shadow,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-toxic/60 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:pointer-events-none disabled:opacity-45 active:translate-y-px",
+  "thr-btn",
   {
     variants: {
       variant: {
-        primary:
-          "bg-toxic text-ink shadow-[0_1px_0_rgba(0,0,0,0.08)] hover:bg-toxic-hot",
-        secondary: "bg-ink text-paper hover:bg-graphite",
-        ghost: "bg-transparent text-ink hover:bg-ink/5",
-        outline:
-          "border border-ink/15 bg-surface text-ink hover:border-ink/35 hover:bg-paper",
-        danger: "bg-roast text-paper hover:bg-roast/90",
+        primary: "thr-btn-tox",
+        secondary: "thr-btn-white",
+        ghost: "thr-btn-ghost",
+        outline: "thr-btn-line",
+        danger: "thr-btn-danger",
       },
       size: {
-        sm: "h-9 px-3.5 text-sm",
-        md: "h-11 px-5 text-base",
-        lg: "h-12 px-6 text-base min-h-12",
-        xl: "h-14 px-8 text-lg min-h-14",
+        sm: "thr-btn-sm",
+        md: "thr-btn-md",
+        lg: "thr-btn-lg",
+        xl: "thr-btn-xl",
       },
     },
     defaultVariants: {

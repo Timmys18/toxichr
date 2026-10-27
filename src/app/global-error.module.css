@@ -1,0 +1,9 @@
+@font-face{font-family:Onest;src:url('/fonts/onest-cyrillic.woff2') format('woff2');font-display:swap}
+.body{--error-bg:#08090a;--error-fg:#f2f4f5;--error-accent:#2ce08b;margin:0;background:var(--error-bg);color:var(--error-fg);font:16px/1.5 Onest,system-ui,sans-serif}
+.main{display:grid;min-height:100dvh;place-items:center;padding:32px}
+.content{max-width:560px;text-align:center}
+.label{color:var(--error-accent);font-weight:700}
+.content h1{margin:16px 0 0;font-size:clamp(36px,5vw,48px);line-height:1.08;letter-spacing:-.04em}
+.description{margin:16px 0 0;color:rgba(242,244,245,.76)}
+.action{min-height:48px;margin-top:32px;padding:0 24px;border:0;border-radius:12px;background:var(--error-accent);color:#06130c;font:700 16px Onest,system-ui,sans-serif;cursor:pointer}
+.action:focus-visible{outline:2px solid var(--error-fg);outline-offset:3px}

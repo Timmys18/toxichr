@@ -12,15 +12,17 @@ import {
   PageIntro,
   PaymentPrompt,
   PrimaryAction,
+  ResultSummary,
   SectionLabel,
   SummaryRail,
   VerdictBlock,
 } from "@/components/ui/system";
 import { track } from "@/lib/analytics";
-import type { MatchAssessment, StructuredVacancyAssessment, VacancyReview } from "@/lib/vacancy";
+import type { StructuredVacancyAssessment, VacancyReview } from "@/lib/vacancy";
 import { clearPendingVacancy, readPendingVacancy, savePendingVacancy } from "@/lib/pending-vacancy";
 import { requestErrorMessage } from "@/lib/user-facing-errors";
 import { vacancyResultUrl } from "@/lib/navigation";
+import { shortVacancyTitle } from "@/lib/display-text";
 
 const MIN_VACANCY_LENGTH = 80;
 
@@ -32,16 +34,6 @@ type PackageState = {
   adaptationAvailable: boolean;
   paymentStatus: "none" | "pending" | "paid" | "failed" | "canceled";
 };
-
-function normalizeTitle(title: string) { return title.replace(/\s*\/\s*/g, " · ").trim(); }
-function decisionMetrics(match: MatchAssessment) {
-  const count = (status: "strong_match" | "partial_match" | "hidden_match" | "unknown" | "gap") => match.matches.filter((item) => item.status === status).length;
-  return [
-    { value: count("strong_match"), label: "подтверждено" },
-    { value: count("partial_match") + count("hidden_match"), label: "можно связать" },
-    { value: count("unknown") + count("gap"), label: "не видно в резюме" },
-  ];
-}
 
 function RequirementList({ assessment, ids }: { assessment: StructuredVacancyAssessment; ids: string[] }) {
   const requirements = assessment.requirements.filter((item) => ids.includes(item.id));
@@ -190,20 +182,23 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
 
   const review = useMemo(() => result ? { assessment: result.vacancyAssessment, match: result.matchAssessment, persona: result.persona } : null, [result]);
   const textLength = text.trim().length;
-  const inputStatus = loadingSaved ? "Загружаем сохранённую вакансию…" : textLength === 0 ? "Минимум 80 символов — вставь описание целиком" : textLength < MIN_VACANCY_LENGTH ? `Добавь ещё ${MIN_VACANCY_LENGTH - textLength} симв. для точного разбора` : draftState === "saved" ? "Черновик сохранён на этом устройстве" : "Текста достаточно для разбора";
+  const inputStatus = loadingSaved ? "Загружаем…" : textLength === 0 ? "" : textLength < MIN_VACANCY_LENGTH ? `Ещё ${MIN_VACANCY_LENGTH - textLength} символов` : draftState === "saved" ? "Черновик сохранён" : "";
   const showEditor = !result || editorOpen;
   const canSubmit = !loadingSaved && !busy && textLength >= MIN_VACANCY_LENGTH && (!result || resultStale);
   const retry = retryAction === "load" ? loadSavedVacancy : retryAction === "checkout" ? checkoutMatch : submit;
-  const primaryGroundIds = review?.match ? [...new Set([...review.match.whyRejectRequirementIds, ...review.match.whyInviteRequirementIds, ...review.match.unknownRequirementIds])].slice(0, 3) : [];
-  const criticalConstraintIds = review?.match ? review.match.matches.filter((item) => item.status === "gap").map((item) => item.requirementId).filter((id) => review.assessment.requirements.some((item) => item.id === id && item.priority === "critical")) : [];
+  const matchGroups = review?.match ? [
+    { label: "Подтверждено", statuses: ["strong_match"] },
+    { label: "Стоит усилить", statuses: ["partial_match", "hidden_match", "gap"] },
+    { label: "Нет данных", statuses: ["unknown"] },
+  ].map((group) => ({ label: group.label, items: review.match!.matches.filter((item) => group.statuses.includes(item.status)).slice(0, 2).map((item) => ({ title: review.assessment.requirements.find((requirement) => requirement.id === item.requirementId)?.text ?? "Требование вакансии", explanation: item.explanation })) })) : [];
   const resultCommand = review ? <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : packageState?.adaptationAvailable && savedVacancyId ? <Link href={`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(savedVacancyId)}`}>Адаптировать резюме под вакансию →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? `Адаптация входит в пакет · сопоставлений осталось ${packageState.matchesRemaining} из 5.` : `Адаптация уже использована · повторных проверок осталось ${packageState?.rechecksRemaining ?? 0} из 5.` : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setText(""); setSavedVacancyId(""); setMatchPaywall(null); setResultStale(false); setError(null); clearPendingVacancy(); window.history.replaceState(window.history.state, "", analysisId ? `/vacancy?analysisId=${encodeURIComponent(analysisId)}` : "/vacancy"); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} /> : null;
 
-  return <PageContainer className="ds-comparison">
-    <PageIntro label="Разбор вакансии" action={<Link className="ds-inline-link" href="/vacancies">История вакансий</Link>} title={analysisId ? "Подходишь ли ты на эту роль?" : "Что здесь на самом деле хотят?"} lead={analysisId ? "Сопоставим требования с фактами из твоего резюме." : "Разберём роль и требования до отклика."} />
+  return <PageContainer className="ds-comparison" data-flow-mode={analysisId ? "match" : "vacancy"}>
+    <PageIntro label={analysisId ? "Сопоставление с резюме" : "Разбор вакансии"} action={<Link className="ds-inline-link" href="/vacancies">История вакансий</Link>} title={analysisId ? "Подходишь ли ты на эту роль?" : "Что здесь на самом деле хотят?"} lead={analysisId ? "Сопоставим требования с фактами из твоего резюме." : "Разберём роль и требования до отклика."} />
     {paymentNotice ? <p role="status" aria-live="polite">{paymentNotice}</p> : null}
 
-    {review ? <SummaryRail title={normalizeTitle(review.assessment.title)} meta={<>Вакансия сохранена · {textLength} знаков</>} action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>} /> : null}
-    {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={10} placeholder="Вставь сюда текст вакансии целиком…" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} /><div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span><b className="thr-mono">{textLength} / 30 000</b></div></div> : null}
+    {review ? <SummaryRail title={shortVacancyTitle(review.assessment.title)} meta="Вакансия сохранена" action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>} /> : null}
+    {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={6} placeholder="Вставь текст вакансии" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} />{inputStatus ? <div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span></div> : null}</div> : null}
     {resultStale ? <p className="ds-comparison-stale-note" role="status">Текст изменился. Результат ниже относится к прошлой версии.</p> : null}
     {error ? <EmptyState className="ds-comparison-error" action={<button type="button" className="ds-inline-link" onClick={() => void retry()} disabled={busy || checkoutBusy}>{busy ? "Повторяем…" : "Попробовать ещё раз"}</button>}>{error}</EmptyState> : null}
     {!error && (canSubmit || (!result && showEditor)) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
@@ -217,11 +212,10 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
 
     {review ? <div className="ds-comparison-result">
       {result?.resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это пример структуры интерфейса, а не профессиональная оценка вакансии или кандидата.</span></div> : null}
-      {review.match ? <VerdictBlock title={review.match.decision.headline} summary={<>{review.match.decision.reasoning} {review.persona.comment}</>} metrics={decisionMetrics(review.match)} /> : <VerdictBlock title="Вакансия разобрана" summary={<>{review.assessment.roleReality} {review.persona.comment}</>} />}
+      {review.match ? <VerdictBlock title={review.match.decision.headline} summary={review.match.decision.reasoning} /> : <VerdictBlock title={shortVacancyTitle(review.assessment.title)} summary={review.assessment.roleReality} />}
+      {review.match ? <ResultSummary groups={matchGroups} /> : null}
       {resultCommand}
       {review.match ? <>
-        {primaryGroundIds.length ? <section className="ds-comparison-key"><SectionLabel>Главные основания</SectionLabel><RequirementList assessment={review.assessment} ids={primaryGroundIds} /></section> : null}
-        {criticalConstraintIds.length ? <EditorialSection className="ds-comparison-critical" title="Критичные ограничения"><RequirementList assessment={review.assessment} ids={criticalConstraintIds} /></EditorialSection> : null}
         <CollapsibleSection title="Все требования, пояснения и цитаты"><section className="ds-comparison-flow">
           {review.match.whyInviteRequirementIds.length ? <EditorialSection title="Почему могут позвать"><RequirementList assessment={review.assessment} ids={review.match.whyInviteRequirementIds} /></EditorialSection> : null}
           {review.match.whyRejectRequirementIds.length ? <EditorialSection title="Почему могут отсеять"><RequirementList assessment={review.assessment} ids={review.match.whyRejectRequirementIds} /></EditorialSection> : null}

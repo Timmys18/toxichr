@@ -29,6 +29,26 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
   const [consentChecked, setConsentChecked] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
+  const consentDialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pending) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    consentRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPending(null);
+      if (event.key !== "Tab") return;
+      const controls = [...(consentDialogRef.current?.querySelectorAll<HTMLElement>('input, a, button:not(:disabled)') ?? [])];
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => { window.removeEventListener("keydown", onKeyDown); previous?.focus(); };
+  }, [pending]);
 
   useEffect(() => {
     track("landing_viewed", {});
@@ -172,9 +192,9 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
     <section className={styles.finalCta} aria-labelledby="final-title"><h2 id="final-title">Сколько офферов ты ещё хочешь <em>пропустить?</em></h2><PrimaryAction href="#resume-start">Проверить резюме</PrimaryAction></section>
 
     <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) stageFile(file); event.target.value = ""; }} />
-    {pending ? <div className={styles.consentBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPending(null); }}><div className={styles.consentDialog} role="dialog" aria-modal="true" aria-labelledby="consent-title">
+    {pending ? <div className={styles.consentBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPending(null); }}><div ref={consentDialogRef} className={styles.consentDialog} role="dialog" aria-modal="true" aria-labelledby="consent-title">
       <h2 id="consent-title">Перед разбором</h2><p>Для разбора нужно обработать текст твоего резюме.</p>
-      <label><input type="checkbox" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} /><span>Согласен на обработку резюме для работы сервиса. <a href="/privacy" target="_blank" rel="noopener noreferrer">Условия</a></span></label>
+      <label><input ref={consentRef} type="checkbox" checked={consentChecked} onChange={(event) => setConsentChecked(event.target.checked)} /><span>Согласен на обработку резюме для работы сервиса. <a href="/privacy" target="_blank" rel="noopener noreferrer">Условия</a></span></label>
       <div><button type="button" className="thr-btn thr-btn-line" onClick={() => setPending(null)}>Отмена</button><button type="button" className="thr-btn thr-btn-tox" disabled={!consentChecked} onClick={continueAfterConsent}>Начать разбор</button></div>
     </div></div> : null}
   </div>;
