@@ -23,6 +23,7 @@ import { clearPendingVacancy, readPendingVacancy, savePendingVacancy } from "@/l
 import { requestErrorMessage } from "@/lib/user-facing-errors";
 import { vacancyResultUrl } from "@/lib/navigation";
 import { shortVacancyTitle } from "@/lib/display-text";
+import { vacancyEvaluationState } from "@/lib/vacancy-display";
 
 const MIN_VACANCY_LENGTH = 80;
 
@@ -181,17 +182,19 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
   }
 
   const review = useMemo(() => result ? { assessment: result.vacancyAssessment, match: result.matchAssessment, persona: result.persona } : null, [result]);
+  const evaluationState = result && !resultStale ? vacancyEvaluationState(result, Boolean(analysisId)) : null;
+  const hasAssessment = evaluationState === "assessed";
   const textLength = text.trim().length;
-  const inputStatus = loadingSaved ? "Загружаем…" : textLength === 0 ? "" : textLength < MIN_VACANCY_LENGTH ? `Ещё ${MIN_VACANCY_LENGTH - textLength} символов` : draftState === "saved" ? "Черновик сохранён" : "";
+  const inputStatus = loadingSaved ? "Загружаем…" : textLength === 0 ? "Данных недостаточно · вставь текст вакансии" : textLength < MIN_VACANCY_LENGTH ? `Данных недостаточно · ещё ${MIN_VACANCY_LENGTH - textLength} символов` : draftState === "saved" ? "Черновик сохранён" : "";
   const showEditor = !result || editorOpen;
   const canSubmit = !loadingSaved && !busy && textLength >= MIN_VACANCY_LENGTH && (!result || resultStale);
   const retry = retryAction === "load" ? loadSavedVacancy : retryAction === "checkout" ? checkoutMatch : submit;
-  const matchGroups = review?.match ? [
+  const matchGroups = hasAssessment && review?.match ? [
     { label: "Подтверждено", statuses: ["strong_match"] },
     { label: "Стоит усилить", statuses: ["partial_match", "hidden_match", "gap"] },
     { label: "Нет данных", statuses: ["unknown"] },
   ].map((group) => ({ label: group.label, items: review.match!.matches.filter((item) => group.statuses.includes(item.status)).slice(0, 2).map((item) => ({ title: review.assessment.requirements.find((requirement) => requirement.id === item.requirementId)?.text ?? "Требование вакансии", explanation: item.explanation })) })) : [];
-  const resultCommand = review ? <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : packageState?.adaptationAvailable && savedVacancyId ? <Link href={`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(savedVacancyId)}`}>Адаптировать резюме под вакансию →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? `Адаптация входит в пакет · сопоставлений осталось ${packageState.matchesRemaining} из 5.` : `Адаптация уже использована · повторных проверок осталось ${packageState?.rechecksRemaining ?? 0} из 5.` : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setText(""); setSavedVacancyId(""); setMatchPaywall(null); setResultStale(false); setError(null); clearPendingVacancy(); window.history.replaceState(window.history.state, "", analysisId ? `/vacancy?analysisId=${encodeURIComponent(analysisId)}` : "/vacancy"); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} /> : null;
+  const resultCommand = hasAssessment && review ? <CommandRail primary={!analysisId ? <Link href="/?from=vacancy" onClick={() => savePendingVacancy(text)}>Добавить резюме и проверить себя →</Link> : packageState?.adaptationAvailable && savedVacancyId ? <Link href={`/adaptation?analysisId=${encodeURIComponent(analysisId)}&vacancyId=${encodeURIComponent(savedVacancyId)}`}>Адаптировать резюме под вакансию →</Link> : <Link href={`/revenge?analysisId=${analysisId}`}>Исправить резюме →</Link>} hint={analysisId ? packageState?.adaptationAvailable ? `Адаптация входит в пакет · сопоставлений осталось ${packageState.matchesRemaining} из 5.` : `Адаптация уже использована · повторных проверок осталось ${packageState?.rechecksRemaining ?? 0} из 5.` : "Добавь резюме, чтобы проверить себя под эту роль"} secondary={<button type="button" className="ds-inline-link" onClick={() => { setResult(null); setText(""); setSavedVacancyId(""); setMatchPaywall(null); setResultStale(false); setError(null); clearPendingVacancy(); window.history.replaceState(window.history.state, "", analysisId ? `/vacancy?analysisId=${encodeURIComponent(analysisId)}` : "/vacancy"); setEditorOpen(true); }}>Сравнить с другой вакансией</button>} /> : null;
 
   return <PageContainer className="ds-comparison" data-flow-mode={analysisId ? "match" : "vacancy"}>
     <PageIntro label={analysisId ? "Сопоставление с резюме" : "Разбор вакансии"} action={<Link className="ds-inline-link" href="/vacancies">История вакансий</Link>} title={analysisId ? "Подходишь ли ты на эту роль?" : "Что здесь на самом деле хотят?"} lead={analysisId ? "Сопоставим требования с фактами из твоего резюме." : "Разберём роль и требования до отклика."} />
@@ -200,7 +203,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
     {review ? <SummaryRail title={shortVacancyTitle(review.assessment.title)} meta="Вакансия сохранена" action={<button type="button" className="ds-inline-link" onClick={() => setEditorOpen((value) => !value)}>{editorOpen ? "Скрыть" : "Изменить"}</button>} /> : null}
     {showEditor ? <div className="ds-comparison-editor"><textarea value={text} onChange={(event) => { const next = event.target.value; setText(next); if (!vacancyId) setDraftState(next.trim().length >= MIN_VACANCY_LENGTH ? "saving" : "idle"); if (result) setResultStale(true); }} rows={6} placeholder="Вставь текст вакансии" aria-label="Текст вакансии" maxLength={30_000} disabled={loadingSaved} />{inputStatus ? <div className="ds-comparison-input-meta"><span aria-live="polite">{inputStatus}</span></div> : null}</div> : null}
     {resultStale ? <p className="ds-comparison-stale-note" role="status">Текст изменился. Результат ниже относится к прошлой версии.</p> : null}
-    {error ? <EmptyState className="ds-comparison-error" action={<button type="button" className="ds-inline-link" onClick={() => void retry()} disabled={busy || checkoutBusy}>{busy ? "Повторяем…" : "Попробовать ещё раз"}</button>}>{error}</EmptyState> : null}
+    {error ? <EmptyState className="ds-comparison-error" action={<button type="button" className="ds-inline-link" onClick={() => void retry()} disabled={busy || checkoutBusy}>{busy ? "Повторяем…" : "Попробовать ещё раз"}</button>}>{retryAction === "review" ? "AI недоступен. " : ""}{error}</EmptyState> : null}
     {!error && (canSubmit || (!result && showEditor)) ? <PrimaryAction className="ds-comparison-submit" onClick={submit} disabled={busy || !canSubmit}>{loadingSaved ? "Загружаем вакансию…" : busy ? "Разбираем требования…" : result ? "Обновить сравнение" : analysisId ? "Сопоставить с резюме" : "Разобрать вакансию"}</PrimaryAction> : null}
     {matchPaywall ? <PaymentPrompt
       title="Открыть пакет ToxicHR"
@@ -210,12 +213,12 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
       secondary="Один платёж без подписки и дополнительных оплат внутри пакета."
     /> : null}
 
-    {review ? <div className="ds-comparison-result">
-      {result?.resultMode === "test" ? <div className="ds-result-mode" role="status"><b>Тестовый ответ</b><span>AI отключён. Это пример структуры интерфейса, а не профессиональная оценка вакансии или кандидата.</span></div> : null}
-      {review.match ? <VerdictBlock title={review.match.decision.headline} summary={review.match.decision.reasoning} /> : <VerdictBlock title={shortVacancyTitle(review.assessment.title)} summary={review.assessment.roleReality} />}
-      {review.match ? <ResultSummary groups={matchGroups} /> : null}
+    {review && !resultStale && !error ? <div className="ds-comparison-result" data-evaluation-state={evaluationState}>
+      {evaluationState === "unavailable" ? <VerdictBlock label="AI недоступен" title="Оценки пока нет" summary="Текст вакансии сохранён. Профессиональный разбор сейчас недоступен; выводов о роли или соответствии пока нет." /> : evaluationState === "insufficient" ? <VerdictBlock label="Данных недостаточно" title={analysisId ? "О соответствии пока нельзя судить" : "Роль пока нельзя оценить"} summary={analysisId ? "В резюме нет подтверждения ключевых требований либо в вакансии не хватает проверяемых условий. Нужны дополнительные факты." : "В тексте вакансии нет проверяемых требований. Уточни условия роли у работодателя или дополни описание."} /> : review.match ? <VerdictBlock title={review.match.decision.headline} summary={review.match.decision.reasoning} /> : <VerdictBlock title={shortVacancyTitle(review.assessment.title)} summary={review.assessment.roleReality} />}
+      {hasAssessment && review.match ? <ResultSummary groups={matchGroups} /> : null}
+      {evaluationState === "insufficient" && review.match ? <ResultSummary groups={[{ label: "Что не подтверждено", items: review.match.matches.filter((item) => item.status === "unknown").slice(0, 2).map((item) => ({ title: review.assessment.requirements.find((requirement) => requirement.id === item.requirementId)?.text ?? "Требование вакансии", explanation: "В тексте резюме нет подтверждающего факта." })) }]} /> : null}
       {resultCommand}
-      {review.match ? <>
+      {hasAssessment && review.match ? <>
         <CollapsibleSection title="Все требования, пояснения и цитаты"><section className="ds-comparison-flow">
           {review.match.whyInviteRequirementIds.length ? <EditorialSection title="Почему могут позвать"><RequirementList assessment={review.assessment} ids={review.match.whyInviteRequirementIds} /></EditorialSection> : null}
           {review.match.whyRejectRequirementIds.length ? <EditorialSection title="Почему могут отсеять"><RequirementList assessment={review.assessment} ids={review.match.whyRejectRequirementIds} /></EditorialSection> : null}
@@ -228,7 +231,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
           {review.match.employerQuestions.length ? <CollapsibleSection title="Что спросить работодателя"><ol>{review.match.employerQuestions.map((item) => <li key={item}>{item}</li>)}</ol></CollapsibleSection> : null}
           {review.match.limits.length ? <CollapsibleSection title="Границы вывода"><ul>{review.match.limits.map((item) => <li key={item}>{item}</li>)}</ul></CollapsibleSection> : null}
         </section>
-      </> : <>
+      </> : hasAssessment ? <>
         <section className="ds-comparison-flow"><SectionLabel>Разбор вакансии</SectionLabel>
           <EditorialSection title="Что это за роль"><EvidenceItem title={review.assessment.whoTheySeek} description={review.assessment.mainTask} /></EditorialSection>
           <EditorialSection title="Что критично">{review.assessment.requirements.filter((item) => item.priority === "critical").map((item) => <EvidenceItem key={item.id} title={item.text} description={item.interpretation} quote={`«${item.sourceQuote}»`} />)}</EditorialSection>
@@ -238,7 +241,7 @@ export function VacancyClient({ analysisId, vacancyId }: { analysisId?: string; 
           {[...review.assessment.contradictions, ...review.assessment.risks, ...review.assessment.clarificationPoints].length ? <CollapsibleSection title="Мутные места и вопросы"><>{[...review.assessment.contradictions, ...review.assessment.risks, ...review.assessment.clarificationPoints].map((item) => <EvidenceItem key={item.id} title={item.interpretation} description={item.kind === "hypothesis" ? "Это гипотеза, а не установленный факт." : "Вывод связан с формулировкой вакансии."} quote={`«${item.sourceQuote}»`} />)}</></CollapsibleSection> : null}
           {review.assessment.employerQuestions.length ? <CollapsibleSection title="Что спросить работодателя"><ol>{review.assessment.employerQuestions.map((item) => <li key={item}>{item}</li>)}</ol></CollapsibleSection> : null}
         </section>
-      </>}
+      </> : null}
     </div> : null}
   </PageContainer>;
 }

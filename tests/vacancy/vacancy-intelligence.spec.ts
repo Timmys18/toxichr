@@ -8,6 +8,7 @@ import {
   validateMatchAssessment,
   VACANCY_ASSESSMENT_JSON_SCHEMA,
   VACANCY_ASSESSMENT_VERSION,
+  type VacancyReview,
   MATCH_ASSESSMENT_JSON_SCHEMA,
   vacancyFingerprint,
   writeVacancyPersona,
@@ -16,6 +17,7 @@ import {
 } from "../../src/lib/vacancy";
 import type { ProfessionalAssessment } from "../../src/lib/ai/professional-assessment";
 import { vacancyResultUrl } from "../../src/lib/navigation";
+import { vacancyEvaluationState } from "../../src/lib/vacancy-display";
 
 const vacancy = {
   schemaVersion: VACANCY_ASSESSMENT_VERSION,
@@ -44,6 +46,18 @@ const baseMatch = {
 };
 const vacancyAssessment = StructuredVacancyAssessmentSchema.parse(vacancy);
 const matchAssessment = MatchAssessmentSchema.parse(baseMatch);
+
+test("экран вакансии различает оценку, нехватку данных и недоступный AI", () => {
+  const live: VacancyReview = { schemaVersion: VACANCY_ASSESSMENT_VERSION, resultMode: "live", vacancyAssessment, matchAssessment, persona: { id: "vacancy", comment: "", contentBlocks: [] } };
+  expect(vacancyEvaluationState(live, false)).toBe("assessed");
+  expect(vacancyEvaluationState(live, true)).toBe("assessed");
+  expect(vacancyEvaluationState({ ...live, matchAssessment: undefined }, true)).toBe("insufficient");
+  expect(vacancyEvaluationState({ ...live, matchAssessment: { ...matchAssessment, matches: matchAssessment.matches.map((item) => ({ ...item, status: "unknown" as const })) } }, true)).toBe("insufficient");
+  expect(vacancyEvaluationState({ ...live, vacancyAssessment: { ...vacancyAssessment, requirements: vacancyAssessment.requirements.map((item) => ({ ...item, kind: "hypothesis" as const })) } }, false)).toBe("insufficient");
+  expect(vacancyEvaluationState({ ...live, vacancyAssessment: { ...vacancyAssessment, requirements: vacancyAssessment.requirements.map((item) => ({ ...item, kind: "hypothesis" as const })) } }, true)).toBe("insufficient");
+  expect(vacancyEvaluationState({ ...live, resultMode: "test" }, false)).toBe("unavailable");
+  expect(vacancyEvaluationState({ ...live, resultMode: "test" }, true)).toBe("unavailable");
+});
 const resumeAssessment: ProfessionalAssessment = {
   candidateContext: { primaryProfession: "продуктовый менеджер", secondaryContext: "B2B", claimedLevel: "руководитель", inferredLevel: "руководитель", industry: "технологии", careerPattern: "продуктовый рост", confidence: 0.8 },
   professionalAssessment: { overallImpression: "Опыт запуска и развития продукта отражён в тексте.", strongestProfessionalSignal: "Запуск сервиса и координация команды.", mainResumeProblem: "Нужно точнее показать полномочия.", seniorityConsistency: "Уровень нужно связать с масштабом роли.", resumeVsExperienceGap: "Часть фактов не вынесена в позиционирование." },

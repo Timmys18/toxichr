@@ -10,6 +10,7 @@ export type CabItem = {
   achievements: number;
   unproven: number;
   filename: string;
+  resumeTitle: string;
   resumeId: string;
   afterScore: number | null;
   hasImprovement: boolean;
@@ -23,6 +24,6 @@ export type CabinetPackage = {
   adaptationUsed: boolean;
 };
 
-export type CabDocument = { id: string; kind: "improvement" | "adaptation"; analysisId: string; resumeId: string; title: string; detail: string; updatedAt: string; href: string };
-export type CabUpload = { id: string; filename: string; createdAt: string; href: string; analysed: boolean };
+export type CabDocument = { id: string; kind: "improvement" | "adaptation"; analysisId: string; resumeId: string; title: string; detail: string; updatedAt: string; href: string; downloadHref: string };
+export type CabUpload = { id: string; filename: string; title: string; createdAt: string; href: string; analysed: boolean };
 export type CabDraftTarget = { analysisId: string; vacancyId: string; vacancyTitle: string };

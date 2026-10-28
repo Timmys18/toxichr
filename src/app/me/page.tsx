@@ -6,6 +6,7 @@ import type { AnalysisReport } from "@/lib/ai/schemas";
 import { PERSONAS } from "@/lib/personas";
 import { CabinetClient } from "./cabinet-view";
 import type { CabDocument, CabDraftTarget, CabItem, CabUpload, CabinetPackage } from "./cabinet-client";
+import { shortResumeTitle, shortVacancyTitle } from "@/lib/display-text";
 
 export const metadata: Metadata = { title: "Центр карьеры" };
 
@@ -56,7 +57,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
       where: { userId: session.user.id, deletedAt: null },
       orderBy: { createdAt: "desc" },
       take: 30,
-      select: { id: true, originalFilename: true, mimeType: true, createdAt: true },
+      select: { id: true, originalFilename: true, mimeType: true, sanitizedText: true, createdAt: true },
     }),
   ]);
 
@@ -77,6 +78,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
         achievements: report.viralMetrics.achievementsCount,
         unproven: report.viralMetrics.unprovenClaimsCount,
         filename: a.resumeVersion?.resume?.originalFilename ?? "резюме",
+        resumeTitle: shortResumeTitle(report.candidateProfile.primaryRole, a.resumeVersion?.resume?.originalFilename ?? "Резюме", a.resumeVersion?.resume?.sanitizedText),
         resumeId: a.resumeVersion.resumeId,
         afterScore: a.improvements[0]?.afterScore ?? null,
         hasImprovement: a.improvements[0]?.status === "ready",
@@ -95,20 +97,22 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
       kind: "improvement" as const,
       analysisId: analysis.id,
       resumeId: analysis.resumeVersion.resumeId,
-      title: "Улучшенная версия резюме",
+      title: `Улучшенное резюме · ${shortResumeTitle((analysis.reportPayload as AnalysisReport | null)?.candidateProfile.primaryRole, analysis.resumeVersion.resume.originalFilename ?? "Резюме", analysis.resumeVersion.resume.sanitizedText)}`,
       detail: improvement.afterScore === null ? "Оценка новой версии не рассчитана" : `Оценка новой версии: ${improvement.afterScore}/100`,
       updatedAt: improvement.updatedAt.toISOString(),
       href: `/revenge?analysisId=${analysis.id}`,
+      downloadHref: `/api/improvements/${analysis.id}/docx`,
     }))),
     ...adaptations.map((adaptation) => ({
       id: adaptation.id,
       kind: "adaptation" as const,
       analysisId: adaptation.analysisId,
       resumeId: adaptation.analysis.resumeVersion.resumeId,
-      title: `Адаптация под «${adaptation.vacancy.title ?? "вакансию"}»`,
+      title: `Версия под «${shortVacancyTitle(adaptation.vacancy.title ?? "вакансию")}»`,
       detail: "Это отдельная версия под вакансию; общая оценка резюме не пересчитывалась",
       updatedAt: adaptation.updatedAt.toISOString(),
       href: `/adaptation?analysisId=${adaptation.analysisId}&vacancyId=${adaptation.vacancyId}`,
+      downloadHref: `/api/adaptations/${adaptation.id}/docx`,
     })),
   ].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 
@@ -123,6 +127,7 @@ export default async function MePage({ searchParams }: { searchParams: Promise<{
     return {
       id: resume.id,
       filename: resume.mimeType === "text/plain" ? "Текст резюме" : resume.originalFilename ?? "Резюме",
+      title: shortResumeTitle(latestAnalysis?.resumeTitle, resume.mimeType === "text/plain" ? "Текст резюме" : resume.originalFilename ?? "Резюме", resume.sanitizedText),
       createdAt: resume.createdAt.toISOString(),
       href: latestAnalysis ? `/session?view=${latestAnalysis.id}` : `/session?resumeId=${resume.id}&personaId=vadik`,
       analysed: Boolean(latestAnalysis),
