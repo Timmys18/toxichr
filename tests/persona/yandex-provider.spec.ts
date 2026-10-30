@@ -149,7 +149,7 @@ test("Yandex provider uses isolated credentials, pinned model and documented sch
     expect(headers.get("OpenAI-Project")).toBe("folder-test");
     expect(headers.get("x-data-logging-enabled")).toBe("false");
     expect(body.model).toBe("gpt://folder-test/yandexgpt-5.1");
-    expect(body.response_format.json_schema.strict).toBe(false);
+    expect(body.response_format.json_schema.strict).toBe(true);
     expect(response).toMatchObject({
       provider: "yandex",
       content: '{"ok":true}',

@@ -1,0 +1,98 @@
+{
+  "commit": "4bdd0998fe25371b2cf5f6da10e987b8a2629acb",
+  "dirty": true,
+  "calls": 4,
+  "maxCalls": 6,
+  "reservedUsd": 3.7575410774,
+  "usage": [
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 2526,
+        "completion_tokens": 1751,
+        "total_tokens": 4277,
+        "prompt_tokens_details": {
+          "cached_tokens": 2304,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 109,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1072,
+        "completion_tokens": 124,
+        "total_tokens": 1196,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 1069,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 32,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 6165,
+        "completion_tokens": 660,
+        "total_tokens": 6825,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6162,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 891,
+        "completion_tokens": 61,
+        "total_tokens": 952,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 35,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "id": "236a1222-ee96-48c0-ab75-08a4b515ef76",
+      "caseId": "H09",
+      "personaId": "lera",
+      "repeat": 0,
+      "status": "generated"
+    }
+  ]
+}

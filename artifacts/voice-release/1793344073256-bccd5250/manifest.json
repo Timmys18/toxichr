@@ -1,0 +1,96 @@
+{
+  "commit": "88ef54bed63db3b25dc4c775d8b69269eeb7b4e2",
+  "dirty": true,
+  "calls": 4,
+  "maxCalls": 14,
+  "reservedUsd": 0.5477040000000001,
+  "usage": [
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1308,
+        "completion_tokens": 1348,
+        "total_tokens": 2656,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 301,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 642,
+        "completion_tokens": 359,
+        "total_tokens": 1001,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 116,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-terra",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 5467,
+        "completion_tokens": 433,
+        "total_tokens": 5900,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 5465,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-5-nano",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 5925,
+        "completion_tokens": 414,
+        "total_tokens": 6339,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "id": "5e41d6ca-07ab-4c1f-bba3-c842c032fa40",
+      "caseId": "R03",
+      "personaId": "tamara",
+      "repeat": 0,
+      "status": "limited"
+    }
+  ]
+}

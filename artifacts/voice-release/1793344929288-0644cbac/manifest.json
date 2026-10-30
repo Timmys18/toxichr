@@ -1,0 +1,125 @@
+{
+  "commit": "88ef54bed63db3b25dc4c775d8b69269eeb7b4e2",
+  "dirty": true,
+  "calls": 5,
+  "maxCalls": 8,
+  "reservedUsd": 0.931522,
+  "usage": [
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1076,
+        "completion_tokens": 650,
+        "total_tokens": 1726,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 339,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-terra",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 5202,
+        "completion_tokens": 311,
+        "total_tokens": 5513,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 5200,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-terra",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 2640,
+        "completion_tokens": 81,
+        "total_tokens": 2721,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 2638,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-terra",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 5168,
+        "completion_tokens": 343,
+        "total_tokens": 5511,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 5166,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-terra",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 2662,
+        "completion_tokens": 77,
+        "total_tokens": 2739,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 2660,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "id": "94ec7e1a-53bb-4f4a-a954-1acc36a1ae73",
+      "caseId": "R01",
+      "personaId": "lera",
+      "repeat": 0,
+      "status": "generated"
+    },
+    {
+      "id": "5db710c7-cc2f-4c89-9b36-6ad6a383068e",
+      "caseId": "R01",
+      "personaId": "vadik",
+      "repeat": 0,
+      "status": "generated"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "commit": "169d7e3224630b5c455c96d5882a2dc4a9bb9beb",
+  "dirty": true,
+  "calls": 3,
+  "maxCalls": 5,
+  "reservedUsd": 4.062951043399999,
+  "usage": [
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 2511,
+        "completion_tokens": 1757,
+        "total_tokens": 4268,
+        "prompt_tokens_details": {
+          "cached_tokens": 2304,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 196,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1212,
+        "completion_tokens": 205,
+        "total_tokens": 1417,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 1209,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 165,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 6545,
+        "completion_tokens": 647,
+        "total_tokens": 7192,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6542,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "id": "7f47d3d9-30c4-4b7f-8961-944f69051a77",
+      "caseId": "H10",
+      "personaId": "lera",
+      "repeat": 0,
+      "status": "generated"
+    }
+  ]
+}

@@ -28,7 +28,7 @@ export type AiRequest = {
   temperature?: number;
   maxTokens?: number;
   timeoutMs?: number;
-  reasoningEffort?: "minimal" | "low" | "medium" | "high";
+  reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
   /** Модель на этот вызов (аналитике — быстрая mini, персоне — сильная) */
   model?: string;
 };
@@ -201,7 +201,7 @@ async function fetchWithTimeout(
 async function callOpenAi(
   system: string,
   user: string,
-  options?: { temperature?: number; maxTokens?: number; model?: string; jsonSchemaName?: string; jsonSchema?: Record<string, unknown>; timeoutMs?: number; reasoningEffort?: "minimal" | "low" | "medium" | "high" },
+  options?: { temperature?: number; maxTokens?: number; model?: string; jsonSchemaName?: string; jsonSchema?: Record<string, unknown>; timeoutMs?: number; reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high" },
 ): Promise<AiResponse> {
   const model = options?.model ?? process.env.OPENAI_MODEL ?? "gpt-4o";
   const baseRaw = process.env.OPENAI_BASE_URL?.trim();
@@ -214,8 +214,8 @@ async function callOpenAi(
     },
     body: JSON.stringify({
       model,
-      ...(model.startsWith("gpt-5")
-        ? { max_completion_tokens: options?.maxTokens ?? 4500, reasoning_effort: options?.reasoningEffort ?? "low" }
+      ...(/^(gpt-5|gpt-6)/.test(model)
+        ? { max_completion_tokens: options?.maxTokens ?? 4500, reasoning_effort: model.startsWith("gpt-6") && options?.reasoningEffort === "minimal" ? "low" : options?.reasoningEffort ?? "low", ...(model === "gpt-6.1-terra" && options?.reasoningEffort === "none" ? { temperature: options.temperature ?? 0.9 } : {}) }
         : { temperature: options?.temperature ?? 0.9, max_tokens: options?.maxTokens ?? 4500 }),
       response_format: options?.jsonSchema
         ? {
@@ -254,14 +254,22 @@ async function callOpenAi(
 
   const data = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
-    usage?: { prompt_tokens?: number; completion_tokens?: number };
+    usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number } };
   };
 
   const content = data.choices?.[0]?.message?.content ?? "{}";
   const tokensIn = data.usage?.prompt_tokens ?? 0;
   const tokensOut = data.usage?.completion_tokens ?? 0;
-  // rough gpt-4o list prices
-  const costUsd = tokensIn * 0.0000025 + tokensOut * 0.00001;
+  // Standard text token rates; historical fallback remains for unlisted models.
+  const rates: Record<string, [number, number, number]> = {
+    "gpt-6.1-sol": [2, 0.1, 10], "gpt-6.1-terra": [1, 0.05, 5], "gpt-5.4-mini": [0.75, 0.075, 4.5],
+    "gpt-5-mini": [0.25, 0.025, 2], "gpt-5-nano": [0.05, 0.005, 0.4],
+  };
+  const [inputRate, cachedRate, outputRate] = rates[model] ?? [2.5, 2.5, 10];
+  const cached = Math.min(tokensIn, Math.max(0, data.usage?.prompt_tokens_details?.cached_tokens ?? 0));
+  const cacheWrite = Math.min(tokensIn - cached, Math.max(0, data.usage?.prompt_tokens_details?.cache_write_tokens ?? 0));
+  const cacheWritePremium = model.startsWith("gpt-6") ? cacheWrite * inputRate * 0.25 : 0;
+  const costUsd = ((tokensIn - cached) * inputRate + cached * cachedRate + cacheWritePremium + tokensOut * outputRate) / 1_000_000;
 
   return {
     provider: "openai",

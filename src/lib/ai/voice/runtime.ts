@@ -4,6 +4,7 @@ import policyAsset from "./policy.json";
 import type { PersonaId } from "@/lib/personas";
 import type { VoiceContext } from "./context";
 import { voiceContext } from "./context";
+import { EDITORIAL_LESSONS } from "./direction";
 import type { ProfessionalAssessment } from "../professional-assessment";
 
 export type VoiceExample = {
@@ -47,6 +48,14 @@ export function voiceCalibration(assessment: ProfessionalAssessment, persona: Pe
     metadata: selected.metadata,
     instruction: "Создай новую реакцию. Эти примеры вымышлены: не факты кандидата, не шаблон ответа и не список обязательных образов.",
     intensity: selected.metadata.effectiveIntensity,
+    editorialLessons: EDITORIAL_LESSONS,
+    // Contrastive craft lessons, always available even for unknown professions.
+    // Their situations are explicitly NOT diagnoses of the current resume.
+    fictionalCraftExamplesNotCurrentFindings: ["concern", "strength"].flatMap(polarity => {
+      const example = VOICE_EXAMPLES.find(e => e.persona === persona && e.polarity === polarity && !selected.metadata.selectedIds.includes(e.id));
+      return example ? [{ fictionalInput: example.sourceFragment, fictionalResponse: example.outputExample, boundaries: example.disallowedInference,
+        instruction: "Это урок авторской речи на ДРУГОМ материале. Не переноси тему, претензию, образ или факты. Текущую оценку определяет только assessment." }] : [];
+    }),
     lengthGuidance: "Одна ведущая мысль в verdict; свободные блоки без одинакового скелета. Не увеличивай длину ради валидатора.",
     fictionalStyleExamplesNeverCandidateEvidence: selected.examples.map(e => ({ id: e.id, fictionalInput: e.sourceFragment, boundaries: e.disallowedInference, move: e.rhetoricalMove, fictionalResponse: e.outputExample })),
   };

@@ -1,0 +1,60 @@
+{
+  "commit": "5444991f2fa393cefcc81e3cff5eae4c04fdd01a",
+  "dirty": true,
+  "calls": 2,
+  "maxCalls": 2,
+  "reservedUsd": 3.237482106399999,
+  "usage": [
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 385,
+        "completion_tokens": 20,
+        "total_tokens": 405,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 393,
+        "completion_tokens": 61,
+        "total_tokens": 454,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "caseId": "final-review-supported",
+      "supported": true
+    },
+    {
+      "caseId": "final-review-fabricated",
+      "supported": false
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "commit": "f45366670fa9fba18583a12721a1e71a25f0902f",
+  "dirty": true,
+  "calls": 2,
+  "maxCalls": 4,
+  "reservedUsd": 0.463017,
+  "usage": [
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1165,
+        "completion_tokens": 1424,
+        "total_tokens": 2589,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 44,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 5851,
+        "completion_tokens": 616,
+        "total_tokens": 6467,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 27,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "id": "08e2c10c-1371-45fd-9085-5a8a3f43b18d",
+      "caseId": "R01",
+      "personaId": "lera",
+      "repeat": 0,
+      "status": "generated"
+    }
+  ]
+}

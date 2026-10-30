@@ -9,6 +9,7 @@ import { editorPrompt } from "../../src/lib/ai/prompts/editor-core";
 import { PERSONA_DRAFT_JSON_SCHEMA, validatePersonaDraft, type PersonaDraft } from "../../src/lib/ai/writer-validator";
 import { runAnalysisPipeline } from "../../src/lib/ai/pipeline";
 import { normalizeYandexJsonContent } from "../../src/lib/ai/gateway";
+import { resultPresentation } from "../../src/lib/ai/result-presentation";
 
 const interpretations: Record<string, string> = {
   C01: "Управленческие решения не раскрыты в описании работы.",
@@ -98,6 +99,8 @@ test("неизвестная ситуация остаётся без приме
   const calibration = voiceCalibration(assessment, "lera");
   expect(calibration.metadata.selectedIds).toEqual([]);
   expect(PERSONA_BIBLES.lera).toContain("Быстрая");
+  expect(calibration.fictionalCraftExamplesNotCurrentFindings).toHaveLength(2);
+  expect(calibration.editorialLessons.length).toBeGreaterThan(0);
 });
 
 test("явное личное действие выбирает релевантный голос и передаёт пример writer; должность и командный итог не подходят", () => {
@@ -192,19 +195,168 @@ test("Yandex JSON control characters are repaired without accepting unrelated br
 
 test("pipeline передаёт корпус writer, сохраняет выбор и общую аналитику без внешнего запроса", async () => {
   const { resume, assessment } = fixture();
-  await withStubbedYandex([draft()], async requests => {
+  const authored = draft();
+  authored.verdict.findingIds = ["F01"];
+  await withStubbedYandex([authored], async requests => {
     const result = await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "tamara" });
     expect(requests).toHaveLength(1);
     const messages = requests[0].messages as Array<{ content: string }>;
     const input = JSON.parse(messages[1].content);
     expect(input.voiceCalibration.metadata.selectedIds).toEqual(["T05"]);
     expect(input.assessment).toEqual(assessment);
+    expect(input.sourceContext[0].excerpt).toContain(assessment.findings[0].sourceQuote);
     expect(result.report.generationMeta?.voice?.status).toBe("generated");
     expect(result.report.generationMeta?.voice?.selectedIds).toEqual(["T05"]);
     expect(result.report.professionalAssessment).toEqual(assessment);
     expect(result.report.hrReview.deepDive).not.toContain(draft().contentBlocks[1].content);
     expect(result.report.topProblems[0].roast).toBe(assessment.findings[0].interpretation);
+    expect(resultPresentation(result.report).quotes).toEqual([assessment.findings[0].sourceQuote]);
+    expect(result.report.verdict.comment).toBe(authored.verdict.comment);
   });
+});
+
+test("independent perspective reads full resume and does not reuse shared assessment", async () => {
+  const { resume, assessment } = fixture();
+  const authored = draft();
+  authored.verdict.findingIds = ["F01"];
+  const previous = process.env.AI_INDEPENDENT_PERSPECTIVE;
+  process.env.AI_INDEPENDENT_PERSPECTIVE = "true";
+  try {
+    await withStubbedYandex([JSON.stringify(assessment), authored], async requests => {
+      await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "lera" });
+      expect(requests).toHaveLength(2);
+      const analyst = requests[0].messages as Array<{ content: string }>;
+      expect(analyst[0].content).toContain("МИРОВОЗЗРЕНИЕ ЛЕРЫ");
+      expect(analyst[1].content).toBe(resume.trim());
+      const writer = requests[1].messages as Array<{ content: string }>;
+      expect(JSON.parse(writer[1].content).fullResume).toBe(resume);
+      expect(JSON.parse(writer[1].content).voiceCalibration.fictionalStyleExamplesNeverCandidateEvidence).toBeUndefined();
+      expect(JSON.parse(writer[1].content).voiceCalibration.metadata.selectedIds).toEqual([]);
+      expect(writer[0].content).not.toContain("Исходное резюме целиком не передаётся");
+    });
+  } finally {
+    if (previous === undefined) delete process.env.AI_INDEPENDENT_PERSPECTIVE;
+    else process.env.AI_INDEPENDENT_PERSPECTIVE = previous;
+  }
+});
+
+test("final factual review refuses unsupported output rather than saving it", async () => {
+  const { resume, assessment } = fixture();
+  const authored = draft(); authored.verdict.findingIds = ["F01"];
+  const previous = process.env.AI_FINAL_REVIEW;
+  process.env.AI_FINAL_REVIEW = "true";
+  try {
+    await withStubbedYandex([authored, JSON.stringify({ supported: false, reason: "нет подтверждения" })], async requests => {
+      await expect(runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "tamara" })).rejects.toThrow("результат не сохранён");
+      expect(requests).toHaveLength(2);
+    });
+  } finally {
+    if (previous === undefined) delete process.env.AI_FINAL_REVIEW;
+    else process.env.AI_FINAL_REVIEW = previous;
+  }
+});
+
+test("factual repair must pass a second review before the result is saved", async () => {
+  const { resume, assessment } = fixture();
+  const authored = draft(); authored.verdict.findingIds = ["F01"];
+  const corrected = draft(); corrected.verdict.findingIds = ["F01"];
+  corrected.verdict.comment = "Рядом с командным итогом стоит уточнить собственный участок переговоров.";
+  const review = process.env.AI_FINAL_REVIEW, repair = process.env.AI_FINAL_REPAIR;
+  process.env.AI_FINAL_REVIEW = "true"; process.env.AI_FINAL_REPAIR = "true";
+  try {
+    await withStubbedYandex([authored, JSON.stringify({ supported: false, reason: "Нет опоры" }), corrected, JSON.stringify({ supported: true, reason: "" })], async requests => {
+      const result = await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "tamara" });
+      expect(requests).toHaveLength(4);
+      expect(result.report.verdict.comment).toBe(corrected.verdict.comment);
+      expect(result.report.generationMeta?.stages.map(s => s.name)).toContain("persona-factual-review-retry");
+    });
+    await withStubbedYandex([authored, JSON.stringify({ supported: false, reason: "Нет опоры" }), corrected, JSON.stringify({ supported: false, reason: "Осталась ошибка" })], async () => {
+      await expect(runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "tamara" })).rejects.toThrow("результат не сохранён");
+    });
+  } finally {
+    if (review === undefined) delete process.env.AI_FINAL_REVIEW; else process.env.AI_FINAL_REVIEW = review;
+    if (repair === undefined) delete process.env.AI_FINAL_REPAIR; else process.env.AI_FINAL_REPAIR = repair;
+  }
+});
+
+test("independent editorial selection is grounded, passed to writer and accounted for", async () => {
+  const { resume, assessment } = fixture();
+  const authored = draft(); authored.verdict.findingIds = ["F01"];
+  const previousPerspective = process.env.AI_INDEPENDENT_PERSPECTIVE;
+  const previousSelection = process.env.AI_EDITORIAL_SELECTION;
+  process.env.AI_INDEPENDENT_PERSPECTIVE = "true"; process.env.AI_EDITORIAL_SELECTION = "true";
+  try {
+    await withStubbedYandex([JSON.stringify(assessment), JSON.stringify({ tamara: "F01", lera: "F01", gleb: "F01", vadik: "F01" }), authored], async requests => {
+      const result = await runAnalysisPipeline({ resumeText: resume, personaId: "lera" });
+      expect(requests).toHaveLength(3);
+      const writer = requests[2].messages as Array<{ content: string }>;
+      expect(JSON.parse(writer[1].content).selectedAnchor.item.id).toBe("F01");
+      expect(result.report.generationMeta?.stages.map(s => s.name)).toContain("persona-editorial-selection");
+      expect(result.report.verdict.findingIds).toContain("F01");
+    });
+  } finally {
+    if (previousPerspective === undefined) delete process.env.AI_INDEPENDENT_PERSPECTIVE; else process.env.AI_INDEPENDENT_PERSPECTIVE = previousPerspective;
+    if (previousSelection === undefined) delete process.env.AI_EDITORIAL_SELECTION; else process.env.AI_EDITORIAL_SELECTION = previousSelection;
+  }
+});
+
+test("OpenAI defaults use the independent editorial path and configured writer", async () => {
+  const { resume, assessment } = fixture();
+  const authored = draft(); authored.verdict.findingIds = ["F01"];
+  const keys = ["AI_PROVIDER", "OPENAI_API_KEY", "AI_INDEPENDENT_PERSPECTIVE", "AI_EDITORIAL_SELECTION", "OPENAI_WRITER_MODEL"];
+  const saved = keys.map(key => process.env[key]);
+  const originalFetch = globalThis.fetch;
+  const requests: Array<Record<string, unknown>> = [];
+  const outputs = [assessment, { tamara: "F01", lera: "F01", gleb: "F01", vadik: "F01" }, authored];
+  globalThis.fetch = async (_url, init) => {
+    requests.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(outputs[requests.length - 1]) }, finish_reason: "stop" }], usage: { prompt_tokens: 20, completion_tokens: 20 } }), { status: 200 });
+  };
+  process.env.AI_PROVIDER = "openai"; process.env.OPENAI_API_KEY = "synthetic-test-key";
+  delete process.env.AI_INDEPENDENT_PERSPECTIVE; delete process.env.AI_EDITORIAL_SELECTION; delete process.env.OPENAI_WRITER_MODEL;
+  try {
+    const result = await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "lera" });
+    expect(requests).toHaveLength(3);
+    expect(requests[2].model).toBe("gpt-6.1-sol");
+    expect(result.report.generationMeta?.stages.map(s => s.name)).toContain("persona-editorial-selection");
+  } finally {
+    globalThis.fetch = originalFetch;
+    keys.forEach((key, i) => { if (saved[i] === undefined) delete process.env[key]; else process.env[key] = saved[i]; });
+  }
+});
+
+test("editorial selection cannot introduce an unknown observation", async () => {
+  const { resume, assessment } = fixture();
+  const previousPerspective = process.env.AI_INDEPENDENT_PERSPECTIVE;
+  const previousSelection = process.env.AI_EDITORIAL_SELECTION;
+  process.env.AI_INDEPENDENT_PERSPECTIVE = "true"; process.env.AI_EDITORIAL_SELECTION = "true";
+  try {
+    await withStubbedYandex([JSON.stringify(assessment), JSON.stringify({ tamara: "F01", lera: "F999", gleb: "F01", vadik: "F01" })], async requests => {
+      await expect(runAnalysisPipeline({ resumeText: resume, personaId: "lera" })).rejects.toThrow("выбор наблюдения");
+      expect(requests).toHaveLength(2);
+    });
+  } finally {
+    if (previousPerspective === undefined) delete process.env.AI_INDEPENDENT_PERSPECTIVE; else process.env.AI_INDEPENDENT_PERSPECTIVE = previousPerspective;
+    if (previousSelection === undefined) delete process.env.AI_EDITORIAL_SELECTION; else process.env.AI_EDITORIAL_SELECTION = previousSelection;
+  }
+});
+
+test("writer and repair cannot ignore the selected leading observation", async () => {
+  const { resume, assessment } = fixture();
+  const authored = draft(); authored.verdict.findingIds = [];
+  const previousPerspective = process.env.AI_INDEPENDENT_PERSPECTIVE;
+  const previousSelection = process.env.AI_EDITORIAL_SELECTION;
+  process.env.AI_INDEPENDENT_PERSPECTIVE = "true"; process.env.AI_EDITORIAL_SELECTION = "true";
+  try {
+    await withStubbedYandex([JSON.stringify(assessment), JSON.stringify({ tamara: "F01", lera: "F01", gleb: "F01", vadik: "F01" }), authored, authored], async requests => {
+      const result = await runAnalysisPipeline({ resumeText: resume, personaId: "lera" });
+      expect(requests).toHaveLength(4);
+      expect(result.report.generationMeta?.voice?.status).toBe("limited");
+    });
+  } finally {
+    if (previousPerspective === undefined) delete process.env.AI_INDEPENDENT_PERSPECTIVE; else process.env.AI_INDEPENDENT_PERSPECTIVE = previousPerspective;
+    if (previousSelection === undefined) delete process.env.AI_EDITORIAL_SELECTION; else process.env.AI_EDITORIAL_SELECTION = previousSelection;
+  }
 });
 
 test("repair получает те же примеры; повторно неверный результат честно ограничивается", async () => {
@@ -219,4 +371,32 @@ test("repair получает те же примеры; повторно нев�
     expect(new Set(result.report.contentBlocks.map(b => b.content)).size).toBe(result.report.contentBlocks.length);
     expect(result.report.hrReview.deepDive).not.toContain(result.report.hrReview.hiringTake);
   });
+});
+
+test("литературная редактура меняет только подтверждённую реплику и учитывается отдельно", async () => {
+  const before = process.env.AI_VOICE_POLISH;
+  process.env.AI_VOICE_POLISH = "true";
+  const { resume, assessment } = fixture();
+  const polished = "Общий итог не обязан один рассказывать о ваших переговорах. Покажите рядом собственный участок работы.";
+  try {
+    await withStubbedYandex([draft(), JSON.stringify({ comment: polished })], async () => {
+      const result = await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "tamara" });
+      expect(result.report.verdict.comment).toBe(polished);
+      expect(result.report.contentBlocks).toEqual(draft().contentBlocks);
+      expect(result.report.generationMeta?.stages.map(stage => stage.name)).toContain("persona-voice-polish");
+    });
+  } finally { if (before === undefined) delete process.env.AI_VOICE_POLISH; else process.env.AI_VOICE_POLISH = before; }
+});
+
+test("редактура с выдуманным числом отклоняется и исходный ответ сохраняется", async () => {
+  const before = process.env.AI_VOICE_POLISH;
+  process.env.AI_VOICE_POLISH = "true";
+  const { resume, assessment } = fixture();
+  try {
+    await withStubbedYandex([draft(), JSON.stringify({ comment: "Ваш личный результат — 777%, и это видно в тексте." })], async () => {
+      const result = await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "tamara" });
+      expect(result.report.verdict.comment).toBe(draft().verdict.comment);
+      expect(result.report.generationMeta?.stages.map(stage => stage.name)).toContain("persona-voice-polish-rejected");
+    });
+  } finally { if (before === undefined) delete process.env.AI_VOICE_POLISH; else process.env.AI_VOICE_POLISH = before; }
 });

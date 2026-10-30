@@ -17,11 +17,12 @@ for (const personaId of ["tamara", "lera", "gleb", "vadik"] as const) {
     await page.route(`**/api/analyses/${id}`, route => route.fulfill({ json: response() }));
     await page.route("**/api/payments/access?*", route => route.fulfill({ json: { hasPackage: false } }));
     await page.goto(`/session?view=${id}`);
-    await expect(page.locator(".diag")).toContainText(sample.outputExample);
+    await expect(page.locator(".result-hr-quote")).toContainText(sample.outputExample);
+    await expect(page.locator(".result-hr-quote")).not.toContainText(report.topProblems[0]?.roast ?? "NEVER_MATCH");
     await expect(page.getByText("Ограниченный разбор", { exact: true })).toHaveCount(0);
     for (const width of [1280, 390]) {
       await page.setViewportSize({ width, height: 900 });
-      await expect.poll(() => page.locator(".diag").evaluate(el => el.getBoundingClientRect().right <= window.innerWidth - 8)).toBe(true);
+      await expect.poll(() => page.locator(".result-hr-quote").evaluate(el => el.getBoundingClientRect().right <= window.innerWidth - 8)).toBe(true);
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
       await page.screenshot({ path: `tests/artifacts/hr-voices-v02/fixture-${personaId}-${width}.png`, fullPage: true, animations: "disabled" });
     }

@@ -31,3 +31,27 @@ test("OpenAI получает strict JSON Schema, а не только json_obje
     if (previousProvider === undefined) delete process.env.AI_PROVIDER; else process.env.AI_PROVIDER = previousProvider;
   }
 });
+
+test("GPT-6 uses current completion-token parameters and model rates", async () => {
+  const key = process.env.OPENAI_API_KEY, provider = process.env.AI_PROVIDER, fetchBefore = global.fetch;
+  process.env.OPENAI_API_KEY = "test-only-key"; process.env.AI_PROVIDER = "openai";
+  let request: Record<string, unknown> = {};
+  global.fetch = (async (_input, init) => {
+    request = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }], usage: { prompt_tokens: 1000, completion_tokens: 100, prompt_tokens_details: { cached_tokens: 200, cache_write_tokens: 400 } } }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    const result = await runAi({ stage: "persona", system: "system", user: "user", model: "gpt-6.1-terra", reasoningEffort: "minimal" });
+    expect(request).toHaveProperty("max_completion_tokens");
+    expect(request).not.toHaveProperty("temperature");
+    expect(request.reasoning_effort).toBe("low");
+    expect(result.costUsd).toBeCloseTo((800 + 200 * 0.05 + 400 * 0.25 + 100 * 5) / 1_000_000);
+    await runAi({ stage: "persona", system: "system", user: "user", model: "gpt-6.1-terra", reasoningEffort: "none", temperature: 0.9 });
+    expect(request.reasoning_effort).toBe("none");
+    expect(request.temperature).toBe(0.9);
+  } finally {
+    global.fetch = fetchBefore;
+    if (key === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = key;
+    if (provider === undefined) delete process.env.AI_PROVIDER; else process.env.AI_PROVIDER = provider;
+  }
+});

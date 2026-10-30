@@ -13,6 +13,7 @@ export const PersonaDraftSchema = z.object({
   verdict: z.object({
     title: z.string().min(3).max(160),
     comment: z.string().min(20).max(900),
+    findingIds: z.array(z.string().min(1)).max(6).optional(),
   }),
   contentBlocks: z.array(UserFacingBlockSchema).min(2).max(10),
   priorities: z.array(z.object({
@@ -31,8 +32,8 @@ export const PERSONA_DRAFT_JSON_SCHEMA: Record<string, unknown> = {
   required: ["verdict", "contentBlocks", "priorities", "shareLines"],
   properties: {
     verdict: {
-      type: "object", additionalProperties: false, required: ["title", "comment"],
-      properties: { title: text, comment: text },
+      type: "object", additionalProperties: false, required: ["title", "comment", "findingIds"],
+      properties: { title: text, comment: text, findingIds: { type: "array", maxItems: 6, items: text } },
     },
     contentBlocks: {
       type: "array", minItems: 2, maxItems: 10,
@@ -55,7 +56,7 @@ export const PERSONA_DRAFT_JSON_SCHEMA: Record<string, unknown> = {
   },
 };
 
-const BANNED_USER_FACING = /(доказател\w*|приговор\w*|(?:^|[^а-яё])при[её]м(?:а|у|ом|е|ы|ов|ам|ами|ах)?(?=$|[^а-яё])|прожарк\w*)/iu;
+const BANNED_USER_FACING = /(доказател\w*|приговор\w*|прожарк\w*)/iu;
 const ABILITY_CLAIMS = /(?:кандидат|человек|вы|ты|он|она)[^.!?\n]{0,60}(?:умеет|может|способен|способна|неспособен|неспособна|не\s+знает|знает)(?![а-яё])/iu;
 const ABILITY_NOUNS = /(?:способност(?:ь|и|ей|ям|ями|ях)|умени(?:е|я|й|ям|ями|ях))(?![а-яё])/iu;
 const PERSON_JUDGMENT = /(?:настоящий|сильный|слабый|плохой|хороший|выдающийся)\s+(?:лидер|руководитель|специалист|профессионал|кандидат)/iu;
@@ -175,6 +176,7 @@ export function validatePersonaDraft(
   const draft = parsed.data;
   const errors: string[] = [];
   const allText = [draft.verdict.title, draft.verdict.comment, ...draft.contentBlocks.map((b) => b.content), ...draft.priorities.map((p) => p.action), ...draft.shareLines].join("\n");
+  if (draft.verdict.findingIds?.some(id => !findingIds.has(id))) errors.push("главная реплика ссылается на несуществующий findingId");
   errors.push(...validateUserFacingLanguage(allText));
   if (options.avoidMasculineSecondPerson && /(?:^|\s)ты\s+[а-яё]+(?:ил|ал|ял|ёл)(?=[\s,.!?;:]|$)/iu.test(allText)) errors.push("мужская форма обращения противоречит грамматике исходного резюме");
   if (options.metricIssueGrounded === false || options.hasFindings === false) {

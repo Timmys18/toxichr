@@ -2,6 +2,15 @@ import { z } from "zod";
 
 import { runAi } from "@/lib/ai/gateway";
 import { PROFESSIONAL_CORE_PROMPT } from "@/lib/ai/prompts/professional-core";
+import type { PersonaId } from "@/lib/personas";
+import { CHARACTER_DIRECTION } from "@/lib/ai/voice/direction";
+import { PROFESSIONAL_CONTEXT_GUIDE } from "@/lib/ai/prompts/professional-context";
+import { personaPreference } from "@/lib/ai/persona-focus";
+
+export function analystSystem(personaId?: PersonaId): string {
+  if (!personaId) return PROFESSIONAL_CORE_PROMPT;
+  return `${PROFESSIONAL_CORE_PROMPT}\n\nПРОФЕССИОНАЛЬНАЯ ОПТИКА ПЕРСОНАЖА\n${CHARACTER_DIRECTION[personaId]}\n${personaPreference(personaId)}\nЧитай всё резюме самостоятельно. Выбирай значимые наблюдения с этой точки зрения, сохраняя критически важные проблемы и сильные стороны. В оценке пиши аналитически, без шуток и без имитации голоса. Не выдумывай различия с другими HR.\n\nПРОФЕССИОНАЛЬНЫЙ КОНТЕКСТ\nРазличай профессию, отрасль, уровень и конкретную роль; если они неясны, обозначь неопределённость. Для каждого наблюдения установи, какая задача, действие, ограничение, решение или результат действительно видны и почему именно они важны для этой работы. Профессиональные знания — гипотезы для чтения, не факты о кандидате и не обязательный чек-лист. Для редких и регулируемых специальностей не утверждай требования или стандарты, которые не подтверждены текстом. Если информации мало, не сочиняй контекст.\n\n${PROFESSIONAL_CONTEXT_GUIDE}`;
+}
 
 const ConfidenceSchema = z.enum(["high", "medium", "low"]);
 
@@ -144,10 +153,10 @@ export function parseGroundedAssessment(input: unknown, resumeText: string): { a
     : { assessment: null, errors: [...errors, "подтверждённая оценка не прошла проверку структуры"] };
 }
 
-export async function runProfessionalAnalyst(resumeText: string) {
+export async function runProfessionalAnalyst(resumeText: string, personaId?: PersonaId) {
   const ai = await runAi({
     stage: "extract",
-    system: PROFESSIONAL_CORE_PROMPT,
+    system: analystSystem(personaId),
     user: resumeText.trim(),
     jsonSchemaName: "professional_assessment_v2",
     jsonSchema: PROFESSIONAL_ASSESSMENT_JSON_SCHEMA,

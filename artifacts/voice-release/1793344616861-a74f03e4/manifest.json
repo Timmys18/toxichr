@@ -1,0 +1,59 @@
+{
+  "commit": "88ef54bed63db3b25dc4c775d8b69269eeb7b4e2",
+  "dirty": true,
+  "calls": 2,
+  "maxCalls": 5,
+  "reservedUsd": 0.9021524999999999,
+  "usage": [
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 5921,
+        "completion_tokens": 709,
+        "total_tokens": 6630,
+        "prompt_tokens_details": {
+          "cached_tokens": 5918,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 3363,
+        "completion_tokens": 123,
+        "total_tokens": 3486,
+        "prompt_tokens_details": {
+          "cached_tokens": 1512,
+          "cache_write_tokens": 1848,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "literaryAcceptance": "pending-human-review",
+  "entries": [
+    {
+      "id": "a9c7b715-3288-4422-b2af-e707a6c0426e",
+      "caseId": "R06",
+      "personaId": "vadik",
+      "repeat": 0,
+      "status": "generated"
+    }
+  ]
+}

@@ -35,14 +35,15 @@ export const ViralMetricsSchema = z.object({
 export const VerdictSchema = z.object({
   title: z.string().min(3),
   comment: z.string().min(10),
+  findingIds: z.array(z.string()).max(6).optional(),
 });
 
 /** Развёрнутый разбор HR — главный продукт, не набор карточек. */
 export const HrReviewSchema = z.object({
-  firstImpression: z.string().min(80),
-  deepDive: z.string().min(200),
-  hiringTake: z.string().min(60),
-  fixPriority: z.string().min(60),
+  firstImpression: z.string().min(10),
+  deepDive: z.string().min(10),
+  hiringTake: z.string().min(10),
+  fixPriority: z.string().min(10),
 });
 
 export const ProblemSchema = z.object({
