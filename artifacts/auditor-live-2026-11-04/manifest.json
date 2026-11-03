@@ -1,0 +1,197 @@
+{
+  "sourceCommit": "c3eb9ecba3d34e39f2bb0fda07a7a299db6aab41",
+  "budgetUsd": 1,
+  "reservationLimitUsd": 0.95,
+  "pricingSource": "https://developers.openai.com/api/docs/pricing",
+  "calls": [
+    {
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.021275625,
+      "startedAt": "2026-11-03T21:10:35.226Z",
+      "status": "RECEIVED",
+      "elapsedMs": 12215,
+      "httpStatus": 200,
+      "requestId": "req_ce7f8a20e5b74b1ea2949d0ee63759f1",
+      "usage": {
+        "prompt_tokens": 519,
+        "completion_tokens": 734,
+        "total_tokens": 1253,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 95,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00369225
+    },
+    {
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.012448125,
+      "startedAt": "2026-11-03T21:10:47.451Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2347,
+      "httpStatus": 200,
+      "requestId": "req_9393121bee054686ac4cbfe15f07ea35",
+      "usage": {
+        "prompt_tokens": 860,
+        "completion_tokens": 445,
+        "total_tokens": 1305,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 254,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0026475
+    },
+    {
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_repair_v1",
+      "boundUsd": 0.0262875,
+      "startedAt": "2026-11-03T21:10:49.801Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3185,
+      "httpStatus": 200,
+      "requestId": "req_07c4d1a2fdab48eb8e0bcb00f8b1e0e6",
+      "usage": {
+        "prompt_tokens": 1247,
+        "completion_tokens": 798,
+        "total_tokens": 2045,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 273,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00452625
+    },
+    {
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.0114853125,
+      "startedAt": "2026-11-03T21:10:52.993Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1591,
+      "httpStatus": 200,
+      "requestId": "req_872647c8c0f54e54a1d0ffaa5cf59568",
+      "usage": {
+        "prompt_tokens": 746,
+        "completion_tokens": 260,
+        "total_tokens": 1006,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 123,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0017295
+    },
+    {
+      "id": 5,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_v1",
+      "boundUsd": 0.0901603125,
+      "startedAt": "2026-11-03T21:10:54.590Z",
+      "status": "RECEIVED",
+      "elapsedMs": 14970,
+      "httpStatus": 200,
+      "requestId": "req_bb7627901d664c769e489c680cbb2c6a",
+      "usage": {
+        "prompt_tokens": 5697,
+        "completion_tokens": 4556,
+        "total_tokens": 10253,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 83,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.02477475
+    },
+    {
+      "id": 6,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.0213140625,
+      "startedAt": "2026-11-03T21:11:09.569Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3320,
+      "httpStatus": 200,
+      "requestId": "req_922ae5e08d124e6198fd62d52552b14e",
+      "usage": {
+        "prompt_tokens": 524,
+        "completion_tokens": 836,
+        "total_tokens": 1360,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 184,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.004155
+    }
+  ],
+  "results": [
+    {
+      "caseId": "H10",
+      "personaId": "tamara",
+      "status": "FAILED",
+      "elapsedMs": 34348,
+      "costUsd": 0.03737025,
+      "error": "Выбранное наблюдение не подтверждено"
+    },
+    {
+      "caseId": "N01",
+      "personaId": "tamara",
+      "status": "FAILED",
+      "elapsedMs": 3324,
+      "costUsd": 0.004154999999999999,
+      "error": "Неверная опора классификации"
+    }
+  ],
+  "reservedUsd": 0.1829709375,
+  "knownCostUsd": 0.04152525,
+  "H10TotalMs": 34348,
+  "N01TotalMs": 3324,
+  "finishedAt": "2026-11-03T21:11:12.893Z",
+  "acceptance": "FAILED_BEFORE_WRITER",
+  "harnessExitExplanation": "Playwright passed means the bounded harness completed and saved failures; it is not product acceptance.",
+  "unknownCostCalls": 0,
+  "maxReservedUsdIncludingFailures": 0.1829709375
+}
