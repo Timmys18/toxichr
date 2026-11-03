@@ -1,0 +1,47 @@
+{
+  "base": "2c62ba84f885ff9bc99299ae9366fe3281a36ffc",
+  "date": "2026-11-04",
+  "checks": {
+    "typecheck": "passed",
+    "targetedESLint": "passed",
+    "newTests": 2,
+    "passed": 2,
+    "prior20": "retained prior artifact; not rerun"
+  },
+  "streaming": {
+    "productionCallersFound": 0,
+    "policy": "disabled before network or chunks until properly accounted"
+  },
+  "integration": {
+    "providerRoute": "openai",
+    "transport": "fully stubbed HTTP; no provider requests",
+    "database": "isolated SQLite",
+    "stages": [
+      "resume_facts_v1",
+      "facts_review_v1",
+      "coordinated_plan_v1",
+      "assessment_grounding_review_v1",
+      "persona_review_v2",
+      "final_grounding_review_v1"
+    ],
+    "firstOpenCalls": 6,
+    "secondOpenAdditionalCalls": 0,
+    "analysesCreated": 1,
+    "receiptsSaved": 6,
+    "asserted": [
+      "shared facts persisted before plan",
+      "plan persisted before assessment review",
+      "all professional assessment claims presented for review",
+      "writer receives full resume and selected anchor",
+      "final reviewer receives authored response",
+      "COMPLETED response matches fixture",
+      "stored report has current source hash and coordinated@2",
+      "cost and time receipts saved in database and JSONL",
+      "same analysis returned on reopen without new generation"
+    ]
+  },
+  "actualPaidCalls": 0,
+  "actualNewSpendUsd": 0,
+  "remainingLifetimeBudgetUsd": null,
+  "liveAcceptance": "not performed; pending budget reconciliation"
+}

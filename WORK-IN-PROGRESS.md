@@ -1,3 +1,10 @@
+# Latest follow-up — 2026-11-04
+Base remote HEAD verified: 2c62ba84, same review branch. No architecture rewrite.
+- Repository code search confirms runAiStream has no production callers. Its unaccounted SSE/character-price implementation is removed; exported entry throws before network/chunks pending complete streaming accounting. runAi remains the supported transport.
+- New success-chain integration test uses real application orchestration, isolated SQLite and a fully stubbed HTTP transport with AI_PROVIDER=openai (not mock). It checks facts extraction/review → persisted facts → four-view plan → persisted plan → whole-assessment review → selected author → final review → COMPLETED storage and six receipts → reopen same analysis with no new calls/rows.
+- Two new tests passed; typecheck and addressed ESLint passed. Historical 20-test result retained, not rerun for this follow-up. New artifact: artifacts/recovery/success-chain-checks.json.
+- Actual paid calls 0; new spend $0. Historical $5 remainder still unresolved; live acceptance remains blocked. No merge/deploy. Unrelated modified screenshot excluded.
+
 # ToxicHR — audit corrections 2026-11-03
 Branch review/ux-ui-rebuild-48a583b. Starting HEAD verified: 522457c. Existing architecture retained.
 Implemented:

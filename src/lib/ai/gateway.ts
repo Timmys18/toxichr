@@ -479,113 +479,15 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
 }
 
 /**
- * Потоковый вызов (только OpenAI). onChunk получает куски текста по мере
- * генерации — так разбор печатается вживую, а не ждётся целиком.
- * Для не-OpenAI и при ошибке — прозрачный fallback на обычный runAi.
+ * No production callers exist (repository search, 2026-11-04).
+ * Disabled until streaming has provider usage receipts and the same accounting
+ * and lease guards as runAi. Do not silently fall back or estimate by characters.
  */
 export async function runAiStream(
   request: AiRequest,
   onChunk: (delta: string) => void,
 ): Promise<AiResponse> {
-  assertAiReady();
-  if (resolveProvider() !== "openai") {
-    const r = await runAi(request);
-    onChunk(r.content);
-    return r;
-  }
-
-  const model = request.model ?? process.env.OPENAI_MODEL ?? "gpt-4o";
-  const baseRaw = process.env.OPENAI_BASE_URL?.trim();
-  const base = (baseRaw || "https://api.openai.com/v1").replace(/\/$/, "");
-  const controller = new AbortController();
-  // Таймаут по бездействию: сбрасывается на каждом токене. Не даёт зависнуть
-  // на старте/в середине, но не режет долгую живую генерацию.
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const arm = () => {
-    clearTimeout(timer);
-    timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-  };
-  arm();
-  let full = "";
-
-  try {
-    const res = await fetch(`${base}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY!.trim()}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        temperature: request.temperature ?? 0.9,
-        max_tokens: request.maxTokens ?? 4500,
-        stream: true,
-        messages: [
-          { role: "system", content: request.system },
-          { role: "user", content: request.user },
-        ],
-      }),
-      signal: controller.signal,
-    });
-
-    if (!res.ok || !res.body) {
-      const err = await res.text().catch(() => "");
-      if (res.status === 401) {
-        throw new AiConfigError(
-          "Ключ OpenAI не принят. Проверь OPENAI_API_KEY.",
-        );
-      }
-      throw new Error(`OpenAI ${res.status}: ${err.slice(0, 200)}`);
-    }
-
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      const lines = buf.split("\n");
-      buf = lines.pop() ?? "";
-      for (const line of lines) {
-        const t = line.trim();
-        if (!t.startsWith("data:")) continue;
-        const payload = t.slice(5).trim();
-        if (payload === "[DONE]") continue;
-        try {
-          const j = JSON.parse(payload) as {
-            choices?: Array<{ delta?: { content?: string } }>;
-          };
-          const delta = j.choices?.[0]?.delta?.content ?? "";
-          if (delta) {
-            arm(); // токен пришёл — сбрасываем сторож бездействия
-            full += delta;
-            onChunk(delta);
-          }
-        } catch {
-          /* частичный JSON — пропускаем */
-        }
-      }
-    }
-  } catch (e) {
-    if (e instanceof AiConfigError) throw e;
-    if (e instanceof Error && e.name === "AbortError") {
-      throw new Error(
-        `Поток молчал ${Math.round(AI_TIMEOUT_MS / 1000)}с. Попробуй ещё раз.`,
-      );
-    }
-    throw e;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  return {
-    provider: "openai",
-    model,
-    content: full,
-    tokensIn: 0,
-    tokensOut: 0,
-    cost: { amount: full.length * 0.0000004, currency: "USD" },
-    costUsd: full.length * 0.0000004,
-  };
+  void request;
+  void onChunk;
+  throw new AiConfigError("Потоковый транспорт отключён до подключения полного учёта. Используйте runAi.");
 }
