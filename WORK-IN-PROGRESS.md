@@ -1,3 +1,6 @@
+# Передача Codex — 2026-11-04
+Актуальное задание, замысел владельца, карта кода и критерии подготовки запуска: [docs/CODEX-HANDOFF-2026-11-04.md](docs/CODEX-HANDOFF-2026-11-04.md). Базовый код 2cf4df3. Бюджет прежнего цикла не обнулять: из $1 осталось $0.24280555. Production-восстановление пароля сейчас возвращает 503; старые планы запуска требуют сверки.
+
 # Completion checkpoint — 2026-11-04
 Branch review/ux-ui-rebuild-48a583b, local workspace /workspace/scratch/168bf684bac1/toxichr. Earlier durable code checkpoint 55e125c.
 AI fixes and limited live acceptance complete on two synthetic CVs; all eight accepted real replies in artifacts/auditor-completion/accepted-results.json. Full report: artifacts/auditor-completion/REVIEW.md. Total authorized-$1 ledger includes ALL initial/failed/repaired calls: $0.75719445, 100 calls, zero unknown charges in this session. Corrected cache-write premium included. This does not reconcile the lost historical $5 budget.
