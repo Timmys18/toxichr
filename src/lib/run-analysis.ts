@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { validatePlan, resumeHash, type CoordinatedPlan } from "./ai/coordinated-plan";
+import { aiMockEnabled, resolveProvider } from "./ai/gateway";
 /**
  * Общий запуск анализа для sync-роута и SSE-стрима:
  * загрузка резюме → запись Analysis → пайплайн v3 → сохранение результата.
@@ -44,8 +47,8 @@ async function createFreePersonaAnalysis(
       select: { id: true, personaId: true, status: true, reportPayload: true },
     });
     const validExisting = existing.filter((item) => {
-      const report = item.reportPayload as { generationMeta?: { stages?: Array<{ name?: string }> } } | null;
-      return !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
+      const report = item.reportPayload as { generationMeta?: { stages?: { name?: string }[] } } | null;
+      return item.status === "RUNNING" || (Boolean(report) && !report?.generationMeta?.stages?.some(stage => /fallback/.test(stage.name ?? "")));
     });
     const usedPersonaIds = new Set(
       validExisting.map((item) => item.personaId).filter((value): value is string => Boolean(value)),
@@ -71,7 +74,7 @@ async function createFreePersonaAnalysis(
   });
 }
 
-const REUSABLE_ANALYSIS_WINDOW_MS = 15 * 60 * 1000;
+
 
 export async function findReusableAnalysis(
   resumeId: string,
@@ -79,14 +82,12 @@ export async function findReusableAnalysis(
   currentUserId?: string | null,
 ): Promise<{ id: string; status: "RUNNING" | "COMPLETED" } | null> {
   const resume = await assertResumeAccess(resumeId, currentUserId);
-  const latest = await prisma.resumeVersion.findFirst({ where: { resumeId: resume.id }, orderBy: { versionNumber: "desc" }, select: { id: true } });
+  const latest = await prisma.resumeVersion.findFirst({ where: { resumeId: resume.id }, orderBy: { versionNumber: "desc" }, select: { id: true, structuredContent: true } });
   if (!latest) return null;
   const recent = await prisma.analysis.findMany({
     where: {
       status: { in: ["RUNNING", "COMPLETED"] },
-      createdAt: {
-        gte: new Date(Date.now() - REUSABLE_ANALYSIS_WINDOW_MS),
-      },
+
       resumeVersionId: latest.id,
       persona: { code: personaId },
     },
@@ -94,10 +95,13 @@ export async function findReusableAnalysis(
     take: 20,
     select: { id: true, status: true, reportPayload: true },
   });
+  const currentResume = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId }, select: { sanitizedText: true } });
+  const content = latest.structuredContent as { text?: string } | null;
+  const textHash = resumeHash(content?.text?.trim() || currentResume.sanitizedText || "");
   const reusable = recent.find((item) => {
     if (item.status === "RUNNING") return true;
-    const report = item.reportPayload as { generationMeta?: { stages?: Array<{ name?: string }> } } | null;
-    return !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
+    const report = item.reportPayload as { sourceTextHash?: string; generationMeta?: { promptVersion?: string; stages?: Array<{ name?: string }> } } | null;
+    return Boolean(report) && (aiMockEnabled() || resolveProvider() !== "openai" || (report?.generationMeta?.promptVersion?.includes("coordinated@1") && report.sourceTextHash === textHash)) && !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
   });
   return reusable ? { id: reusable.id, status: reusable.status as "RUNNING" | "COMPLETED" } : null;
 }
@@ -119,7 +123,7 @@ export async function waitForAnalysis(
   return "TIMEOUT";
 }
 
-export async function createAndRunAnalysis(
+async function createAndRunAnalysisLocked(
   resumeId: string,
   personaId: PersonaId,
   onEvent?: (event: PipelineEvent) => void,
@@ -158,6 +162,12 @@ export async function createAndRunAnalysis(
   try {
     const versionContent = version.structuredContent as { text?: string } | null;
     const resumeText = versionContent?.text?.trim() || resume.sanitizedText;
+    const freshVersion = await prisma.resumeVersion.findUniqueOrThrow({ where: { id: version.id } });
+    const stored = freshVersion.structuredContent as { coordinatedPlan?: unknown; sharedFacts?: { textHash: string; facts: CoordinatedPlan["facts"] } } | null;
+    let coordinatedPlan: CoordinatedPlan | undefined;
+    if (stored?.coordinatedPlan) {
+      try { coordinatedPlan = validatePlan(stored.coordinatedPlan, resumeText); } catch { /* changed text needs a fresh foundation */ }
+    }
     const previous = await prisma.analysis.findMany({
       where: { resumeVersionId: version.id, status: "COMPLETED", reportPayload: { not: undefined } },
       orderBy: { createdAt: "desc" },
@@ -166,7 +176,7 @@ export async function createAndRunAnalysis(
     });
     const previousReport = previous.map((item) => item.reportPayload as {
       professionalAssessment?: unknown;
-      generationMeta?: { stages?: Array<{ name?: string }> };
+      generationMeta?: { promptVersion?: string; stages?: Array<{ name?: string }> };
     } | null).find((report) => report?.generationMeta?.stages?.some((stage) =>
       stage.name === "professional-analyst" || stage.name === "professional-analyst-reused",
     ));
@@ -175,6 +185,24 @@ export async function createAndRunAnalysis(
       resumeText,
       personaId,
       professionalAssessment: reused.success ? reused.data as ProfessionalAssessment : undefined,
+      sharedFacts: stored?.sharedFacts?.textHash === resumeHash(resumeText) ? stored.sharedFacts.facts : undefined,
+      onFacts: async facts => {
+        await prisma.$transaction(async tx => {
+          const current = await tx.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, include: { resume: true } });
+          const content = current.structuredContent as Record<string, unknown> | null;
+          if (current.resume.deletedAt || content?.redacted) throw new AnalysisInputError("Резюме удалено", 404);
+          await tx.resumeVersion.update({ where: { id: version.id }, data: { structuredContent: JSON.parse(JSON.stringify({ ...content, sharedFacts: { textHash: resumeHash(resumeText), facts } })) } });
+        });
+      },
+      coordinatedPlan,
+      onPlan: async plan => {
+        await prisma.$transaction(async tx => {
+          const current = await tx.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, include: { resume: true } });
+          const content = current.structuredContent as Record<string, unknown> | null;
+          if (current.resume.deletedAt || content?.redacted) throw new AnalysisInputError("Резюме удалено", 404);
+          await tx.resumeVersion.update({ where: { id: version.id }, data: { structuredContent: JSON.parse(JSON.stringify({ ...content, coordinatedPlan: plan })) } });
+        });
+      },
       onEvent,
     });
 
@@ -230,4 +258,38 @@ export async function assertResumeAccess(resumeId: string, currentUserId?: strin
   if (!resume || resume.deletedAt) throw new AnalysisInputError("Резюме не найдено.", 404);
   if (resume.userId && resume.userId !== currentUserId) throw new AnalysisInputError("Нет доступа.", 403);
   return resume;
+}
+
+/** Serializes all personas of one version across processes; completed answers are immutable. */
+export async function createAndRunAnalysis(
+  resumeId: string, personaId: PersonaId, onEvent?: (event: PipelineEvent) => void,
+  targetResumeVersionId?: string, currentUserId?: string | null,
+): Promise<{ analysisId: string }> {
+  await assertResumeAccess(resumeId, currentUserId);
+  const version = await prisma.resumeVersion.findFirst({ where: { resumeId, ...(targetResumeVersionId ? { id: targetResumeVersionId } : {}) }, orderBy: { versionNumber: "desc" } });
+  if (!version) throw new AnalysisInputError("Версия резюме не найдена", 404);
+  const key = `resume:${version.id}`, owner = randomUUID();
+  const deadline = Date.now() + 210000;
+  let held = false;
+  while (!held && Date.now() < deadline) {
+    try { await prisma.analysisLease.create({ data: { id: key, owner } }); held = true; }
+    catch (error) {
+      if (!(error && typeof error === "object" && "code" in error && error.code === "P2002")) throw error;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+  }
+  if (!held) throw new AnalysisInputError("Разбор ещё занят. Повторите открытие позднее; новый запрос к AI не запущен.", 409);
+  try {
+    await assertResumeAccess(resumeId, currentUserId);
+    const candidates = await prisma.analysis.findMany({ where: { resumeVersionId: version.id, persona: { code: personaId }, status: "COMPLETED" }, orderBy: { createdAt: "desc" }, select: { id: true, reportPayload: true } });
+    const current = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId } });
+    const content = version.structuredContent as { text?: string } | null;
+    const textHash = resumeHash(content?.text?.trim() || current.sanitizedText || "");
+    const cached = candidates.find(c => {
+      const r = c.reportPayload as { sourceTextHash?: string; generationMeta?: { promptVersion?: string; voice?: { status?: string }, stages?: { name?: string }[] } } | null;
+      return r && (!(!aiMockEnabled() && resolveProvider() === "openai") || (r.generationMeta?.promptVersion?.includes("coordinated@1") && r.sourceTextHash === textHash)) && !r.generationMeta?.stages?.some(s => /fallback/.test(s.name ?? ""));
+    });
+    if (cached) return { analysisId: cached.id };
+    return await createAndRunAnalysisLocked(resumeId, personaId, onEvent, version.id, currentUserId);
+  } finally { await prisma.analysisLease.deleteMany({ where: { id: key, owner } }); }
 }

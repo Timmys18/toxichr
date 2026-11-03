@@ -1,7 +1,9 @@
 # ToxicHR recovery — 2026-11-03
 Branch: review/ux-ui-rebuild-48a583b. Base: ad0aa42.
-Implemented checkpoint: factual/interpretive schema, four-view planning, quote/hash checks, 14 function profiles with sources, selected-persona writer integration and mandatory semantic gates for OpenAI.
-Not accepted: persistence/concurrency integration, targeted tests, live acceptance, voice quality. No live requests made in recovery.
-Budget: $5 lifetime cap. Historical local runs and ledger unavailable; repository ledger is incomplete. Remaining budget UNKNOWN. Paid calls blocked operationally until reconciled. No guessed $2.81 balance.
-Next: atomic persistent coordination, response reuse, tests, source verification and limited live acceptance when budget established.
-No merge/deploy. No preview running. GitHub review commits are checkpoints, not release approval.
+Implemented: shared evidence and explicit/inferred classification; separate facts persistence before coordination; independent full-CV views; persisted unified plan; selected-persona writer; mandatory semantic checks; one factual repair/recheck; failed writer does not become successful fallback; 14 function profiles linked to O*NET.
+Persistence: a unique database AnalysisLease serializes all personas per resume version across workers. Completed answers are reused, current OpenAI reports require coordinated version + matching text hash. Legacy reports remain readable. New schema requires `prisma db push` by deployment operator; no production changes made.
+Crash policy: lease has no timer takeover, to avoid paying twice while original worker lives. A crashed worker can leave a blocking lease. Operator must establish worker stopped before deleting that lease; user gets incomplete/retry, never a second concurrent writer.
+Checks: typecheck passed; 12 addressed tests passed (real isolated SQLite + stubbed model transport), including concurrency, reopen, new version, legacy schema, factual gate rejection and exactly one foundation repair. First DB attempt failed because relative directory absent; corrected to isolated absolute path, tests then passed.
+Acceptance incomplete: no new live generations, timings, actual four-persona literary acceptance. Professional source mapping is guidance, not independently certified expertise; levels and pitfalls are editorial applications, not O*NET seniority standards.
+Budget: lifetime limit $5; lost subsequent local runs prevent reconciliation. Recovery paid calls 0 ($0). Lifetime actual and remaining UNKNOWN. Paid acceptance blocked; do not use $2.81 as current spend or increase budget implicitly.
+No merge/deploy. No preview running. Review commits are checkpoints, not release approval.

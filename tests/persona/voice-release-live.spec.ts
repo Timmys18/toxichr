@@ -1,3 +1,4 @@
+import type { CoordinatedPlan } from "../../src/lib/ai/coordinated-plan";
 import { test, expect } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -12,6 +13,8 @@ import { reviewFinalDraft } from "../../src/lib/ai/final-review";
 // Explicitly enabled, synthetic inputs only. One bounded batch, never part of CI.
 test("bounded voice acceptance batch — artifacts require human review", async () => {
   test.skip(process.env.RUN_VOICE_RELEASE !== "1", "Live generation explicitly disabled");
+  const reconciliation = JSON.parse(await readFile("artifacts/recovery/budget-reconciliation.json", "utf8"));
+  if (reconciliation.status !== "reconciled" || !Number.isFinite(reconciliation.confirmedSpendUsd) || reconciliation.confirmedSpendUsd < 0 || !Number.isFinite(reconciliation.unknownReserveUsd) || reconciliation.unknownReserveUsd < 0) throw new Error("Платные вызовы остановлены: общий расход после потери локальных прогонов не восстановлен");
   const selectedIds = (process.env.VOICE_CASE_IDS ?? "R01").split(",");
   const selected = cases.cases.filter(c => selectedIds.includes(c.id));
   expect(selected.length).toBe(selectedIds.length);
@@ -30,7 +33,7 @@ test("bounded voice acceptance batch — artifacts require human review", async 
   // One historical interrupted batch lacks a manifest; reserve $1 for it,
   // without inventing actual usage. Any other missing manifest still blocks.
   const ledgerUsd = await priorVoiceCost("artifacts/voice-release", { "1793340823663-02f0fb90": 1 });
-  let reservedUsd = Math.max(ledgerUsd * 1.02, Number(process.env.VOICE_PREVIOUS_RESERVED_USD ?? "0"));
+  let reservedUsd = Math.max(reconciliation.confirmedSpendUsd + reconciliation.unknownReserveUsd, ledgerUsd * 1.02, Number(process.env.VOICE_PREVIOUS_RESERVED_USD ?? "0"));
   expect(Number.isFinite(reservedUsd) && reservedUsd >= 0 && reservedUsd < 4.75).toBeTruthy();
   await mkdir(dir, { recursive: true });
   const usage: unknown[] = [];
@@ -57,6 +60,7 @@ test("bounded voice acceptance batch — artifacts require human review", async 
   };
   const manifest: unknown[] = [];
   const blind: unknown[] = [];
+  const plans = new Map<string, CoordinatedPlan>();
   const sharedAssessments = new Map<string, NonNullable<Awaited<ReturnType<typeof runAnalysisPipeline>>["report"]["professionalAssessment"]>>();
   const reviewedAssessments = new Set<string>();
   if (process.env.VOICE_SEED_REPORT) {
@@ -88,7 +92,7 @@ test("bounded voice acceptance batch — artifacts require human review", async 
         const previousReview = process.env.AI_SEMANTIC_REVIEW;
         if (process.env.AI_INDEPENDENT_PERSPECTIVE !== "true" && reviewedAssessments.has(item.id)) process.env.AI_SEMANTIC_REVIEW = "false";
         let result: Awaited<ReturnType<typeof runAnalysisPipeline>>;
-        try { result = await runAnalysisPipeline({ resumeText: item.text, personaId, professionalAssessment: sharedAssessments.get(item.id) }); }
+        try { result = await runAnalysisPipeline({ resumeText: item.text, personaId, professionalAssessment: sharedAssessments.get(item.id), coordinatedPlan: plans.get(item.id), onFacts: async facts => { await writeFile(`${dir}/${item.id}-facts.json`, JSON.stringify(facts, null, 2)); }, onPlan: async plan => { plans.set(item.id, plan); await writeFile(`${dir}/${item.id}-plan.json`, JSON.stringify(plan, null, 2)); } }); }
         finally { if (previousReview === undefined) delete process.env.AI_SEMANTIC_REVIEW; else process.env.AI_SEMANTIC_REVIEW = previousReview; }
         if (result.report.professionalAssessment) sharedAssessments.set(item.id, result.report.professionalAssessment);
         if (result.report.generationMeta?.stages.some(stage => stage.name === "assessment-semantic-review")) reviewedAssessments.add(item.id);

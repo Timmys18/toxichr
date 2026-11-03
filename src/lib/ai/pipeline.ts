@@ -38,6 +38,8 @@ export type PipelineInput = {
   personaId: PersonaId;
   professionalAssessment?: ProfessionalAssessment;
   coordinatedPlan?: CoordinatedPlan;
+  sharedFacts?: CoordinatedPlan["facts"];
+  onFacts?: (facts: CoordinatedPlan["facts"]) => Promise<void>;
   onPlan?: (plan: CoordinatedPlan) => Promise<void>;
   onEvent?: (event: PipelineEvent) => void;
 };
@@ -225,12 +227,12 @@ function reportFromDraft(
 export async function runAnalysisPipeline(input: PipelineInput): Promise<PipelineResult> {
   const emit = input.onEvent ?? (() => {});
   const openAiLive = !aiMockEnabled() && resolveProvider() === "openai";
-  const independentPerspective = process.env.AI_INDEPENDENT_PERSPECTIVE === undefined ? openAiLive : process.env.AI_INDEPENDENT_PERSPECTIVE === "true";
+  const independentPerspective = openAiLive || process.env.AI_INDEPENDENT_PERSPECTIVE === "true";
   let plan = input.coordinatedPlan;
   let planning: Awaited<ReturnType<typeof buildPlan>> | undefined;
   if (openAiLive) {
     if (plan) plan = validatePlan(plan, input.resumeText);
-    else { planning = await buildPlan(input.resumeText); plan = planning.plan; await input.onPlan?.(plan); }
+    else { planning = await buildPlan(input.resumeText, input.sharedFacts, input.onFacts); plan = planning.plan; await input.onPlan?.(plan); }
   }
   const suppliedAssessment = plan?.views[input.personaId].assessment ?? (!independentPerspective && input.professionalAssessment
     ? parseGroundedAssessment(input.professionalAssessment, input.resumeText).assessment ?? undefined
@@ -439,7 +441,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   }
   const writerLatency = Date.now() - writerStartedAt;
   const meta = {
-    promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}${independentPerspective ? "+independent-perspective@1.1" : ""}${anchor ? "+editorial-selection@2.0" : ""}`,
+    promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}${plan ? "+coordinated@1" : ""}${independentPerspective ? "+independent-perspective@1.1" : ""}${anchor ? "+editorial-selection@2.0" : ""}`,
     personaVersion: PERSONA_BIBLE_VERSION,
     voice: { ...writerCalibration.metadata, status: validation.ok ? "generated" as const : "limited" as const },
     stages: [
@@ -465,6 +467,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
     editorUsed,
   };
   const report = groundReport(reportFromDraft(base, assessment, draft, input.personaId, meta, input.resumeText), input.resumeText);
+  if (plan) report.sourceTextHash = plan.textHash;
   emit({ type: "roast", delta: report.hrReview.deepDive }); emit({ type: "stage", stage: "persona", status: "done" });
   return {
     report,

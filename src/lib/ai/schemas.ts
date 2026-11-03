@@ -111,6 +111,7 @@ export const GenerationMetaSchema = z.object({
 });
 
 export const AnalysisReportSchema = z.object({
+  sourceTextHash: z.string().optional(),
   candidateProfile: CandidateProfileSchema,
   score: ScoreSchema,
   viralMetrics: ViralMetricsSchema,

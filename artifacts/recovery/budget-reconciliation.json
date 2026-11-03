@@ -1,0 +1,9 @@
+{
+  "status": "blocked",
+  "limitUsd": 5,
+  "confirmedSpendUsd": null,
+  "unknownReserveUsd": null,
+  "reason": "GitHub ledger predates lost paid runs; original manifests and billing reconciliation unavailable. Do not replace with historical $2.81.",
+  "missingReportedRuns": ["1793368904972-87aa5f3c", "1793369043388-764604b1", "1793369133077-a16debb4"],
+  "recoveryPaidCalls": 0
+}

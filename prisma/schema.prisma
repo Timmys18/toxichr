@@ -384,3 +384,11 @@ model AccessGrant {
   @@unique([analysisId, productCode])
   @@index([userId])
 }
+
+// Persistent cross-process exclusion. No automatic expiry: an expired timer must
+// not permit a second paid call while the original worker is still alive.
+model AnalysisLease {
+  id String @id
+  owner String
+  createdAt DateTime @default(now())
+}
