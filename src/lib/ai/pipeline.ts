@@ -41,6 +41,7 @@ export type PipelineInput = {
   sharedFacts?: CoordinatedPlan["facts"];
   onFacts?: (facts: CoordinatedPlan["facts"]) => Promise<void>;
   onPlan?: (plan: CoordinatedPlan) => Promise<void>;
+  onPlanInvalid?: () => Promise<void>;
   onEvent?: (event: PipelineEvent) => void;
 };
 export type PipelineResult = { report: AnalysisReport; provider: string; model: string; costUsd: number; cost?: AnalysisCost };
@@ -290,8 +291,19 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
     try {
       groundingReview = await reviewAssessment(input.resumeText, assessment, Boolean(plan));
       assessment = groundingReview.assessment;
+      if (plan) {
+        // Any semantic alteration invalidates coordination. Never pass an old
+        // assessment (including a rejected anchor) through coordinatedDirection.
+        const original = plan.views[input.personaId].assessment;
+        if (JSON.stringify(original) !== JSON.stringify(assessment)) {
+          await input.onPlanInvalid?.();
+          throw new Error("План требует нового согласования после проверки");
+        }
+        plan.views[input.personaId].assessment = assessment;
+      }
     } catch (error) {
       if (error instanceof AiConfigError) throw error;
+      if (plan) await input.onPlanInvalid?.();
       console.error("[pipeline] semantic assessment review unavailable", error);
       throw new Error("AI не завершил проверку разбора. Попробуй ещё раз — результат не сохранён.");
     }
@@ -441,7 +453,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   }
   const writerLatency = Date.now() - writerStartedAt;
   const meta = {
-    promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}${plan ? "+coordinated@1" : ""}${independentPerspective ? "+independent-perspective@1.1" : ""}${anchor ? "+editorial-selection@2.0" : ""}`,
+    promptVersion: `${PROFESSIONAL_CORE_VERSION}+${WRITER_CORE_VERSION}${plan ? "+coordinated@2" : ""}${independentPerspective ? "+independent-perspective@1.1" : ""}${anchor ? "+editorial-selection@2.0" : ""}`,
     personaVersion: PERSONA_BIBLE_VERSION,
     voice: { ...writerCalibration.metadata, status: validation.ok ? "generated" as const : "limited" as const },
     stages: [

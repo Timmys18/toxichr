@@ -1,9 +1,11 @@
-# ToxicHR recovery — 2026-11-03
-Branch: review/ux-ui-rebuild-48a583b. Base: ad0aa42.
-Implemented: shared evidence and explicit/inferred classification; separate facts persistence before coordination; independent full-CV views; persisted unified plan; selected-persona writer; mandatory semantic checks; one factual repair/recheck; failed writer does not become successful fallback; 14 function profiles linked to O*NET.
-Persistence: a unique database AnalysisLease serializes all personas per resume version across workers. Completed answers are reused, current OpenAI reports require coordinated version + matching text hash. Legacy reports remain readable. New schema requires `prisma db push` by deployment operator; no production changes made.
-Crash policy: lease has no timer takeover, to avoid paying twice while original worker lives. A crashed worker can leave a blocking lease. Operator must establish worker stopped before deleting that lease; user gets incomplete/retry, never a second concurrent writer.
-Checks: typecheck passed; 13 addressed tests passed (real isolated SQLite + stubbed model transport), including concurrency, reopen, new version, legacy schema, factual gate rejection and exactly one foundation repair. First DB attempt failed because relative directory absent; corrected to isolated absolute path, tests then passed.
-Acceptance incomplete: no new live generations, timings, actual four-persona literary acceptance. Professional source mapping is guidance, not independently certified expertise; levels and pitfalls are editorial applications, not O*NET seniority standards.
-Budget: lifetime limit $5; lost subsequent local runs prevent reconciliation. Recovery paid calls 0 ($0). Lifetime actual and remaining UNKNOWN. Paid acceptance blocked; do not use $2.81 as current spend or increase budget implicitly.
-No merge/deploy. No preview running. Review commits are checkpoints, not release approval.
+# ToxicHR — audit corrections 2026-11-03
+Branch review/ux-ui-rebuild-48a583b. Starting HEAD verified: 522457c. Existing architecture retained.
+Implemented:
+- Semantic reviewer checks every professional assessment field, candidate context and arrays plus observations; omitted decisions fail closed. One repair/recheck; unsupported final fields cannot pass.
+- Any semantic change or review failure invalidates stored coordinated plan. Current attempt fails before author; next attempt rebuilds coordination from saved facts. Never feeds rejected old observations to coordinatedDirection.
+- Expiring 180s lease, 20s heartbeat, atomic conditional takeover. Ownership renewed before model calls; checked again after response and fenced inside save transactions. Cache checked before acquiring/waiting; abandoned RUNNING marked failed after acquisition.
+- Per-call fsynced receipt journal `.data/ai-call-ledger.jsonl`, no prompts or secrets. Analysis calls also recorded in AiCall database table, immediate usage/time/estimated cost aggregation survives FAILED. STARTED, ERROR or missing usage remain unresolved (not zero); raw usage + request ID available for billing reconciliation. Standalone runAi calls also journaled.
+- Account profile uses general attribution/tool-use principles; removed 85%/weekly-list fixture wording.
+Validation: final typecheck and targeted ESLint passed; 20/20 addressed tests passed. Results: artifacts/recovery/audit-fixes-tests.json. Tests use isolated SQLite and fake HTTP transport, no live acceptance.
+Budget: recovery paid calls 0. Lifetime spend and remainder still UNKNOWN because paid historical runs were lost; existing $5 reconciliation gate retained. No live calls until confirmed.
+Operational: schema changes require prisma db push on target before use; no production DB changes, merge or deploy. Unrelated modified UX screenshot preserved and excluded.

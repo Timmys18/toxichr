@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+import { journalStart, journalFinish } from "./call-journal";
+import { aiCallContext } from "./call-context";
 import { recordCalibrationAiCall } from "@/lib/ai/calibration-audit";
 
 /**
@@ -37,6 +40,9 @@ export type AiResponse = {
   provider: AiProvider;
   model: string;
   content: string;
+  usageKnown?: boolean;
+  rawUsage?: Record<string, unknown>;
+  requestId?: string;
   tokensIn: number;
   tokensOut: number;
   /** Валюта провайдера; новое поле для корректной телеметрии. */
@@ -275,6 +281,9 @@ async function callOpenAi(
     provider: "openai",
     model,
     content,
+    usageKnown: Number.isFinite(data.usage?.prompt_tokens) && Number.isFinite(data.usage?.completion_tokens),
+    rawUsage: data.usage,
+    requestId: res.headers.get("x-request-id") ?? undefined,
     tokensIn,
     tokensOut,
     cost: { amount: costUsd, currency: "USD" },
@@ -441,15 +450,29 @@ export async function runAi(request: AiRequest): Promise<AiResponse> {
     reasoningEffort: request.reasoningEffort,
   };
 
+  const context = aiCallContext.getStore();
+  await context?.assertOwner();
+  const callId = await context?.started(request) ?? randomUUID();
+  journalStart(callId, request, provider);
+  const startedAt = Date.now();
+  let finished = false;
   try {
     const response = provider === "openai"
       ? await callOpenAi(request.system, request.user, options)
       : provider === "anthropic"
         ? await callAnthropic(request.system, request.user, options)
         : await callYandex(request.system, request.user, options);
+    finished = true;
+    journalFinish(callId, Date.now() - startedAt, response);
+    if (context) await context.finished(callId, Date.now() - startedAt, response);
+    await context?.assertOwner();
     recordCalibrationAiCall({ stage: request.stage, provider: response.provider, model: response.model, status: "success" });
     return response;
   } catch (error) {
+    if (!finished) {
+      journalFinish(callId, Date.now() - startedAt);
+      if (context) await context.finished(callId, Date.now() - startedAt);
+    }
     recordCalibrationAiCall({ stage: request.stage, provider, model: request.model ?? "default", status: "error" });
     throw error;
   }

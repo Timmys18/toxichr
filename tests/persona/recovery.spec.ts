@@ -1,21 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { resumeHash, validatePlan } from "../../src/lib/ai/coordinated-plan";
+import { validatePlan } from "../../src/lib/ai/coordinated-plan";
 import { AnalysisReportSchema } from "../../src/lib/ai/schemas";
 import { runAnalysisPipeline } from "../../src/lib/ai/pipeline";
-import { applyAssessmentReview } from "../../src/lib/ai/assessment-review";
+import { assessmentClaims, applyAssessmentReview } from "../../src/lib/ai/assessment-review";
 
-const cases = [
-  "Аккаунт-менеджер. Продлевала договоры и согласовывала условия с юристами. Команда сохранила 85% клиентов; личный вклад не измерялся. Подготовила список открытых вопросов; менеджеры используют его на еженедельной встрече.",
-  "Планировщик ремонтов. Составляла недельный график ремонта насосов. После изменения срока поставки деталей перенесла две задачи, очередность остальных сохранилась. Журнал замечаний мастера использовали на планёрках. Простой отдельно не рассчитывала.",
-  "Бухгалтер. Самостоятельно закрывала участок расчётов с поставщиками. Сверила акты и устранила расхождения между реестром и первичными документами. Налоговую отчётность готовил главный бухгалтер.",
-];
-function planFor(text: string) {
- const unknown = { value: "не установлен", quotes: [] as string[], reason: "Недостаточно оснований" };
- const context = { primaryProfession: "не установлен", industry: "не установлен", claimedLevel: "не установлен", inferredLevel: "не установлен", secondaryContext: "", careerPattern: "", confidence: .5 };
- const assessment = { candidateContext: context, professionalAssessment: { overallImpression: "Текст содержит конкретные действия и ограничения результата.", strongestProfessionalSignal: "Указано конкретное действие.", mainResumeProblem: "Существенный недостаток не установлен.", seniorityConsistency: "Уровень не установлен по имеющимся данным.", resumeVsExperienceGap: "Неописанное не означает отсутствие опыта." }, findings: [], strengths: [{ id: "S01", sourceQuote: text.slice(0,80), interpretation: "В резюме указаны конкретные профессиональные действия." }], questionsCreatedByResume: [], uncertainties: [], claimsNotAllowed: [] };
- const view = () => ({ assessment: structuredClone(assessment), selectedId: "S01", angle: "Подтверждённое действие", imageDirection: "Не добавлять факты", overlapReason: "Короткий фрагмент ограничивает выбор" });
- return { version: 1, textHash: resumeHash(text), facts: { facts: [{ statement: "Указанное действие", quote: text.slice(0,80) }], unknowns: ["Уровень"], declared: { profession: unknown, industry: unknown, level: unknown }, inferred: { profession: unknown, industry: unknown, level: unknown } }, views: { tamara: view(), lera: view(), gleb: view(), vadik: view() } };
-}
+import { cases, planFor } from "./recovery-fixtures";
 for (const [index,text] of cases.entries()) test(`основание ${index}: цитаты, неизвестный уровень, новая версия`, () => {
  const raw = planFor(text);
  const p = validatePlan(raw, text);
@@ -73,7 +62,12 @@ async function withTransport(outputs: unknown[], run: (requests: Record<string,u
  globalThis.fetch=async (_url,init) => {
   requests.push(JSON.parse(String(init?.body)));
   if (requests.length>outputs.length) throw new Error("Unexpected request blocked locally");
-  return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(outputs[requests.length-1])},finish_reason:"stop"}],usage:{prompt_tokens:10,completion_tokens:10}}),{status:200});
+  let output=outputs[requests.length-1];
+  if (output && typeof output === "object" && "decisions" in output) {
+    const old = output as { decisions: { id: string; supported: boolean; reason: string }[] };
+    output = { decisions: [...old.decisions, ...assessmentClaims(validatePlan(planFor(cases[0]),cases[0]).views.tamara.assessment).filter(c => c.id !== "S01").map(c => ({ id:c.id,supported:true,reason:"" }))] };
+  }
+  return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(output)},finish_reason:"stop"}],usage:{prompt_tokens:10,completion_tokens:10}}),{status:200});
  };
  try {await run(requests);} finally {globalThis.fetch=oldFetch; if(oldProvider===undefined) delete process.env.AI_PROVIDER; else process.env.AI_PROVIDER=oldProvider; if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;}
 }

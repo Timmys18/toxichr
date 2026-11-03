@@ -166,6 +166,7 @@ model Analysis {
   scorePayload    Json?
   reportPayload   Json?
   cost            Float?
+  accountingIncomplete Boolean @default(false)
   costAmount      Float?
   costCurrency    String?
   tokensIn        Int?
@@ -385,10 +386,29 @@ model AccessGrant {
   @@index([userId])
 }
 
-// Persistent cross-process exclusion. No automatic expiry: an expired timer must
-// not permit a second paid call while the original worker is still alive.
+// Expiring, owner-fenced lease with renewal before calls and writes.
 model AnalysisLease {
   id String @id
+  expiresAt DateTime @default(now())
   owner String
   createdAt DateTime @default(now())
+}
+
+// Append-only accounting; no prompts, CV text, credentials or generated prose.
+model AiCall {
+ usage Json?
+ requestId String?
+ id String @id @default(cuid())
+ analysisId String
+ stage String
+ model String
+ provider String?
+ status String @default("STARTED")
+ startedAt DateTime @default(now())
+ elapsedMs Int?
+ tokensIn Int?
+ tokensOut Int?
+ costAmount Float?
+ currency String?
+ @@index([analysisId, startedAt])
 }

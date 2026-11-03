@@ -1,4 +1,6 @@
-import { randomUUID } from "node:crypto";
+import type { Prisma } from "@prisma/client";
+import { acquireLease } from "./analysis-lease";
+import { aiCallContext } from "./ai/call-context";
 import { validatePlan, resumeHash, type CoordinatedPlan } from "./ai/coordinated-plan";
 import { aiMockEnabled, resolveProvider } from "./ai/gateway";
 /**
@@ -12,7 +14,6 @@ import type { PersonaId } from "@/lib/personas";
 import { prisma } from "@/lib/prisma";
 import { trackServer } from "@/lib/analytics-server";
 import { hasPaidPackageForResume } from "@/lib/package";
-import { analysisCostFields } from "@/lib/ai/run-analysis-cost";
 
 export const PERSONA_CODES: PersonaId[] = ["tamara", "lera", "gleb", "vadik"];
 
@@ -98,10 +99,11 @@ export async function findReusableAnalysis(
   const currentResume = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId }, select: { sanitizedText: true } });
   const content = latest.structuredContent as { text?: string } | null;
   const textHash = resumeHash(content?.text?.trim() || currentResume.sanitizedText || "");
+  const activeLease = await prisma.analysisLease.findFirst({ where: { id: `resume:${latest.id}`, expiresAt: { gt: new Date() } } });
   const reusable = recent.find((item) => {
-    if (item.status === "RUNNING") return true;
+    if (item.status === "RUNNING") return Boolean(activeLease);
     const report = item.reportPayload as { sourceTextHash?: string; generationMeta?: { promptVersion?: string; stages?: Array<{ name?: string }> } } | null;
-    return Boolean(report) && (aiMockEnabled() || resolveProvider() !== "openai" || (report?.generationMeta?.promptVersion?.includes("coordinated@1") && report.sourceTextHash === textHash)) && !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
+    return Boolean(report) && (aiMockEnabled() || resolveProvider() !== "openai" || (report?.generationMeta?.promptVersion?.includes("coordinated@2") && report.sourceTextHash === textHash)) && !report?.generationMeta?.stages?.some((stage) => stage.name === "professional-analyst-fallback");
   });
   return reusable ? { id: reusable.id, status: reusable.status as "RUNNING" | "COMPLETED" } : null;
 }
@@ -129,6 +131,8 @@ async function createAndRunAnalysisLocked(
   onEvent?: (event: PipelineEvent) => void,
   targetResumeVersionId?: string,
   currentUserId?: string | null,
+  assertOwner: () => Promise<void> = async () => {},
+  fence?: { id: string; owner: string },
 ): Promise<{ analysisId: string }> {
   await assertResumeAccess(resumeId, currentUserId);
   const resume = await prisma.resume.findUnique({
@@ -148,6 +152,9 @@ async function createAndRunAnalysisLocked(
     throw new AnalysisInputError("Версия резюме не найдена.", 404);
   }
 
+  const verifyFence = async (tx: Prisma.TransactionClient) => {
+    if (fence && !await tx.analysisLease.findFirst({ where: { ...fence, expiresAt: { gt: new Date() } } })) throw new Error("Блокировка утрачена до сохранения");
+  };
   let persona = await prisma.persona.findUnique({ where: { code: personaId } });
   if (!persona) {
     persona = await prisma.persona.create({
@@ -181,13 +188,40 @@ async function createAndRunAnalysisLocked(
       stage.name === "professional-analyst" || stage.name === "professional-analyst-reused",
     ));
     const reused = ProfessionalAssessmentSchema.safeParse(previousReport?.professionalAssessment);
-    const result = await runAnalysisPipeline({
+    const result = await aiCallContext.run({
+      assertOwner,
+      started: async request => {
+        const call = await prisma.aiCall.create({ data: { analysisId: analysis.id, stage: request.stage, model: request.model ?? "default", provider: resolveProvider() } });
+        await prisma.analysis.update({ where: { id: analysis.id }, data: { accountingIncomplete: true } });
+        return call.id;
+      },
+      finished: async (id, elapsedMs, response) => {
+        const known = response && response.usageKnown !== false;
+        await prisma.aiCall.update({ where: { id }, data: { elapsedMs, status: response ? "COMPLETED" : "ERROR", tokensIn: known ? response.tokensIn : null, tokensOut: known ? response.tokensOut : null, costAmount: known ? (response.cost?.amount ?? response.costUsd) : null, currency: response?.cost?.currency ?? (response ? "USD" : undefined), usage: response?.rawUsage ? JSON.parse(JSON.stringify(response.rawUsage)) : undefined, requestId: response?.requestId } });
+        const calls = await prisma.aiCall.findMany({ where: { analysisId: analysis.id } });
+        const currency = calls.find(c => c.currency)?.currency;
+        if (currency && calls.every(c => !c.currency || c.currency === currency)) await prisma.analysis.update({ where: { id: analysis.id }, data: { accountingIncomplete: calls.some(c => c.status !== "COMPLETED" || c.costAmount === null), costAmount: calls.reduce((n,c) => n+(c.costAmount ?? 0),0), costCurrency: currency, tokensIn: calls.reduce((n,c) => n+(c.tokensIn ?? 0),0), tokensOut: calls.reduce((n,c) => n+(c.tokensOut ?? 0),0) } });
+      },
+    }, () => runAnalysisPipeline({
       resumeText,
       personaId,
       professionalAssessment: reused.success ? reused.data as ProfessionalAssessment : undefined,
       sharedFacts: stored?.sharedFacts?.textHash === resumeHash(resumeText) ? stored.sharedFacts.facts : undefined,
-      onFacts: async facts => {
+      onPlanInvalid: async () => {
+        await assertOwner();
         await prisma.$transaction(async tx => {
+          await verifyFence(tx);
+          const current = await tx.resumeVersion.findUniqueOrThrow({ where: { id: version.id } });
+          const content = current.structuredContent as Record<string, unknown> | null;
+          if (content?.redacted) return;
+          const next = { ...content }; delete next.coordinatedPlan;
+          await tx.resumeVersion.update({ where: { id: version.id }, data: { structuredContent: JSON.parse(JSON.stringify(next)) } });
+        });
+      },
+      onFacts: async facts => {
+        await assertOwner();
+        await prisma.$transaction(async tx => {
+          await verifyFence(tx);
           const current = await tx.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, include: { resume: true } });
           const content = current.structuredContent as Record<string, unknown> | null;
           if (current.resume.deletedAt || content?.redacted) throw new AnalysisInputError("Резюме удалено", 404);
@@ -196,7 +230,9 @@ async function createAndRunAnalysisLocked(
       },
       coordinatedPlan,
       onPlan: async plan => {
+        await assertOwner();
         await prisma.$transaction(async tx => {
+          await verifyFence(tx);
           const current = await tx.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, include: { resume: true } });
           const content = current.structuredContent as Record<string, unknown> | null;
           if (current.resume.deletedAt || content?.redacted) throw new AnalysisInputError("Резюме удалено", 404);
@@ -204,9 +240,11 @@ async function createAndRunAnalysisLocked(
         });
       },
       onEvent,
-    });
+    }));
 
+    await assertOwner();
     await prisma.$transaction(async tx => {
+          await verifyFence(tx);
       const current = await tx.resume.findUnique({ where: { id: resumeId }, select: { deletedAt: true } });
       if (!current || current.deletedAt) throw new AnalysisInputError("Резюме удалено", 404);
     await tx.analysis.update({
@@ -215,7 +253,6 @@ async function createAndRunAnalysisLocked(
         status: "COMPLETED",
         modelProvider: result.provider,
         modelName: result.model,
-        ...analysisCostFields(result.cost, result.costUsd),
         scorePayload: result.report.score,
         reportPayload: result.report,
       },
@@ -273,28 +310,31 @@ export async function createAndRunAnalysis(
   await assertResumeAccess(resumeId, currentUserId);
   const version = await prisma.resumeVersion.findFirst({ where: { resumeId, ...(targetResumeVersionId ? { id: targetResumeVersionId } : {}) }, orderBy: { versionNumber: "desc" } });
   if (!version) throw new AnalysisInputError("Версия резюме не найдена", 404);
-  const key = `resume:${version.id}`, owner = randomUUID();
-  const deadline = Date.now() + 210000;
-  let held = false;
-  while (!held && Date.now() < deadline) {
-    try { await prisma.analysisLease.create({ data: { id: key, owner } }); held = true; }
-    catch (error) {
-      if (!(error && typeof error === "object" && "code" in error && error.code === "P2002")) throw error;
-      await new Promise(resolve => setTimeout(resolve, 250));
-    }
-  }
-  if (!held) throw new AnalysisInputError("Разбор ещё занят. Повторите открытие позднее; новый запрос к AI не запущен.", 409);
-  try {
-    await assertResumeAccess(resumeId, currentUserId);
+  const cachedAnswer = async () => {
     const candidates = await prisma.analysis.findMany({ where: { resumeVersionId: version.id, persona: { code: personaId }, status: "COMPLETED" }, orderBy: { createdAt: "desc" }, select: { id: true, reportPayload: true } });
     const current = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId } });
     const content = version.structuredContent as { text?: string } | null;
     const textHash = resumeHash(content?.text?.trim() || current.sanitizedText || "");
     const cached = candidates.find(c => {
       const r = c.reportPayload as { sourceTextHash?: string; generationMeta?: { promptVersion?: string; voice?: { status?: string }, stages?: { name?: string }[] } } | null;
-      return r && (!(!aiMockEnabled() && resolveProvider() === "openai") || (r.generationMeta?.promptVersion?.includes("coordinated@1") && r.sourceTextHash === textHash)) && !r.generationMeta?.stages?.some(s => /fallback/.test(s.name ?? ""));
+      return r && (!(!aiMockEnabled() && resolveProvider() === "openai") || (r.generationMeta?.promptVersion?.includes("coordinated@2") && r.sourceTextHash === textHash)) && !r.generationMeta?.stages?.some(s => /fallback/.test(s.name ?? ""));
     });
-    if (cached) return { analysisId: cached.id };
-    return await createAndRunAnalysisLocked(resumeId, personaId, onEvent, version.id, currentUserId);
-  } finally { await prisma.analysisLease.deleteMany({ where: { id: key, owner } }); }
+    return cached ? { analysisId: cached.id } : null;
+  };
+  const ready = await cachedAnswer();
+  if (ready) return ready;
+  const deadline = Date.now() + 210000;
+  let lease: Awaited<ReturnType<typeof acquireLease>> = null;
+  while (!lease && Date.now() < deadline) {
+    lease = await acquireLease(`resume:${version.id}`);
+    if (!lease) { const ready = await cachedAnswer(); if (ready) return ready; await new Promise(resolve => setTimeout(resolve,250)); }
+  }
+  if (!lease) throw new AnalysisInputError("Разбор ещё занят. Повторите открытие позднее.",409);
+  try {
+    await assertResumeAccess(resumeId,currentUserId);
+    const ready = await cachedAnswer(); if (ready) return ready;
+    await lease.assertOwner();
+    await prisma.analysis.updateMany({ where: { resumeVersionId: version.id, status: "RUNNING" }, data: { status: "FAILED" } });
+    return await createAndRunAnalysisLocked(resumeId, personaId, onEvent, version.id, currentUserId, lease.assertOwner, { id: `resume:${version.id}`, owner: lease.owner });
+  } finally { await lease.release(); }
 }

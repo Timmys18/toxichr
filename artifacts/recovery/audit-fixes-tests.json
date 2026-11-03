@@ -1,0 +1,242 @@
+{
+  "base": "522457c1dc40c21b06fb97e88425b6c9c3f6a56f",
+  "transport": "HTTP completely stubbed; not live acceptance",
+  "checks": {
+    "typecheck": "passed",
+    "targetedESLint": "passed",
+    "tests": {
+      "startTime": "2026-11-03T20:57:55.589Z",
+      "duration": 2383.2780000000002,
+      "expected": 20,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "paidCalls": 0,
+  "actualNewCostUsd": 0,
+  "lifetimeSpendUsd": null,
+  "liveAcceptance": "blocked pending historical budget reconciliation",
+  "cases": [
+    {
+      "file": "assessment-review.spec.ts",
+      "title": "semantic rejection removes stale finding and derived summaries",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 8
+        }
+      ]
+    },
+    {
+      "file": "assessment-review.spec.ts",
+      "title": "review cannot omit, duplicate or invent observation IDs",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "неподтверждённое итоговое поле после одной правки не выдаётся",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 16
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "после сохранения плана отклонение главного наблюдения сбрасывает его до автора",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 324
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "просроченная блокировка перехватывается атомарно; старый владелец лишён прав",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 84
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "готовый ответ открывается при действующей чужой блокировке",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 62
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "после аварии просроченная блокировка и RUNNING не мешают новому разбору",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 46
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "успешный модельный вызов сохраняет расход и время при последующей ошибке",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 63
+        }
+      ]
+    },
+    {
+      "file": "audit-fixes.spec.ts",
+      "title": "неполный проверяющий не может подтвердить только карточки, пропустив итоговые поля",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 9
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "основание 0: цитаты, неизвестный уровень, новая версия",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 18
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "основание 1: цитаты, неизвестный уровень, новая версия",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 4
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "основание 2: цитаты, неизвестный уровень, новая версия",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 12
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "обоснованную оценку уровня не запрещаем; заявленный уровень не выдумываем",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 6
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "ошибка или неполный ответ проверяющего не считается поддержкой",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 8
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "старые отчёты читаемы без новых полей",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 5
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "одновременные открытия возвращают один сохранённый разбор, новая версия — новый",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 314
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "общие факты сохраняются до плана; повторное планирование использует сохранённые факты",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 12
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "неподтверждённое основание: одна попытка исправления, повторная проверка и отказ",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 7
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "невалидный авторский ответ не заменяется успешной заготовкой",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 10
+        }
+      ]
+    },
+    {
+      "file": "recovery.spec.ts",
+      "title": "исправление аналитика выполняется один раз и повторно проверяется",
+      "status": "expected",
+      "results": [
+        {
+          "status": "passed",
+          "durationMs": 13
+        }
+      ]
+    }
+  ]
+}
