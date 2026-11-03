@@ -206,7 +206,10 @@ async function createAndRunAnalysisLocked(
       onEvent,
     });
 
-    await prisma.analysis.update({
+    await prisma.$transaction(async tx => {
+      const current = await tx.resume.findUnique({ where: { id: resumeId }, select: { deletedAt: true } });
+      if (!current || current.deletedAt) throw new AnalysisInputError("Резюме удалено", 404);
+    await tx.analysis.update({
       where: { id: analysis.id },
       data: {
         status: "COMPLETED",
@@ -218,7 +221,7 @@ async function createAndRunAnalysisLocked(
       },
     });
 
-    await prisma.candidateProfile.upsert({
+    await tx.candidateProfile.upsert({
       where: { resumeVersionId: version.id },
       create: {
         resumeVersionId: version.id,
@@ -235,6 +238,8 @@ async function createAndRunAnalysisLocked(
         inferredLevel: result.report.candidateProfile.inferredLevel,
         classificationConfidence: result.report.candidateProfile.confidence,
       },
+    });
+
     });
 
     await trackServer("analysis_completed", {

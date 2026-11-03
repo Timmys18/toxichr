@@ -288,7 +288,7 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   let groundingReview: Awaited<ReturnType<typeof reviewAssessment>> | null = null;
   if (plan || process.env.AI_SEMANTIC_REVIEW === "true") {
     try {
-      groundingReview = await reviewAssessment(input.resumeText, assessment);
+      groundingReview = await reviewAssessment(input.resumeText, assessment, Boolean(plan));
       assessment = groundingReview.assessment;
     } catch (error) {
       if (error instanceof AiConfigError) throw error;

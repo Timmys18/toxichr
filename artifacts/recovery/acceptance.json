@@ -1,7 +1,7 @@
 {
   "date": "2026-11-03",
   "base": "ad0aa429def3b95d0eb5f6f5b12366a822ce25d3",
-  "checks": {"typecheck": "passed", "targetedTests": 12, "targetedPassed": 12, "networkInTests": "stubbed; no paid requests"},
+  "checks": {"typecheck": "passed", "targetedTests": 13, "targetedPassed": 13, "networkInTests": "stubbed; no paid requests"},
   "cases": ["audit-account-manager-85-percent-weekly-list", "maintenance-planner", "accountant"],
   "coverage": ["quote-and-hash-validation", "unknown-and-inferred-level", "reviewer-failure", "old-report-schema", "concurrent-open-single-analysis", "reopen-cache", "new-version", "facts-before-plan", "one-repair-then-recheck", "invalid-writer-fails-closed"],
   "liveAcceptance": "blocked: lifetime spend cannot be reconciled after lost local runs",

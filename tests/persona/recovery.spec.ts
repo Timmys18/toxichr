@@ -98,3 +98,9 @@ test("невалидный авторский ответ не заменяетс
   await expect(runAnalysisPipeline({resumeText:cases[0],personaId:"tamara",coordinatedPlan:validatePlan(raw,cases[0])})).rejects.toThrow("обязательные проверки");
  });
 });
+test("исправление аналитика выполняется один раз и повторно проверяется",async()=>{
+ const {reviewAssessment}=await import("../../src/lib/ai/assessment-review");const raw=validatePlan(planFor(cases[0]),cases[0]).views.tamara.assessment;
+ await withTransport([{decisions:[{id:"S01",supported:false,reason:"неверный смысл"}]},raw,{decisions:[{id:"S01",supported:true,reason:""}]}],async requests=>{
+  const result=await reviewAssessment(cases[0],raw,true);expect(result.assessment.strengths).toHaveLength(1);expect(requests).toHaveLength(3);
+ });
+});
