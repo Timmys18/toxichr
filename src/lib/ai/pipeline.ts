@@ -295,11 +295,19 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
         // Any semantic alteration invalidates coordination. Never pass an old
         // assessment (including a rejected anchor) through coordinatedDirection.
         const original = plan.views[input.personaId].assessment;
-        if (JSON.stringify(original) !== JSON.stringify(assessment)) {
+        const commonKeys = ["primaryProfession", "industry", "claimedLevel", "inferredLevel"] as const;
+        const observationsChanged = JSON.stringify([original.findings, original.strengths]) !== JSON.stringify([assessment.findings, assessment.strengths]);
+        const checkedContext = assessment.candidateContext;
+        const commonFactsChanged = commonKeys.some(key => original.candidateContext[key] !== checkedContext[key]);
+        if (observationsChanged || commonFactsChanged) {
           await input.onPlanInvalid?.();
           throw new Error("План требует нового согласования после проверки");
         }
+        const summariesChanged = JSON.stringify(original) !== JSON.stringify(assessment);
         plan.views[input.personaId].assessment = assessment;
+        // A checked summary/optional question correction does not alter the
+        // chosen observation or coordination. Persist it without a user retry.
+        if (summariesChanged) await input.onPlan?.(plan);
       }
     } catch (error) {
       if (error instanceof AiConfigError) throw error;

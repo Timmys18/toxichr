@@ -6,7 +6,7 @@ import cases from '../fixtures/voice-release-cases.json';
 
 test('auditor bounded live acceptance', async () => {
  test.setTimeout(900000);
- if(process.env.AUDITOR_LIVE !== '1') throw new Error('Explicit opt in required');
+ test.skip(process.env.AUDITOR_LIVE !== '1','Explicit live opt in required');
  const dir='artifacts/auditor-live-2026-11-04';
  if(existsSync(dir+'/manifest.json')) throw new Error('Existing run: preserve receipts; do not reset this budget or overwrite artifacts');
  mkdirSync(dir,{recursive:true});

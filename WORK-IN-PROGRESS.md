@@ -1,3 +1,12 @@
+# Active completion — 2026-11-04
+Working copy: /workspace/scratch/168bf684bac1/toxichr; branch review/ux-ui-rebuild-48a583b. Starting saved remote 9f57723.
+- Fixed initial facts JSON/schema/citation failures entering one bounded repair plus semantic recheck; exact quotes remain required. Detailed declared-field errors preserve original grammatical form.
+- Added selectedId schema constraint and one full coordinated-plan repair with immutable facts; no arbitrary anchor replacement.
+- Semantic repair applies only rejected claims, preserving all supported observations/classification. Rechecked summary-only corrections persist in the plan without making the user restart; changed observations or common facts still invalidate coordination.
+- Replayed both recorded failures and preserved existing persistence/lease/grounding checks: 27/27 addressed tests pass in isolated SQLite. Typecheck and addressed ESLint pass. npm CI was installed without scripts initially; SQLite native driver subsequently rebuilt for DB checks.
+- Live continuation uses the same user-authorized TOTAL $1 cap, including original $0.04152525. Separate manifests and pre-dispatch conservative reservations; no historical billing reconciliation was fabricated. Live results in progress, not yet accepted.
+- No UI changes or preview server. Production deployment is manual per existing workflow; no merge, deployment or production DB changes authorized/performed. Review branch artifacts/code will be preserved through connected GitHub as before.
+
 # Latest follow-up — 2026-11-04
 Base remote HEAD verified: 2c62ba84, same review branch. No architecture rewrite.
 - Repository code search confirms runAiStream has no production callers. Its unaccounted SSE/character-price implementation is removed; exported entry throws before network/chunks pending complete streaming accounting. runAi remains the supported transport.
