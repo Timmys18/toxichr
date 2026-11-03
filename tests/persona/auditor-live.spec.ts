@@ -1,3 +1,4 @@
+import type { AuditManifest, Receipt } from './auditor-types';
 import { test } from '@playwright/test';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { runAnalysisPipeline } from '../../src/lib/ai/pipeline';
@@ -10,7 +11,7 @@ test('auditor bounded live acceptance', async () => {
  const dir='artifacts/auditor-live-2026-11-04';
  if(existsSync(dir+'/manifest.json')) throw new Error('Existing run: preserve receipts; do not reset this budget or overwrite artifacts');
  mkdirSync(dir,{recursive:true});
- const manifest:any={sourceCommit:'c3eb9ecba3d34e39f2bb0fda07a7a299db6aab41',budgetUsd:1,reservationLimitUsd:.95,pricingSource:'https://developers.openai.com/api/docs/pricing',calls:[],results:[],reservedUsd:0,knownCostUsd:0};
+ const manifest:AuditManifest={sourceCommit:'c3eb9ecba3d34e39f2bb0fda07a7a299db6aab41',budgetUsd:1,reservationLimitUsd:.95,pricingSource:'https://developers.openai.com/api/docs/pricing',calls:[],results:[],reusedResults:[],reservedUsd:0,knownCostUsd:0};
  const save=()=>writeFileSync(dir+'/manifest.json',JSON.stringify(manifest,null,2));
  const original=globalThis.fetch;
  const rates:Record<string,number[]>={'gpt-6.1-sol':[2,.1,10],'gpt-5.4-mini':[.75,.075,4.5],'gpt-5-nano':[.05,.005,.4]};
@@ -23,7 +24,7 @@ test('auditor bounded live acceptance', async () => {
   const bound=((Buffer.byteLength(body)+2048)*rate[0]*1.25+limit*rate[2])/1e6;
   if(manifest.reservedUsd+bound>.95||manifest.calls.length>=32)throw new Error('Budget cap: next request blocked before network');
   manifest.reservedUsd+=bound;
-  const call:any={id:manifest.calls.length+1,model:p.model,schema:p.response_format?.json_schema?.name,boundUsd:bound,startedAt:new Date().toISOString(),status:'STARTED'};
+  const call:Receipt={id:manifest.calls.length+1,model:p.model,schema:p.response_format?.json_schema?.name,boundUsd:bound,startedAt:new Date().toISOString(),status:'STARTED'};
   manifest.calls.push(call);save();const started=Date.now();
   console.log('CALL',call.id,call.schema,'reserved total',manifest.reservedUsd.toFixed(4));
   try{

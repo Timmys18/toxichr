@@ -1,0 +1,39 @@
+{
+  "schema": "persona_review_v2",
+  "response": {
+    "id": "chatcmpl-EgGVcW6KbETbVmVCSfpbtf6n5cWPe",
+    "object": "chat.completion",
+    "created": 1793741944,
+    "model": "gpt-6.1-sol",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"verdict\": {\n    \"title\": \"Не дели общий процент на себя\",\n    \"comment\": \"Тебе не нужен личный кусочек от командных 85% — нужна понятная связь между твоей работой и удержанием клиентов. Ты честно обозначила, что вклад отдельно не измерялся. Теперь рядом с общим итогом хочется увидеть не выдуманную долю, а конкретный эпизод продления: что ты сделала и чем он закончился.\",\n    \"findingIds\": [\"F21\"]\n  },\n  \"contentBlocks\": [\n    {\n      \"type\": \"observation\",\n      \"findingIds\": [\"F21\"],\n      \"content\": \"Продление договоров и согласование условий с юридическим отделом уже названы — твоя работа в тексте есть. Не раскрыто другое: как эти действия связаны с сохранением клиентов. Общий процент даёт контекст команды, но сам по себе эту связь не объясняет.\"\n    },\n    {\n      \"type\": \"question\",\n      \"findingIds\": [\"F21\"],\n      \"content\": \"Есть ли конкретный случай продления, где можно описать твои действия и известный итог? Такой эпизод даст читателю больше, чем попытка вычислить персональное удержание задним числом.\"\n    }\n  ],\n  \"priorities\": [\n    {\n      \"findingIds\": [\"F21\"],\n      \"action\": \"Сохрани командную атрибуцию показателя. Если есть подтверждённый пример продления, добавь рядом краткое описание своих действий и результата, не приписывая себе долю общего процента.\"\n    }\n  ],\n  \"shareLines\": [\n    \"Личный вклад — не кусочек командного процента, а конкретное действие с понятным итогом.\"\n  ]\n}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 6224,
+      "completion_tokens": 431,
+      "total_tokens": 6655,
+      "prompt_tokens_details": {
+        "cached_tokens": 3387,
+        "cache_write_tokens": 2834,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 35,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

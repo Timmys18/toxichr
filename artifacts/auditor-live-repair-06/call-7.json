@@ -1,0 +1,39 @@
+{
+  "schema": "final_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGTSzvG0LPekrzq4Y15JQc1BcFe1",
+    "object": "chat.completion",
+    "created": 1793741810,
+    "model": "gpt-6.1-sol",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"supported\":false,\"reason\":\"«Личное подтверждение вклада не доказано», «личный вклад не зафиксирован в тексте» и «читатель не видит, что именно ты сделала самостоятельно» — необоснованно обобщают отсутствие измерения вклада в удержание: в резюме прямо указано, что автор подготовила список. «Главный вывод фокусируется на командном удержании» — исходный текст не задаёт такого главного вывода. Отсутствие прямой связи списка с удержанием названо «слабым моментом для уникального вклада» — отсутствие сведений без основания превращено в недостаток. «Подчеркнута прозрачность процесса» — прозрачность в исходнике не заявлена. «Это структурирует работу команды и экономит время» — приписаны неподтверждённые эффекты использования списка, включая причинную связь с экономией времени.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 773,
+      "completion_tokens": 281,
+      "total_tokens": 1054,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 67,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

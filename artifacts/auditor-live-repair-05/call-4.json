@@ -1,0 +1,38 @@
+{
+  "schema": "coordinated_view_repair_v1",
+  "response": {
+    "id": "chatcmpl-EgGPLvKXAx3PFYXiltIjf0f4YoiiX",
+    "object": "chat.completion",
+    "created": 1793741555,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selectedId\":\"F41\",\"angle\":\"Командные 85% выглядят хорошо, но это всё-таки результат команды, а не твой личный. Тут важнее честно отделить общий показатель от твоего вклада — иначе цифра шумит, а не говорит о тебе.\",\"imageDirection\":\"Спокойная корпоративная сцена: договоры, общий отчёт по удержанию, заметка про командный результат, без попытки выдать чужую цифру за личный подвиг.\",\"overlapReason\":\"Профессиональный слой один и тот же: сопровождение корпоративных клиентов и договоров. Поэтому тут не нужно делать вид, что это разные истории. Разница только в акценте: здесь мы отделяем командный результат от личной атрибуции, а не повторяем мысль про полезный рабочий артефакт.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 2868,
+      "completion_tokens": 510,
+      "total_tokens": 3378,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 314,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

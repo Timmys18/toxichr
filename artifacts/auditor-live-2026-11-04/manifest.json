@@ -29,7 +29,9 @@
           "rejected_prediction_tokens": 0
         }
       },
-      "costUsd": 0.00369225
+      "costUsd": 0.00369225,
+      "costUsdBeforeCacheWritePremium": 0.00369225,
+      "cacheWritePremiumUsd": 0
     },
     {
       "id": 2,
@@ -56,7 +58,9 @@
           "rejected_prediction_tokens": 0
         }
       },
-      "costUsd": 0.0026475
+      "costUsd": 0.0026475,
+      "costUsdBeforeCacheWritePremium": 0.0026475,
+      "cacheWritePremiumUsd": 0
     },
     {
       "id": 3,
@@ -83,7 +87,9 @@
           "rejected_prediction_tokens": 0
         }
       },
-      "costUsd": 0.00452625
+      "costUsd": 0.00452625,
+      "costUsdBeforeCacheWritePremium": 0.00452625,
+      "cacheWritePremiumUsd": 0
     },
     {
       "id": 4,
@@ -110,7 +116,9 @@
           "rejected_prediction_tokens": 0
         }
       },
-      "costUsd": 0.0017295
+      "costUsd": 0.0017295,
+      "costUsdBeforeCacheWritePremium": 0.0017295,
+      "cacheWritePremiumUsd": 0
     },
     {
       "id": 5,
@@ -137,7 +145,9 @@
           "rejected_prediction_tokens": 0
         }
       },
-      "costUsd": 0.02477475
+      "costUsd": 0.02477475,
+      "costUsdBeforeCacheWritePremium": 0.02477475,
+      "cacheWritePremiumUsd": 0
     },
     {
       "id": 6,
@@ -164,7 +174,9 @@
           "rejected_prediction_tokens": 0
         }
       },
-      "costUsd": 0.004155
+      "costUsd": 0.004155,
+      "costUsdBeforeCacheWritePremium": 0.004155,
+      "cacheWritePremiumUsd": 0
     }
   ],
   "results": [
@@ -173,16 +185,16 @@
       "personaId": "tamara",
       "status": "FAILED",
       "elapsedMs": 34348,
-      "costUsd": 0.03737025,
-      "error": "Выбранное наблюдение не подтверждено"
+      "error": "Выбранное наблюдение не подтверждено",
+      "knownCostBeforeCacheWritePremiumUsd": 0.03737025
     },
     {
       "caseId": "N01",
       "personaId": "tamara",
       "status": "FAILED",
       "elapsedMs": 3324,
-      "costUsd": 0.004154999999999999,
-      "error": "Неверная опора классификации"
+      "error": "Неверная опора классификации",
+      "knownCostBeforeCacheWritePremiumUsd": 0.004154999999999999
     }
   ],
   "reservedUsd": 0.1829709375,
@@ -193,5 +205,6 @@
   "acceptance": "FAILED_BEFORE_WRITER",
   "harnessExitExplanation": "Playwright passed means the bounded harness completed and saved failures; it is not product acceptance.",
   "unknownCostCalls": 0,
-  "maxReservedUsdIncludingFailures": 0.1829709375
+  "maxReservedUsdIncludingFailures": 0.1829709375,
+  "pricingAudit": "Includes GPT-6 cache-write premium using returned usage; token estimate, not billing confirmation."
 }

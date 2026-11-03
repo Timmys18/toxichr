@@ -1,0 +1,38 @@
+{
+  "schema": "coordinated_view_repair_v1",
+  "response": {
+    "id": "chatcmpl-EgGVa57KQEVjxwY3j0FtzDfwbVKvd",
+    "object": "chat.completion",
+    "created": 1793741942,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selectedId\":\"F21\",\"angle\":\"Командные 85% выглядят прилично, но ты сама же отрезаешь от них свою часть. Читатель видит цифру и тут же упирается в фразу, где твой вклад не отделён — значит, результат есть, а автор результата размывается.\",\"imageDirection\":\"Деловая сцена с общим показателем удержания, где рядом нет выделенной личной роли: цифра есть, но источник вклада не подсвечен.\",\"overlapReason\":\"Уже показан другой существенный материал — про полезный рабочий список. Поэтому беру не процесс и не артефакт, а слабое место текста: здесь проблема не в том, что работа невидима, а в том, что командный результат подан без личной атрибуции. Это другой смысловой узел и он не повторяет уже использованную реплику.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 3008,
+      "completion_tokens": 369,
+      "total_tokens": 3377,
+      "prompt_tokens_details": {
+        "cached_tokens": 2816,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 155,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

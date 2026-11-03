@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGT4CNfh2g4rN9TLWjQuBvWVdJK5",
+    "object": "chat.completion",
+    "created": 1793741786,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"decisions\":[{\"id\":\"F21\",\"supported\":true,\"reason\":\"\"},{\"id\":\"S21\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.primaryProfession\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.secondaryContext\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.claimedLevel\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.inferredLevel\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.industry\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.careerPattern\",\"supported\":true,\"reason\":\"\"},{\"id\":\"candidateContext.confidence\",\"supported\":true,\"reason\":\"\"},{\"id\":\"professionalAssessment.overallImpression\",\"supported\":true,\"reason\":\"\"},{\"id\":\"professionalAssessment.strongestProfessionalSignal\",\"supported\":true,\"reason\":\"\"},{\"id\":\"professionalAssessment.mainResumeProblem\",\"supported\":true,\"reason\":\"\"},{\"id\":\"professionalAssessment.seniorityConsistency\",\"supported\":true,\"reason\":\"\"},{\"id\":\"professionalAssessment.resumeVsExperienceGap\",\"supported\":true,\"reason\":\"\"},{\"id\":\"questionsCreatedByResume.0\",\"supported\":true,\"reason\":\"\"},{\"id\":\"questionsCreatedByResume.1\",\"supported\":true,\"reason\":\"\"},{\"id\":\"uncertainties.0\",\"supported\":true,\"reason\":\"\"},{\"id\":\"uncertainties.1\",\"supported\":true,\"reason\":\"\"},{\"id\":\"claimsNotAllowed.0\",\"supported\":true,\"reason\":\"\"},{\"id\":\"claimsNotAllowed.1\",\"supported\":true,\"reason\":\"\"},{\"id\":\"claimsNotAllowed.2\",\"supported\":true,\"reason\":\"\"}]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1414,
+      "completion_tokens": 1009,
+      "total_tokens": 2423,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 647,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

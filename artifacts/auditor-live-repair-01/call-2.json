@@ -1,0 +1,38 @@
+{
+  "schema": "facts_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGDhj7uBzGPtBDR0b4xvbQOjD6US",
+    "object": "chat.completion",
+    "created": 1793740833,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"supported\":true,\"reason\":\"Все перечисленные факты прямо подтверждаются текстом резюме: работа с корпоративными клиентами и продление договоров, согласование условий с юридическим отделом, подготовка списка открытых вопросов, его использование на еженедельной встрече, показатель 85% сохранения клиентов и отдельное указание, что личный вклад в него не измерялся. Разделение на текущую должность ('менеджер по работе с корпоративными клиентами') и желаемую роль ('аккаунт-менеджер в корпоративном сегменте') тоже корректно отражено. Отрасль и уровень действительно не названы явно, а вывод об аккаунт-менеджменте как желаемой роли обоснован обязанностями и не противоречит тексту.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 868,
+      "completion_tokens": 471,
+      "total_tokens": 1339,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 285,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

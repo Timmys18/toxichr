@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGH6EOWxfEmZZRRJJLKKN3uK4jiX",
+    "object": "chat.completion",
+    "created": 1793741044,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"decisions\":[{\"id\":\"F21\",\"supported\":true,\"reason\":\"В цитате прямо сказано, что 85% — это командный результат, а личный вклад отдельно не измерялся; замечание корректно фиксирует именно это ограничение, не приписывая автору личный результат.\"},{\"id\":\"F22\",\"supported\":true,\"reason\":\"В тексте действительно описаны рабочие действия, но не раскрыты масштаб договоров и степень самостоятельности роли; замечание корректно указывает на недостаток конкретики без противоречия резюме.\"},{\"id\":\"S21\",\"supported\":true,\"reason\":\"Фрагмент прямо показывает полезный командный артефакт: единый список открытых вопросов подготовлен и используется менеджерами на еженедельной встрече.\"},{\"id\":\"candidateContext.primaryProfession\",\"supported\":true,\"reason\":\"В резюме первая строка прямо называет профессию: менеджер по работе с корпоративными клиентами.\"},{\"id\":\"candidateContext.secondaryContext\",\"supported\":true,\"reason\":\"Текст действительно относится к корпоративному сегменту.\"},{\"id\":\"candidateContext.claimedLevel\",\"supported\":true,\"reason\":\"Уровень в резюме не указан, это соответствует значению «не установлен».\"},{\"id\":\"candidateContext.inferredLevel\",\"supported\":true,\"reason\":\"Из текста не следует надежная оценка уровня, поэтому значение «не установлен» не противоречит резюме.\"},{\"id\":\"candidateContext.industry\",\"supported\":true,\"reason\":\"Резюме явно указывает на B2B / корпоративный сегмент, поэтому контекст отрасли согласуется с текстом.\"},{\"id\":\"candidateContext.careerPattern\",\"supported\":true,\"reason\":\"Описаны сопровождение действующих клиентов и процессное улучшение через общий список вопросов, что соответствует этому паттерну.\"},{\"id\":\"candidateContext.confidence\",\"supported\":true,\"reason\":\"Указанный уровень уверенности — внутренний атрибут разметки; он не противоречит тексту резюме.\"},{\"id\":\"professionalAssessment.overallImpression\",\"supported\":true,\"reason\":\"Оценка опирается на явно описанные действия с действующими клиентами и на конкретный полезный артефакт, который используется командой.\"},{\"id\":\"professionalAssessment.strongestProfessionalSignal\",\"supported\":true,\"reason\":\"Сильнейший сигнал действительно описан прямо: единый список открытых вопросов, используемый менеджерами на еженедельной встрече.\"},{\"id\":\"professionalAssessment.mainResumeProblem\",\"supported\":true,\"reason\":\"В резюме крупный результат дан как командный, а индивидуальный вклад отдельно не измерен; это корректно отражено как основная проблема.\"},{\"id\":\"professionalAssessment.seniorityConsistency\",\"supported\":true,\"reason\":\"По имеющимся фактам нельзя уверенно поднять или понизить уровень: есть рабочие задачи и польза, но нет данных для более сильного вывода о seniority.\"},{\"id\":\"professionalAssessment.resumeVsExperienceGap\",\"supported\":true,\"reason\":\"Текст действительно не отделяет личный вклад от командного результата, поэтому замечание о нехватке именно личной части результата обосновано.\"},{\"id\":\"questionsCreatedByResume.0\",\"supported\":true,\"reason\":\"Из описания продления договоров действительно неясно, какие именно действия входили в процесс; вопрос естественно вытекает из текста.\"},{\"id\":\"questionsCreatedByResume.1\",\"supported\":true,\"reason\":\"Количество договоров или клиентов в зоне ответственности в резюме не указано, поэтому вопрос корректно следует из описания.\"},{\"id\":\"uncertainties.0\",\"supported\":false,\"reason\":\"Это противоречит тексту: сегмент и контекст B2B/корпоративный явно названы, поэтому нельзя утверждать, что отрасль не названа.\"},{\"id\":\"uncertainties.1\",\"supported\":true,\"reason\":\"Личный вклад в удержание клиентов прямо сказано как отдельно не измеренный, поэтому это корректная неопределенность.\"},{\"id\":\"uncertainties.2\",\"supported\":true,\"reason\":\"Из формулировки про согласование с юридическим отделом нельзя понять степень полномочий автора; неопределенность корректна.\"},{\"id\":\"claimsNotAllowed.0\",\"supported\":true,\"reason\":\"Это запрет на некорректный вывод, полностью согласующийся с резюме, где 85% удержания названо командным результатом.\"},{\"id\":\"claimsNotAllowed.1\",\"supported\":true,\"reason\":\"Запрет на вывод о seniority только по названию должности соответствует тексту: он не дает достаточных оснований для такого вывода.\"},{\"id\":\"claimsNotAllowed.2\",\"supported\":true,\"reason\":\"В резюме говорится о продлении и сопровождении договоров, а не о продажах; запрет на подмену сути работы корректен.\"}]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1392,
+      "completion_tokens": 1558,
+      "total_tokens": 2950,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 512,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

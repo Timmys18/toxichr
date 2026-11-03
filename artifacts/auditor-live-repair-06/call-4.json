@@ -1,0 +1,38 @@
+{
+  "schema": "coordinated_view_repair_v1",
+  "response": {
+    "id": "chatcmpl-EgGT8VGDXfdjj1pZKrhJ9BNj5XvLx",
+    "object": "chat.completion",
+    "created": 1793741790,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selectedId\":\"F21\",\"angle\":\"Ты показываешь сильный командный результат, но прячешь главное: где в этих 85% твоя доля. Пока цифра звучит громко, а твой личный вклад в удержание клиентов — нет.\",\"imageDirection\":\"Строгая деловая сцена: общий показатель удержания клиентов, рядом — твои действия в продлении и согласовании, без попытки выдать командную цифру за личный результат.\",\"overlapReason\":\"Другие уже вынесли в центр рабочий список вопросов и его использование в команде. Здесь нужен другой смысл из проверенной оценки — не процесс, а атрибуция результата: командные 85% есть, но твой личный вклад отдельно не раскрыт.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 3008,
+      "completion_tokens": 272,
+      "total_tokens": 3280,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 91,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

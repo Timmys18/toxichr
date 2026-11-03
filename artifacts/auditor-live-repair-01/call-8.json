@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGEJ3bm4T0aVpxITzuF8tdWX4V4O",
+    "object": "chat.completion",
+    "created": 1793740871,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"decisions\":[{\"id\":\"F21\",\"supported\":true,\"reason\":\"В тексте прямо сказано, что 85% retention — командный показатель, а личный вклад отдельно не измерялся, поэтому замечание о недопустимости присваивать автору чужой результат корректно.\"},{\"id\":\"S21\",\"supported\":true,\"reason\":\"Фраза о подготовленном едином списке, который менеджеры используют на еженедельной встрече, действительно описывает полезный рабочий артефакт, видимый коллегам.\"},{\"id\":\"S22\",\"supported\":true,\"reason\":\"В резюме прямо указано согласование условий с юридическим отделом; это корректно описывает кросс-функциональную работу.\"},{\"id\":\"candidateContext.primaryProfession\",\"supported\":true,\"reason\":\"Профессия прямо названа в первой строке: «Менеджер по работе с корпоративными клиентами».\"},{\"id\":\"candidateContext.secondaryContext\",\"supported\":true,\"reason\":\"Сопровождение договоров и согласование с юридическим отделом действительно указывают на корпоративный B2B-контекст и внутреннюю координацию.\"},{\"id\":\"candidateContext.claimedLevel\",\"supported\":true,\"reason\":\"Уровень в резюме не указан, поэтому формулировка «не установлен» соответствует тексту.\"},{\"id\":\"candidateContext.inferredLevel\",\"supported\":true,\"reason\":\"Текст не содержит достаточных оснований для уверенного вывода об уровне, поэтому «не установлен» корректно отражает ситуацию.\"},{\"id\":\"candidateContext.industry\",\"supported\":true,\"reason\":\"Хотя отрасль не названа конкретно, в тексте явно указан корпоративный B2B-сегмент, поэтому контекст описан корректно.\"},{\"id\":\"candidateContext.careerPattern\",\"supported\":true,\"reason\":\"Описание работы действительно сводится к сопровождению клиентов через договоры и внутреннюю координацию.\"},{\"id\":\"candidateContext.confidence\",\"supported\":true,\"reason\":\"Оценка уверенности как 0.88 не противоречит тексту и может быть принята как внутренняя оценка на основе явных данных.\"},{\"id\":\"professionalAssessment.overallImpression\",\"supported\":true,\"reason\":\"Текст действительно читается как короткое, живое описание опыта без перегрузки деталями.\"},{\"id\":\"professionalAssessment.strongestProfessionalSignal\",\"supported\":true,\"reason\":\"Подготовка единого списка открытых вопросов, который реально используют менеджеры, является сильным профессиональным сигналом о полезном артефакте процесса.\"},{\"id\":\"professionalAssessment.mainResumeProblem\",\"supported\":true,\"reason\":\"Командный retention указан, но личный вклад автора отдельно не измерялся, поэтому замечание о том, что читателю не следует приписывать этот результат автору, обосновано.\"},{\"id\":\"professionalAssessment.seniorityConsistency\",\"supported\":true,\"reason\":\"Оценка, что профиль выглядит подходящим для аккаунт-ролі, но не содержит оснований для завышения уровня, соответствует содержанию резюме.\"},{\"id\":\"professionalAssessment.resumeVsExperienceGap\",\"supported\":false,\"reason\":\"Замечание о «пустотах по отрасли» не соответствует тексту: отраслевой контекст уже задан как корпоративный B2B-сегмент; поэтому утверждение в текущем виде противоречит резюме.\"},{\"id\":\"uncertainties.0\",\"supported\":false,\"reason\":\"Утверждение, что отрасль не названа, неверно: в резюме прямо указан корпоративный B2B-сегмент.\"},{\"id\":\"uncertainties.1\",\"supported\":true,\"reason\":\"Уровень действительно не указан, поэтому как неопределённость это замечание корректно отражает текст.\"},{\"id\":\"claimsNotAllowed.0\",\"supported\":true,\"reason\":\"Это соответствует тексту: командный retention нельзя превращать в личное достижение автора без отдельного подтверждения вклада.\"},{\"id\":\"claimsNotAllowed.1\",\"supported\":true,\"reason\":\"В резюме нет прямых оснований для более высокого грейда, поэтому предостережение против завышения уровня корректно.\"}]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1198,
+      "completion_tokens": 1556,
+      "total_tokens": 2754,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 650,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

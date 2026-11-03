@@ -1,0 +1,38 @@
+{
+  "schema": "coordinated_view_repair_v1",
+  "response": {
+    "id": "chatcmpl-EgGVzPl0MXqqnYumgZ4v5vpsITzYH",
+    "object": "chat.completion",
+    "created": 1793741967,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selectedId\":\"S41\",\"angle\":\"Хорошо видно не «красивую инициативу», а нормализацию процесса: ты собрала общий список вопросов, который команда потом использует на еженедельной встрече. Это уже рабочая передача, а не разовый рывок — такой след в процессе ценнее громкой истории.\",\"imageDirection\":\"Деловая сцена без пафоса: общий список открытых вопросов, еженедельная встреча, порядок в договорах и спокойная передача рабочего инструмента команде.\",\"overlapReason\":\"Здесь есть другой существенный материал, чем в сохранённых репликах: не просто факт использования списка, а смысл в том, что ты навела воспроизводимый порядок в процессе. Это не повторяет ни тему про «не дели 85% на себя», ни простое признание ценности списка как инструмента.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 3125,
+      "completion_tokens": 565,
+      "total_tokens": 3690,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 359,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

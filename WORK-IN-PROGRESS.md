@@ -1,3 +1,10 @@
+# Completion checkpoint — 2026-11-04
+Branch review/ux-ui-rebuild-48a583b, local workspace /workspace/scratch/168bf684bac1/toxichr. Earlier durable code checkpoint 55e125c.
+AI fixes and limited live acceptance complete on two synthetic CVs; all eight accepted real replies in artifacts/auditor-completion/accepted-results.json. Full report: artifacts/auditor-completion/REVIEW.md. Total authorized-$1 ledger includes ALL initial/failed/repaired calls: $0.75719445, 100 calls, zero unknown charges in this session. Corrected cache-write premium included. This does not reconcile the lost historical $5 budget.
+Current code additionally prevents planner mutation of facts, requires full review coverage, prunes rejected optional conclusions using only supported observations, internally reconciles corrected observations, and feeds actual earlier same-hash replies to the next HR. Fixed negative-metric lexical false positives; kept factual/context gates and final review. No canned successful HR reply substituted.
+Validation: typecheck + targeted ESLint pass; 31/31 addressed free tests; last same-hash history/persistence test 2/2. Isolated local SQLite; no production DB access. Final source and report checkpoint saved through connected GitHub. No production deployment or merge. No UI change/preview. Existing deployment procedure remains separate/manual; no production action authorized by this work.
+Remaining: broader profession/style evaluation and production acceptance. Accepted reply collection spans tested intermediate revisions and preserves untouched successful outputs to stay within budget; no claim of one cold final-version batch.
+
 # Active completion — 2026-11-04
 Working copy: /workspace/scratch/168bf684bac1/toxichr; branch review/ux-ui-rebuild-48a583b. Starting saved remote 9f57723.
 - Fixed initial facts JSON/schema/citation failures entering one bounded repair plus semantic recheck; exact quotes remain required. Detailed declared-field errors preserve original grammatical form.

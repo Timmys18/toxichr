@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGE3KRCMiqE6FrwGcVedHrl36Ds3",
+    "object": "chat.completion",
+    "created": 1793740855,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"decisions\":[{\"id\":\"F11\",\"supported\":true,\"reason\":\"В тексте прямо сказано, что 85% сохранения клиентов — командный показатель, а личный вклад автора отдельно не измерялся; вывод о невозможности приписать результат лично автору корректно grounded.\"},{\"id\":\"S11\",\"supported\":true,\"reason\":\"Источник прямо описывает продление действующих договоров и согласование условий с юридическим отделом; это соответствует функции сопровождения клиентов и межфункциональной координации.\"},{\"id\":\"S12\",\"supported\":true,\"reason\":\"В тексте указано, что автор подготовила единый список открытых вопросов по договорам, и менеджеры используют его на еженедельной встрече; это действительно полезный артефакт, встроенный в командный процесс.\"},{\"id\":\"candidateContext.primaryProfession\",\"supported\":true,\"reason\":\"Фраза «Менеджер по работе с корпоративными клиентами» прямо задаёт основную профессию автора.\"},{\"id\":\"candidateContext.secondaryContext\",\"supported\":true,\"reason\":\"В тексте есть работа с корпоративными клиентами и сопровождение договоров, что обоснованно описывает вторичный контекст как корпоративный B2B-сегмент и договорное сопровождение.\"},{\"id\":\"candidateContext.claimedLevel\",\"supported\":true,\"reason\":\"Уровень в резюме не заявлен; корректно зафиксировано как не установлен.\"},{\"id\":\"candidateContext.inferredLevel\",\"supported\":true,\"reason\":\"По имеющемуся тексту нет достаточных оснований уверенно выводить уровень; пометка «не установлен» соответствует ограниченности данных.\"},{\"id\":\"candidateContext.industry\",\"supported\":true,\"reason\":\"Упоминание корпоративных клиентов позволяет корректно отнести опыт к корпоративному B2B-сегменту.\"},{\"id\":\"candidateContext.careerPattern\",\"supported\":true,\"reason\":\"Текст показывает сопровождение действующих клиентов, продление договоров и координацию вопросов с другими функциями; это соответствует описанному карьерному паттерну.\"},{\"id\":\"candidateContext.confidence\",\"supported\":true,\"reason\":\"Оценка уверенности 0.89 выглядит обоснованной, поскольку в тексте есть прямые формулировки о функциях и результате, а не предположения.\"},{\"id\":\"professionalAssessment.overallImpression\",\"supported\":true,\"reason\":\"Вывод о деловом и аккуратном тексте с видимой рабочей пользой и без приписывания лишнего согласуется с содержанием резюме.\"},{\"id\":\"professionalAssessment.strongestProfessionalSignal\",\"supported\":true,\"reason\":\"Продление договоров и согласование условий с юристами прямо выделяются как наиболее сильный прикладной сигнал по профилю аккаунта.\"},{\"id\":\"professionalAssessment.mainResumeProblem\",\"supported\":true,\"reason\":\"Это корректно отражает единственную явную ограниченность текста: удержание дано на уровне команды, а личный вклад не выделен отдельно.\"},{\"id\":\"professionalAssessment.seniorityConsistency\",\"supported\":true,\"reason\":\"Поскольку уровень не заявлен, вывод о том, что его не следует угадывать, корректно grounded в тексте.\"},{\"id\":\"professionalAssessment.resumeVsExperienceGap\",\"supported\":true,\"reason\":\"В тексте нет признаков переразгона; описание выглядит честным и согласованным с перечисленными задачами и результатом.\"},{\"id\":\"uncertainties.0\",\"supported\":true,\"reason\":\"В тексте действительно не указана отрасль; это корректно отмечено как неизвестность, без вывода о её отсутствии.\"},{\"id\":\"uncertainties.1\",\"supported\":true,\"reason\":\"В тексте не раскрыты самостоятельность, объём портфеля и сложность договоров; это допустимая неопределённость, а не вывод об их отсутствии.\"},{\"id\":\"claimsNotAllowed.0\",\"supported\":true,\"reason\":\"Замечание корректно: команда сохранила 85% клиентов, но личный результат автора отдельно не измерялся, поэтому нельзя приписывать этот показатель ей лично.\"},{\"id\":\"claimsNotAllowed.1\",\"supported\":true,\"reason\":\"Замечание корректно отражает ограничение вывода: по названию должности и факту инициативы нельзя надёжно установить seniority.\"}]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1203,
+      "completion_tokens": 1128,
+      "total_tokens": 2331,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 206,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

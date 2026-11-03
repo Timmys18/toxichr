@@ -1,0 +1,3043 @@
+{
+  "scope": "User-authorized $1 total across the initial live audit and subsequent fixes",
+  "estimatedSpendUsd": 0.75719445,
+  "budgetUsd": 1,
+  "calls": 100,
+  "unknownCharges": 0,
+  "cacheWritePremiumUsd": 0.0414235,
+  "pricingSource": "https://developers.openai.com/api/docs/pricing",
+  "billingConfirmed": false,
+  "receipts": [
+    {
+      "runDirectory": "artifacts/auditor-live-2026-11-04",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.021275625,
+      "startedAt": "2026-11-03T21:10:35.226Z",
+      "status": "RECEIVED",
+      "elapsedMs": 12215,
+      "httpStatus": 200,
+      "requestId": "req_ce7f8a20e5b74b1ea2949d0ee63759f1",
+      "usage": {
+        "prompt_tokens": 519,
+        "completion_tokens": 734,
+        "total_tokens": 1253,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 95,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00369225,
+      "costUsdBeforeCacheWritePremium": 0.00369225,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-2026-11-04",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.012448125,
+      "startedAt": "2026-11-03T21:10:47.451Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2347,
+      "httpStatus": 200,
+      "requestId": "req_9393121bee054686ac4cbfe15f07ea35",
+      "usage": {
+        "prompt_tokens": 860,
+        "completion_tokens": 445,
+        "total_tokens": 1305,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 254,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0026475,
+      "costUsdBeforeCacheWritePremium": 0.0026475,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-2026-11-04",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_repair_v1",
+      "boundUsd": 0.0262875,
+      "startedAt": "2026-11-03T21:10:49.801Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3185,
+      "httpStatus": 200,
+      "requestId": "req_07c4d1a2fdab48eb8e0bcb00f8b1e0e6",
+      "usage": {
+        "prompt_tokens": 1247,
+        "completion_tokens": 798,
+        "total_tokens": 2045,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 273,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00452625,
+      "costUsdBeforeCacheWritePremium": 0.00452625,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-2026-11-04",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.0114853125,
+      "startedAt": "2026-11-03T21:10:52.993Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1591,
+      "httpStatus": 200,
+      "requestId": "req_872647c8c0f54e54a1d0ffaa5cf59568",
+      "usage": {
+        "prompt_tokens": 746,
+        "completion_tokens": 260,
+        "total_tokens": 1006,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 123,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0017295,
+      "costUsdBeforeCacheWritePremium": 0.0017295,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-2026-11-04",
+      "id": 5,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_v1",
+      "boundUsd": 0.0901603125,
+      "startedAt": "2026-11-03T21:10:54.590Z",
+      "status": "RECEIVED",
+      "elapsedMs": 14970,
+      "httpStatus": 200,
+      "requestId": "req_bb7627901d664c769e489c680cbb2c6a",
+      "usage": {
+        "prompt_tokens": 5697,
+        "completion_tokens": 4556,
+        "total_tokens": 10253,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 83,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.02477475,
+      "costUsdBeforeCacheWritePremium": 0.02477475,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-2026-11-04",
+      "id": 6,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.0213140625,
+      "startedAt": "2026-11-03T21:11:09.569Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3320,
+      "httpStatus": 200,
+      "requestId": "req_922ae5e08d124e6198fd62d52552b14e",
+      "usage": {
+        "prompt_tokens": 524,
+        "completion_tokens": 836,
+        "total_tokens": 1360,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 184,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.004155,
+      "costUsdBeforeCacheWritePremium": 0.004155,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.0215315625,
+      "startedAt": "2026-11-03T21:20:23.707Z",
+      "status": "RECEIVED",
+      "elapsedMs": 8980,
+      "httpStatus": 200,
+      "requestId": "req_980fda421ace4d44b8053222a533e8ec",
+      "usage": {
+        "prompt_tokens": 562,
+        "completion_tokens": 773,
+        "total_tokens": 1335,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 136,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0039,
+      "costUsdBeforeCacheWritePremium": 0.0039,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.012346875,
+      "startedAt": "2026-11-03T21:20:32.693Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2374,
+      "httpStatus": 200,
+      "requestId": "req_f52fa6335024405fa15a500585fa5166",
+      "usage": {
+        "prompt_tokens": 868,
+        "completion_tokens": 471,
+        "total_tokens": 1339,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 285,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0027705,
+      "costUsdBeforeCacheWritePremium": 0.0027705,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_v1",
+      "boundUsd": 0.09241875,
+      "startedAt": "2026-11-03T21:20:35.075Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10915,
+      "httpStatus": 200,
+      "requestId": "req_9fa935d47530413ba072c3b8577c9d17",
+      "usage": {
+        "prompt_tokens": 6651,
+        "completion_tokens": 3406,
+        "total_tokens": 10057,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 75,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.02031525,
+      "costUsdBeforeCacheWritePremium": 0.02031525,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_repair_v1",
+      "boundUsd": 0.0935053125,
+      "startedAt": "2026-11-03T21:20:46.002Z",
+      "status": "RECEIVED",
+      "elapsedMs": 8941,
+      "httpStatus": 200,
+      "requestId": "req_fd0ae860f36449a9b037566cf2da6210",
+      "usage": {
+        "prompt_tokens": 6854,
+        "completion_tokens": 3510,
+        "total_tokens": 10364,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 171,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0209355,
+      "costUsdBeforeCacheWritePremium": 0.0209355,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 5,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0181603125,
+      "startedAt": "2026-11-03T21:20:54.951Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4199,
+      "httpStatus": 200,
+      "requestId": "req_5492e05deeda489ab9bde29fbd2e70b2",
+      "usage": {
+        "prompt_tokens": 1203,
+        "completion_tokens": 1128,
+        "total_tokens": 2331,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 206,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00597825,
+      "costUsdBeforeCacheWritePremium": 0.00597825,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 6,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.134675,
+      "startedAt": "2026-11-03T21:20:59.163Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10029,
+      "httpStatus": 200,
+      "requestId": "req_67d0d095fac2453cbf71e02e0187065f",
+      "usage": {
+        "prompt_tokens": 5822,
+        "completion_tokens": 473,
+        "total_tokens": 6295,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 5819,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0192835,
+      "costUsdBeforeCacheWritePremium": 0.016374,
+      "cacheWritePremiumUsd": 0.0029095
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 7,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.03051,
+      "startedAt": "2026-11-03T21:21:09.203Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1369,
+      "httpStatus": 200,
+      "requestId": "req_c74323ecc0bb4b30a7cd843677c9c9a4",
+      "usage": {
+        "prompt_tokens": 730,
+        "completion_tokens": 20,
+        "total_tokens": 750,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00166,
+      "costUsdBeforeCacheWritePremium": 0.00166,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 8,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.018020625,
+      "startedAt": "2026-11-03T21:21:10.584Z",
+      "status": "RECEIVED",
+      "elapsedMs": 5510,
+      "httpStatus": 200,
+      "requestId": "req_5f0d3c953d594290be89f58a87ab6367",
+      "usage": {
+        "prompt_tokens": 1198,
+        "completion_tokens": 1556,
+        "total_tokens": 2754,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 650,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0079005,
+      "costUsdBeforeCacheWritePremium": 0.0079005,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 9,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0370340625,
+      "startedAt": "2026-11-03T21:21:16.097Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2513,
+      "httpStatus": 200,
+      "requestId": "req_e06b5829f2a84d7da53ac7ecf174cf16",
+      "usage": {
+        "prompt_tokens": 1906,
+        "completion_tokens": 649,
+        "total_tokens": 2555,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 114,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00435,
+      "costUsdBeforeCacheWritePremium": 0.00435,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 10,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.018,
+      "startedAt": "2026-11-03T21:21:18.614Z",
+      "status": "RECEIVED",
+      "elapsedMs": 6026,
+      "httpStatus": 200,
+      "requestId": "req_ee826123676046f4bef0eebee61a2520",
+      "usage": {
+        "prompt_tokens": 1185,
+        "completion_tokens": 1677,
+        "total_tokens": 2862,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 732,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00843525,
+      "costUsdBeforeCacheWritePremium": 0.00843525,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 11,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.02157,
+      "startedAt": "2026-11-03T21:21:24.653Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3440,
+      "httpStatus": 200,
+      "requestId": "req_5c045b3b9be44eb48ab780cada348f7b",
+      "usage": {
+        "prompt_tokens": 567,
+        "completion_tokens": 976,
+        "total_tokens": 1543,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 207,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00481725,
+      "costUsdBeforeCacheWritePremium": 0.00481725,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-01",
+      "id": 12,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_repair_v1",
+      "boundUsd": 0.026735625,
+      "startedAt": "2026-11-03T21:21:28.098Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4004,
+      "httpStatus": 200,
+      "requestId": "req_027ceb83a81e400a9c3d97cba07da398",
+      "usage": {
+        "prompt_tokens": 1336,
+        "completion_tokens": 929,
+        "total_tokens": 2265,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 238,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0051825,
+      "costUsdBeforeCacheWritePremium": 0.0051825,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.0215315625,
+      "startedAt": "2026-11-03T21:23:17.111Z",
+      "status": "RECEIVED",
+      "elapsedMs": 8748,
+      "httpStatus": 200,
+      "requestId": "req_e50ca5c8fa03453ca0fca0639996beca",
+      "usage": {
+        "prompt_tokens": 562,
+        "completion_tokens": 727,
+        "total_tokens": 1289,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 79,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.003693,
+      "costUsdBeforeCacheWritePremium": 0.003693,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.0125746875,
+      "startedAt": "2026-11-03T21:23:25.865Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2292,
+      "httpStatus": 200,
+      "requestId": "req_d01366de5cc34401a14504eb79bd6ff5",
+      "usage": {
+        "prompt_tokens": 879,
+        "completion_tokens": 437,
+        "total_tokens": 1316,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 296,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00262575,
+      "costUsdBeforeCacheWritePremium": 0.00262575,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_v1",
+      "boundUsd": 0.0926465625,
+      "startedAt": "2026-11-03T21:23:28.162Z",
+      "status": "RECEIVED",
+      "elapsedMs": 15338,
+      "httpStatus": 200,
+      "requestId": "req_069845cccf824622ad89abc470348792",
+      "usage": {
+        "prompt_tokens": 6662,
+        "completion_tokens": 4279,
+        "total_tokens": 10941,
+        "prompt_tokens_details": {
+          "cached_tokens": 4736,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 87,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0210552,
+      "costUsdBeforeCacheWritePremium": 0.0210552,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01941,
+      "startedAt": "2026-11-03T21:23:43.525Z",
+      "status": "RECEIVED",
+      "elapsedMs": 5708,
+      "httpStatus": 200,
+      "requestId": "req_76fbe629060342f4ba77854854a1f94e",
+      "usage": {
+        "prompt_tokens": 1395,
+        "completion_tokens": 1539,
+        "total_tokens": 2934,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 574,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00797175,
+      "costUsdBeforeCacheWritePremium": 0.00797175,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 5,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1440925,
+      "startedAt": "2026-11-03T21:23:49.242Z",
+      "status": "RECEIVED",
+      "elapsedMs": 11675,
+      "httpStatus": 200,
+      "requestId": "req_91c1b1845ed14b5ca49090108bb918aa",
+      "usage": {
+        "prompt_tokens": 6321,
+        "completion_tokens": 537,
+        "total_tokens": 6858,
+        "prompt_tokens_details": {
+          "cached_tokens": 3290,
+          "cache_write_tokens": 3028,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.013275,
+      "costUsdBeforeCacheWritePremium": 0.011761,
+      "cacheWritePremiumUsd": 0.001514
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 6,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.031235,
+      "startedAt": "2026-11-03T21:24:00.931Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2666,
+      "httpStatus": 200,
+      "requestId": "req_e75205bffd334b77baa9c9c97c09455f",
+      "usage": {
+        "prompt_tokens": 775,
+        "completion_tokens": 61,
+        "total_tokens": 836,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 35,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00216,
+      "costUsdBeforeCacheWritePremium": 0.00216,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 7,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0192084375,
+      "startedAt": "2026-11-03T21:24:03.615Z",
+      "status": "RECEIVED",
+      "elapsedMs": 6325,
+      "httpStatus": 200,
+      "requestId": "req_814d8de78a214a2892459c8dea564cf2",
+      "usage": {
+        "prompt_tokens": 1392,
+        "completion_tokens": 1558,
+        "total_tokens": 2950,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 512,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.008055,
+      "costUsdBeforeCacheWritePremium": 0.008055,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 8,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0391696875,
+      "startedAt": "2026-11-03T21:24:09.947Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2743,
+      "httpStatus": 200,
+      "requestId": "req_c9c91c319ebc4d9a9abc0116ceb121ed",
+      "usage": {
+        "prompt_tokens": 2212,
+        "completion_tokens": 825,
+        "total_tokens": 3037,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 124,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0053715,
+      "costUsdBeforeCacheWritePremium": 0.0053715,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 9,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0191353125,
+      "startedAt": "2026-11-03T21:24:12.693Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4697,
+      "httpStatus": 200,
+      "requestId": "req_3501ce3da81c4dd2a1709fc441912437",
+      "usage": {
+        "prompt_tokens": 1373,
+        "completion_tokens": 1198,
+        "total_tokens": 2571,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 296,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00642075,
+      "costUsdBeforeCacheWritePremium": 0.00642075,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 10,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1405775,
+      "startedAt": "2026-11-03T21:24:17.400Z",
+      "status": "RECEIVED",
+      "elapsedMs": 13194,
+      "httpStatus": 200,
+      "requestId": "req_58b3d21006e8460c928dd281f151364e",
+      "usage": {
+        "prompt_tokens": 6192,
+        "completion_tokens": 576,
+        "total_tokens": 6768,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6189,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0212385,
+      "costUsdBeforeCacheWritePremium": 0.018144,
+      "cacheWritePremiumUsd": 0.0030945
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 11,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.031625,
+      "startedAt": "2026-11-03T21:24:30.601Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3030,
+      "httpStatus": 200,
+      "requestId": "req_ed051d2408994d29991652edb070b1d0",
+      "usage": {
+        "prompt_tokens": 816,
+        "completion_tokens": 67,
+        "total_tokens": 883,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 41,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.002302,
+      "costUsdBeforeCacheWritePremium": 0.002302,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 12,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01964625,
+      "startedAt": "2026-11-03T21:24:33.637Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2462,
+      "httpStatus": 200,
+      "requestId": "req_7a1f5b236e794c40a4794a7a6ea1fc61",
+      "usage": {
+        "prompt_tokens": 1426,
+        "completion_tokens": 534,
+        "total_tokens": 1960,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 187,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0034725,
+      "costUsdBeforeCacheWritePremium": 0.0034725,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 13,
+      "model": "gpt-5.4-mini",
+      "schema": "resume_facts_v1",
+      "boundUsd": 0.02157,
+      "startedAt": "2026-11-03T21:24:36.111Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3627,
+      "httpStatus": 200,
+      "requestId": "req_cf81489f24c94aa9b983cb733794a270",
+      "usage": {
+        "prompt_tokens": 567,
+        "completion_tokens": 787,
+        "total_tokens": 1354,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 67,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00396675,
+      "costUsdBeforeCacheWritePremium": 0.00396675,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 14,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_repair_v1",
+      "boundUsd": 0.026745,
+      "startedAt": "2026-11-03T21:24:39.743Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3303,
+      "httpStatus": 200,
+      "requestId": "req_a2bddc2920694301b0308cbbb3c9d74a",
+      "usage": {
+        "prompt_tokens": 1332,
+        "completion_tokens": 910,
+        "total_tokens": 2242,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 212,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.005094,
+      "costUsdBeforeCacheWritePremium": 0.005094,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 15,
+      "model": "gpt-5.4-mini",
+      "schema": "facts_review_v1",
+      "boundUsd": 0.0129534375,
+      "startedAt": "2026-11-03T21:24:43.049Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1333,
+      "httpStatus": 200,
+      "requestId": "req_3eac6ef72e0e49d38b339fe7c78bfd2d",
+      "usage": {
+        "prompt_tokens": 934,
+        "completion_tokens": 172,
+        "total_tokens": 1106,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 57,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0014745,
+      "costUsdBeforeCacheWritePremium": 0.0014745,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 16,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_v1",
+      "boundUsd": 0.0930253125,
+      "startedAt": "2026-11-03T21:24:44.386Z",
+      "status": "RECEIVED",
+      "elapsedMs": 13716,
+      "httpStatus": 200,
+      "requestId": "req_2c1640d4964947dc824fb3d101a9d972",
+      "usage": {
+        "prompt_tokens": 6720,
+        "completion_tokens": 3829,
+        "total_tokens": 10549,
+        "prompt_tokens_details": {
+          "cached_tokens": 4736,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 321,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.019073700000000002,
+      "costUsdBeforeCacheWritePremium": 0.019073700000000002,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-02",
+      "id": 17,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_repair_v1",
+      "boundUsd": 0.095829375,
+      "startedAt": "2026-11-03T21:24:58.106Z",
+      "status": "RECEIVED",
+      "elapsedMs": 9056,
+      "httpStatus": 200,
+      "requestId": "req_b98b9c44f75d40708dbdbaeedf0c474f",
+      "usage": {
+        "prompt_tokens": 7154,
+        "completion_tokens": 3645,
+        "total_tokens": 10799,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 131,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.021768,
+      "costUsdBeforeCacheWritePremium": 0.021768,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0204946875,
+      "startedAt": "2026-11-03T21:26:46.334Z",
+      "status": "RECEIVED",
+      "elapsedMs": 13151,
+      "httpStatus": 200,
+      "requestId": "req_c5dd2ec2f51c408f9bb207d4a954bb4d",
+      "usage": {
+        "prompt_tokens": 1597,
+        "completion_tokens": 1428,
+        "total_tokens": 3025,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1024,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00762375,
+      "costUsdBeforeCacheWritePremium": 0.00762375,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 2,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.14521,
+      "startedAt": "2026-11-03T21:26:59.495Z",
+      "status": "RECEIVED",
+      "elapsedMs": 13335,
+      "httpStatus": 200,
+      "requestId": "req_89af3c71bf3f43cd86d9e762edd628b5",
+      "usage": {
+        "prompt_tokens": 6381,
+        "completion_tokens": 566,
+        "total_tokens": 6947,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6378,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.021611000000000002,
+      "costUsdBeforeCacheWritePremium": 0.018422,
+      "cacheWritePremiumUsd": 0.003189
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 3,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.031665,
+      "startedAt": "2026-11-03T21:27:12.842Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4216,
+      "httpStatus": 200,
+      "requestId": "req_f1e9bd2ddcef42c5b732e3e3f10b21a3",
+      "usage": {
+        "prompt_tokens": 813,
+        "completion_tokens": 114,
+        "total_tokens": 927,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 59,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.002766,
+      "costUsdBeforeCacheWritePremium": 0.002766,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 4,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_factual_repair_v1",
+      "boundUsd": 0.11777,
+      "startedAt": "2026-11-03T21:27:17.062Z",
+      "status": "RECEIVED",
+      "elapsedMs": 6520,
+      "httpStatus": 200,
+      "requestId": "req_e79c54c4d6564adebc3edfe2f9d7a40c",
+      "usage": {
+        "prompt_tokens": 4814,
+        "completion_tokens": 555,
+        "total_tokens": 5369,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 4811,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.017583500000000002,
+      "costUsdBeforeCacheWritePremium": 0.015178,
+      "cacheWritePremiumUsd": 0.0024055
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 5,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.03143,
+      "startedAt": "2026-11-03T21:27:23.590Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1655,
+      "httpStatus": 200,
+      "requestId": "req_23a0a06117f34ea8906ecb5b3329826c",
+      "usage": {
+        "prompt_tokens": 800,
+        "completion_tokens": 20,
+        "total_tokens": 820,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0018,
+      "costUsdBeforeCacheWritePremium": 0.0018,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 6,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01996125,
+      "startedAt": "2026-11-03T21:27:25.257Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4699,
+      "httpStatus": 200,
+      "requestId": "req_2106b512526d4698bb399610205b86fb",
+      "usage": {
+        "prompt_tokens": 1525,
+        "completion_tokens": 886,
+        "total_tokens": 2411,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 444,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00513075,
+      "costUsdBeforeCacheWritePremium": 0.00513075,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 7,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0346359375,
+      "startedAt": "2026-11-03T21:27:29.960Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2462,
+      "httpStatus": 200,
+      "requestId": "req_31272981197745ce89546f7124533081",
+      "usage": {
+        "prompt_tokens": 1573,
+        "completion_tokens": 670,
+        "total_tokens": 2243,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 118,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00419475,
+      "costUsdBeforeCacheWritePremium": 0.00419475,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 8,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0192403125,
+      "startedAt": "2026-11-03T21:27:32.426Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2661,
+      "httpStatus": 200,
+      "requestId": "req_4b22e6e7f9b64ecb8230c224f011fdaf",
+      "usage": {
+        "prompt_tokens": 1411,
+        "completion_tokens": 650,
+        "total_tokens": 2061,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 278,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00398325,
+      "costUsdBeforeCacheWritePremium": 0.00398325,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 9,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_plan_v1",
+      "boundUsd": 0.0912375,
+      "startedAt": "2026-11-03T21:27:35.102Z",
+      "status": "RECEIVED",
+      "elapsedMs": 13281,
+      "httpStatus": 200,
+      "requestId": "req_e6208313e0e64d7a8071b05a88f07987",
+      "usage": {
+        "prompt_tokens": 6452,
+        "completion_tokens": 3752,
+        "total_tokens": 10204,
+        "prompt_tokens_details": {
+          "cached_tokens": 2688,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 136,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0199086,
+      "costUsdBeforeCacheWritePremium": 0.0199086,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 10,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0210253125,
+      "startedAt": "2026-11-03T21:27:48.394Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3512,
+      "httpStatus": 200,
+      "requestId": "req_09618deccfcc4b99a52fdb7e4d09a96b",
+      "usage": {
+        "prompt_tokens": 1682,
+        "completion_tokens": 871,
+        "total_tokens": 2553,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 456,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.005181,
+      "costUsdBeforeCacheWritePremium": 0.005181,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 11,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1475575,
+      "startedAt": "2026-11-03T21:27:51.910Z",
+      "status": "RECEIVED",
+      "elapsedMs": 9019,
+      "httpStatus": 200,
+      "requestId": "req_fb9729488f1544478f41b874d4e9a331",
+      "usage": {
+        "prompt_tokens": 6517,
+        "completion_tokens": 461,
+        "total_tokens": 6978,
+        "prompt_tokens_details": {
+          "cached_tokens": 3290,
+          "cache_write_tokens": 3224,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.013005000000000001,
+      "costUsdBeforeCacheWritePremium": 0.011393,
+      "cacheWritePremiumUsd": 0.001612
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 12,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.03016,
+      "startedAt": "2026-11-03T21:28:00.945Z",
+      "status": "RECEIVED",
+      "elapsedMs": 5543,
+      "httpStatus": 200,
+      "requestId": "req_0778f30122dd4b5699a82a9e936aa61b",
+      "usage": {
+        "prompt_tokens": 724,
+        "completion_tokens": 196,
+        "total_tokens": 920,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 111,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.003408,
+      "costUsdBeforeCacheWritePremium": 0.003408,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 13,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_factual_repair_v1",
+      "boundUsd": 0.117585,
+      "startedAt": "2026-11-03T21:28:06.491Z",
+      "status": "RECEIVED",
+      "elapsedMs": 5779,
+      "httpStatus": 200,
+      "requestId": "req_c5186386e95041549458731305da8a18",
+      "usage": {
+        "prompt_tokens": 4799,
+        "completion_tokens": 459,
+        "total_tokens": 5258,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 4796,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.016586,
+      "costUsdBeforeCacheWritePremium": 0.014188,
+      "cacheWritePremiumUsd": 0.002398
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-03",
+      "id": 14,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.0300425,
+      "startedAt": "2026-11-03T21:28:12.278Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4066,
+      "httpStatus": 200,
+      "requestId": "req_1411aea14b7b4f5f88e4fc1630abd603",
+      "usage": {
+        "prompt_tokens": 719,
+        "completion_tokens": 149,
+        "total_tokens": 868,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 75,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.002928,
+      "costUsdBeforeCacheWritePremium": 0.002928,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01996125,
+      "startedAt": "2026-11-03T21:30:03.328Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10092,
+      "httpStatus": 200,
+      "requestId": "req_de84b54877ff42f5b5e2bf0278905961",
+      "usage": {
+        "prompt_tokens": 1525,
+        "completion_tokens": 1375,
+        "total_tokens": 2900,
+        "prompt_tokens_details": {
+          "cached_tokens": 1408,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 942,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00638085,
+      "costUsdBeforeCacheWritePremium": 0.00638085,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0344390625,
+      "startedAt": "2026-11-03T21:30:13.433Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2756,
+      "httpStatus": 200,
+      "requestId": "req_69d474f2755440af9c2dc545608af734",
+      "usage": {
+        "prompt_tokens": 1558,
+        "completion_tokens": 591,
+        "total_tokens": 2149,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 40,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.003828,
+      "costUsdBeforeCacheWritePremium": 0.003828,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0192403125,
+      "startedAt": "2026-11-03T21:30:16.194Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3846,
+      "httpStatus": 200,
+      "requestId": "req_0377d408b6f349babdb414daa835a5c8",
+      "usage": {
+        "prompt_tokens": 1411,
+        "completion_tokens": 933,
+        "total_tokens": 2344,
+        "prompt_tokens_details": {
+          "cached_tokens": 1280,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 500,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00439275,
+      "costUsdBeforeCacheWritePremium": 0.00439275,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0210253125,
+      "startedAt": "2026-11-03T21:30:20.067Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2407,
+      "httpStatus": 200,
+      "requestId": "req_4dda7142360741de9fb5183abc7410ca",
+      "usage": {
+        "prompt_tokens": 1682,
+        "completion_tokens": 639,
+        "total_tokens": 2321,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 224,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0031002,
+      "costUsdBeforeCacheWritePremium": 0.0031002,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 5,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1486725,
+      "startedAt": "2026-11-03T21:30:22.488Z",
+      "status": "RECEIVED",
+      "elapsedMs": 11364,
+      "httpStatus": 200,
+      "requestId": "req_c953e7290b2d43adb2fdf18aef173f5f",
+      "usage": {
+        "prompt_tokens": 6583,
+        "completion_tokens": 551,
+        "total_tokens": 7134,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6580,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.021966000000000003,
+      "costUsdBeforeCacheWritePremium": 0.018676,
+      "cacheWritePremiumUsd": 0.00329
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 6,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.0319425,
+      "startedAt": "2026-11-03T21:30:33.880Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2630,
+      "httpStatus": 200,
+      "requestId": "req_85d4011f86a047b7affe10d5b96df512",
+      "usage": {
+        "prompt_tokens": 822,
+        "completion_tokens": 54,
+        "total_tokens": 876,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 28,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.002184,
+      "costUsdBeforeCacheWritePremium": 0.002184,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 7,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.02083875,
+      "startedAt": "2026-11-03T21:30:36.524Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3120,
+      "httpStatus": 200,
+      "requestId": "req_1fa05fa5e721493592fd35c39ba3b965",
+      "usage": {
+        "prompt_tokens": 1664,
+        "completion_tokens": 830,
+        "total_tokens": 2494,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 389,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.004983,
+      "costUsdBeforeCacheWritePremium": 0.004983,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 8,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0351075,
+      "startedAt": "2026-11-03T21:30:39.648Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3943,
+      "httpStatus": 200,
+      "requestId": "req_9b38046137f247448e20e2733f6c45bf",
+      "usage": {
+        "prompt_tokens": 1670,
+        "completion_tokens": 905,
+        "total_tokens": 2575,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 159,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.005325,
+      "costUsdBeforeCacheWritePremium": 0.005325,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 9,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0208378125,
+      "startedAt": "2026-11-03T21:30:43.594Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3582,
+      "httpStatus": 200,
+      "requestId": "req_e667ba9c05774da8ae118b785622500e",
+      "usage": {
+        "prompt_tokens": 1664,
+        "completion_tokens": 947,
+        "total_tokens": 2611,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 526,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0055095,
+      "costUsdBeforeCacheWritePremium": 0.0055095,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 10,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.147675,
+      "startedAt": "2026-11-03T21:30:47.186Z",
+      "status": "RECEIVED",
+      "elapsedMs": 11813,
+      "httpStatus": 200,
+      "requestId": "req_18bb12a9a7464507955040b366211ae4",
+      "usage": {
+        "prompt_tokens": 6560,
+        "completion_tokens": 478,
+        "total_tokens": 7038,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6557,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0211785,
+      "costUsdBeforeCacheWritePremium": 0.0179,
+      "cacheWritePremiumUsd": 0.0032785
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 11,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.0306925,
+      "startedAt": "2026-11-03T21:30:59.008Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1584,
+      "httpStatus": 200,
+      "requestId": "req_d34299fcdaf641978757c2b1ee91d786",
+      "usage": {
+        "prompt_tokens": 758,
+        "completion_tokens": 20,
+        "total_tokens": 778,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.001716,
+      "costUsdBeforeCacheWritePremium": 0.001716,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 12,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0208471875,
+      "startedAt": "2026-11-03T21:31:00.607Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2599,
+      "httpStatus": 200,
+      "requestId": "req_7cb7c588282345e58651e301271919b8",
+      "usage": {
+        "prompt_tokens": 1662,
+        "completion_tokens": 664,
+        "total_tokens": 2326,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 230,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0042345,
+      "costUsdBeforeCacheWritePremium": 0.0042345,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 13,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.035158125,
+      "startedAt": "2026-11-03T21:31:03.211Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4313,
+      "httpStatus": 200,
+      "requestId": "req_ff1c03d02b854cdd9ad6e57ddef59684",
+      "usage": {
+        "prompt_tokens": 1670,
+        "completion_tokens": 744,
+        "total_tokens": 2414,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 54,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0046005,
+      "costUsdBeforeCacheWritePremium": 0.0046005,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-04",
+      "id": 14,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.020445,
+      "startedAt": "2026-11-03T21:31:07.527Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3869,
+      "httpStatus": 200,
+      "requestId": "req_e1c62f2c64994745b61c9d9d49b5244a",
+      "usage": {
+        "prompt_tokens": 1592,
+        "completion_tokens": 863,
+        "total_tokens": 2455,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 445,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0050775,
+      "costUsdBeforeCacheWritePremium": 0.0050775,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01996125,
+      "startedAt": "2026-11-03T21:32:13.747Z",
+      "status": "RECEIVED",
+      "elapsedMs": 9665,
+      "httpStatus": 200,
+      "requestId": "req_2d0bf9c27cb94faa8e3c82fe4c818b97",
+      "usage": {
+        "prompt_tokens": 1525,
+        "completion_tokens": 1176,
+        "total_tokens": 2701,
+        "prompt_tokens_details": {
+          "cached_tokens": 1408,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 679,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00548535,
+      "costUsdBeforeCacheWritePremium": 0.00548535,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0348525,
+      "startedAt": "2026-11-03T21:32:23.421Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4994,
+      "httpStatus": 200,
+      "requestId": "req_c1f99772b06c4d889e8ea00f2dd05306",
+      "usage": {
+        "prompt_tokens": 1622,
+        "completion_tokens": 1192,
+        "total_tokens": 2814,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 614,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0065805,
+      "costUsdBeforeCacheWritePremium": 0.0065805,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0193659375,
+      "startedAt": "2026-11-03T21:32:28.422Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2897,
+      "httpStatus": 200,
+      "requestId": "req_24ebfe5b1c344e60b88477b3bbb6bc71",
+      "usage": {
+        "prompt_tokens": 1431,
+        "completion_tokens": 728,
+        "total_tokens": 2159,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 356,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00434925,
+      "costUsdBeforeCacheWritePremium": 0.00434925,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_view_repair_v1",
+      "boundUsd": 0.0257221875,
+      "startedAt": "2026-11-03T21:32:31.323Z",
+      "status": "RECEIVED",
+      "elapsedMs": 6665,
+      "httpStatus": 200,
+      "requestId": "req_38d2636af9da44e7bad270aa9114b537",
+      "usage": {
+        "prompt_tokens": 2868,
+        "completion_tokens": 510,
+        "total_tokens": 3378,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 314,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.004446,
+      "costUsdBeforeCacheWritePremium": 0.004446,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 5,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1374425,
+      "startedAt": "2026-11-03T21:32:38.005Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10274,
+      "httpStatus": 200,
+      "requestId": "req_ee808be562f34f71bae316e7d86fcf6c",
+      "usage": {
+        "prompt_tokens": 6007,
+        "completion_tokens": 476,
+        "total_tokens": 6483,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6004,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.019776000000000002,
+      "costUsdBeforeCacheWritePremium": 0.016774,
+      "cacheWritePremiumUsd": 0.003002
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 6,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.0303875,
+      "startedAt": "2026-11-03T21:32:48.296Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2789,
+      "httpStatus": 200,
+      "requestId": "req_617a8dd3cef9423f9358599d4fad9297",
+      "usage": {
+        "prompt_tokens": 753,
+        "completion_tokens": 55,
+        "total_tokens": 808,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 29,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.002056,
+      "costUsdBeforeCacheWritePremium": 0.002056,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 7,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0208471875,
+      "startedAt": "2026-11-03T21:32:51.099Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2708,
+      "httpStatus": 200,
+      "requestId": "req_ccc44cc7ef084185b0775ff0c7916ab6",
+      "usage": {
+        "prompt_tokens": 1662,
+        "completion_tokens": 706,
+        "total_tokens": 2368,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 268,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0033867,
+      "costUsdBeforeCacheWritePremium": 0.0033867,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 8,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0351571875,
+      "startedAt": "2026-11-03T21:32:53.811Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2719,
+      "httpStatus": 200,
+      "requestId": "req_ddebcc080cda4d62b60294035ebace6f",
+      "usage": {
+        "prompt_tokens": 1674,
+        "completion_tokens": 906,
+        "total_tokens": 2580,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 160,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0053325,
+      "costUsdBeforeCacheWritePremium": 0.0053325,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 9,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0208471875,
+      "startedAt": "2026-11-03T21:32:56.533Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2795,
+      "httpStatus": 200,
+      "requestId": "req_b897089e7a92434287021ccd685fc9a1",
+      "usage": {
+        "prompt_tokens": 1662,
+        "completion_tokens": 797,
+        "total_tokens": 2459,
+        "prompt_tokens_details": {
+          "cached_tokens": 1536,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 361,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0037962,
+      "costUsdBeforeCacheWritePremium": 0.0037962,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 10,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_view_repair_v1",
+      "boundUsd": 0.026278125,
+      "startedAt": "2026-11-03T21:32:59.335Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2684,
+      "httpStatus": 200,
+      "requestId": "req_986dfa67a6004a1c9675acca0832ce39",
+      "usage": {
+        "prompt_tokens": 2943,
+        "completion_tokens": 390,
+        "total_tokens": 3333,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 206,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00396225,
+      "costUsdBeforeCacheWritePremium": 0.00396225,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 11,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1388125,
+      "startedAt": "2026-11-03T21:33:02.028Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10362,
+      "httpStatus": 200,
+      "requestId": "req_75edac983be74dd1b12a635fd843715d",
+      "usage": {
+        "prompt_tokens": 6004,
+        "completion_tokens": 484,
+        "total_tokens": 6488,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6001,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.019848499999999998,
+      "costUsdBeforeCacheWritePremium": 0.016848,
+      "cacheWritePremiumUsd": 0.0030005
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 12,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.030775,
+      "startedAt": "2026-11-03T21:33:12.396Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4253,
+      "httpStatus": 200,
+      "requestId": "req_fb6e8660a50549fa96e7fb165d82e878",
+      "usage": {
+        "prompt_tokens": 765,
+        "completion_tokens": 81,
+        "total_tokens": 846,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 55,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00234,
+      "costUsdBeforeCacheWritePremium": 0.00234,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 13,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0207215625,
+      "startedAt": "2026-11-03T21:33:16.667Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3600,
+      "httpStatus": 200,
+      "requestId": "req_baff5793b01a4686a93157a3f78bafe6",
+      "usage": {
+        "prompt_tokens": 1624,
+        "completion_tokens": 831,
+        "total_tokens": 2455,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 394,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0049575,
+      "costUsdBeforeCacheWritePremium": 0.0049575,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 14,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0350184375,
+      "startedAt": "2026-11-03T21:33:20.274Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2713,
+      "httpStatus": 200,
+      "requestId": "req_dbf6555b2f524bf887b5471d417a4606",
+      "usage": {
+        "prompt_tokens": 1635,
+        "completion_tokens": 860,
+        "total_tokens": 2495,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 152,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00509625,
+      "costUsdBeforeCacheWritePremium": 0.00509625,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 15,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.02071875,
+      "startedAt": "2026-11-03T21:33:22.992Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2778,
+      "httpStatus": 200,
+      "requestId": "req_d1720df070794e419a3dbc37b16f94fc",
+      "usage": {
+        "prompt_tokens": 1622,
+        "completion_tokens": 752,
+        "total_tokens": 2374,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 337,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0046005,
+      "costUsdBeforeCacheWritePremium": 0.0046005,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 16,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.1474825,
+      "startedAt": "2026-11-03T21:33:25.778Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10697,
+      "httpStatus": 200,
+      "requestId": "req_adfaec1e92024b488452dda431c2d027",
+      "usage": {
+        "prompt_tokens": 6494,
+        "completion_tokens": 559,
+        "total_tokens": 7053,
+        "prompt_tokens_details": {
+          "cached_tokens": 3348,
+          "cache_write_tokens": 3143,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0137883,
+      "costUsdBeforeCacheWritePremium": 0.0122168,
+      "cacheWritePremiumUsd": 0.0015715
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-05",
+      "id": 17,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.031795,
+      "startedAt": "2026-11-03T21:33:36.485Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2533,
+      "httpStatus": 200,
+      "requestId": "req_47bc594dc0854bfe8ed39573b25f4b8a",
+      "usage": {
+        "prompt_tokens": 829,
+        "completion_tokens": 20,
+        "total_tokens": 849,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.001858,
+      "costUsdBeforeCacheWritePremium": 0.001858,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01996125,
+      "startedAt": "2026-11-03T21:36:14.012Z",
+      "status": "RECEIVED",
+      "elapsedMs": 9685,
+      "httpStatus": 200,
+      "requestId": "req_a8f0e74f81774525955eaa241d8038db",
+      "usage": {
+        "prompt_tokens": 1535,
+        "completion_tokens": 654,
+        "total_tokens": 2189,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 254,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00409425,
+      "costUsdBeforeCacheWritePremium": 0.00409425,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0343725,
+      "startedAt": "2026-11-03T21:36:23.705Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2389,
+      "httpStatus": 200,
+      "requestId": "req_0cb8a1f7d8334c02b11cd8fc4f416009",
+      "usage": {
+        "prompt_tokens": 1558,
+        "completion_tokens": 666,
+        "total_tokens": 2224,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 95,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0041655,
+      "costUsdBeforeCacheWritePremium": 0.0041655,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0192,
+      "startedAt": "2026-11-03T21:36:26.098Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4357,
+      "httpStatus": 200,
+      "requestId": "req_b6dc7627132848e6985fb083300e4ce2",
+      "usage": {
+        "prompt_tokens": 1414,
+        "completion_tokens": 1009,
+        "total_tokens": 2423,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 647,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.005601,
+      "costUsdBeforeCacheWritePremium": 0.005601,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_view_repair_v1",
+      "boundUsd": 0.02638875,
+      "startedAt": "2026-11-03T21:36:30.460Z",
+      "status": "RECEIVED",
+      "elapsedMs": 1854,
+      "httpStatus": 200,
+      "requestId": "req_59524db053a14f9ca46d5592116dd86f",
+      "usage": {
+        "prompt_tokens": 3008,
+        "completion_tokens": 272,
+        "total_tokens": 3280,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 91,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00348,
+      "costUsdBeforeCacheWritePremium": 0.00348,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 5,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.140475,
+      "startedAt": "2026-11-03T21:36:32.324Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10571,
+      "httpStatus": 200,
+      "requestId": "req_f25e3e781b5d4b00bd8a67a31c12683e",
+      "usage": {
+        "prompt_tokens": 6191,
+        "completion_tokens": 476,
+        "total_tokens": 6667,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6188,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.020236,
+      "costUsdBeforeCacheWritePremium": 0.017142,
+      "cacheWritePremiumUsd": 0.003094
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 6,
+      "model": "gpt-5-nano",
+      "schema": "persona_review_repair_v2",
+      "boundUsd": 0.0037180625,
+      "startedAt": "2026-11-03T21:36:42.915Z",
+      "status": "RECEIVED",
+      "elapsedMs": 6857,
+      "httpStatus": 200,
+      "requestId": "req_be30e56ee3ec4dbfb2b78ea94813e08f",
+      "usage": {
+        "prompt_tokens": 5625,
+        "completion_tokens": 439,
+        "total_tokens": 6064,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00045685,
+      "costUsdBeforeCacheWritePremium": 0.00045685,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 7,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.0311,
+      "startedAt": "2026-11-03T21:36:49.781Z",
+      "status": "RECEIVED",
+      "elapsedMs": 7733,
+      "httpStatus": 200,
+      "requestId": "req_b4285d40a4fc470785a8e859c67e9578",
+      "usage": {
+        "prompt_tokens": 773,
+        "completion_tokens": 281,
+        "total_tokens": 1054,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 67,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.004356,
+      "costUsdBeforeCacheWritePremium": 0.004356,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-06",
+      "id": 8,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_factual_repair_v1",
+      "boundUsd": 0.119915,
+      "startedAt": "2026-11-03T21:36:57.517Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10106,
+      "httpStatus": 200,
+      "requestId": "req_7f97e55c07de4838b969acdc95263fef",
+      "usage": {
+        "prompt_tokens": 4959,
+        "completion_tokens": 468,
+        "total_tokens": 5427,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 4956,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.017076,
+      "costUsdBeforeCacheWritePremium": 0.014598,
+      "cacheWritePremiumUsd": 0.002478
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 1,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.01996125,
+      "startedAt": "2026-11-03T21:38:44.536Z",
+      "status": "RECEIVED",
+      "elapsedMs": 9887,
+      "httpStatus": 200,
+      "requestId": "req_bba09517159243d7a95df4ae6962d85e",
+      "usage": {
+        "prompt_tokens": 1535,
+        "completion_tokens": 912,
+        "total_tokens": 2447,
+        "prompt_tokens_details": {
+          "cached_tokens": 1408,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 512,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.004304850000000001,
+      "costUsdBeforeCacheWritePremium": 0.004304850000000001,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 2,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.0343865625,
+      "startedAt": "2026-11-03T21:38:54.440Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2354,
+      "httpStatus": 200,
+      "requestId": "req_bc5e8275e579431b9f32e89337778cdb",
+      "usage": {
+        "prompt_tokens": 1558,
+        "completion_tokens": 640,
+        "total_tokens": 2198,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 69,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0040485,
+      "costUsdBeforeCacheWritePremium": 0.0040485,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 3,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0192,
+      "startedAt": "2026-11-03T21:38:56.797Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4904,
+      "httpStatus": 200,
+      "requestId": "req_02364a4cfcf844e6bacf862a0a1fea55",
+      "usage": {
+        "prompt_tokens": 1414,
+        "completion_tokens": 727,
+        "total_tokens": 2141,
+        "prompt_tokens_details": {
+          "cached_tokens": 1280,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 371,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.003468,
+      "costUsdBeforeCacheWritePremium": 0.003468,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 4,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_view_repair_v1",
+      "boundUsd": 0.02638875,
+      "startedAt": "2026-11-03T21:39:01.706Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2122,
+      "httpStatus": 200,
+      "requestId": "req_8b8f844856f64cc1b576a72a9bf9d0c2",
+      "usage": {
+        "prompt_tokens": 3008,
+        "completion_tokens": 369,
+        "total_tokens": 3377,
+        "prompt_tokens_details": {
+          "cached_tokens": 2816,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 155,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0020157,
+      "costUsdBeforeCacheWritePremium": 0.0020157,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 5,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.14088,
+      "startedAt": "2026-11-03T21:39:03.840Z",
+      "status": "RECEIVED",
+      "elapsedMs": 10184,
+      "httpStatus": 200,
+      "requestId": "req_41ec6c2cef5c4992b57f534fbbd8e20b",
+      "usage": {
+        "prompt_tokens": 6224,
+        "completion_tokens": 431,
+        "total_tokens": 6655,
+        "prompt_tokens_details": {
+          "cached_tokens": 3387,
+          "cache_write_tokens": 2834,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 35,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0117397,
+      "costUsdBeforeCacheWritePremium": 0.0103227,
+      "cacheWritePremiumUsd": 0.001417
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 6,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.029135,
+      "startedAt": "2026-11-03T21:39:14.038Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3510,
+      "httpStatus": 200,
+      "requestId": "req_4929aff1e02a40c2bc6b6ff50cc907a9",
+      "usage": {
+        "prompt_tokens": 677,
+        "completion_tokens": 56,
+        "total_tokens": 733,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 30,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.001914,
+      "costUsdBeforeCacheWritePremium": 0.001914,
+      "cacheWritePremiumUsd": 0.0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 7,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0193659375,
+      "startedAt": "2026-11-03T21:39:17.566Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3208,
+      "httpStatus": 200,
+      "requestId": "req_0212f24dc0a84118affa6bf4459acc55",
+      "usage": {
+        "prompt_tokens": 1431,
+        "completion_tokens": 801,
+        "total_tokens": 2232,
+        "prompt_tokens_details": {
+          "cached_tokens": 1280,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 409,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00381375,
+      "costUsdBeforeCacheWritePremium": 0.00381375,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 8,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_repair_v1",
+      "boundUsd": 0.033744375,
+      "startedAt": "2026-11-03T21:39:20.776Z",
+      "status": "RECEIVED",
+      "elapsedMs": 2098,
+      "httpStatus": 200,
+      "requestId": "req_66d6df1c20384d2b94eaaf743fca5f2c",
+      "usage": {
+        "prompt_tokens": 1448,
+        "completion_tokens": 600,
+        "total_tokens": 2048,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 36,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.003786,
+      "costUsdBeforeCacheWritePremium": 0.003786,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 9,
+      "model": "gpt-5.4-mini",
+      "schema": "assessment_grounding_review_v1",
+      "boundUsd": 0.0192825,
+      "startedAt": "2026-11-03T21:39:22.879Z",
+      "status": "RECEIVED",
+      "elapsedMs": 4323,
+      "httpStatus": 200,
+      "requestId": "req_c0e6a7994b6a4309b9051a1c621ca721",
+      "usage": {
+        "prompt_tokens": 1407,
+        "completion_tokens": 1124,
+        "total_tokens": 2531,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 762,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00611325,
+      "costUsdBeforeCacheWritePremium": 0.00611325,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 10,
+      "model": "gpt-5.4-mini",
+      "schema": "coordinated_view_repair_v1",
+      "boundUsd": 0.027354375,
+      "startedAt": "2026-11-03T21:39:27.208Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3557,
+      "httpStatus": 200,
+      "requestId": "req_bd5b971db9f34dba920914e805520dce",
+      "usage": {
+        "prompt_tokens": 3125,
+        "completion_tokens": 565,
+        "total_tokens": 3690,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 359,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.00488625,
+      "costUsdBeforeCacheWritePremium": 0.00488625,
+      "cacheWritePremiumUsd": 0
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 11,
+      "model": "gpt-6.1-sol",
+      "schema": "persona_review_v2",
+      "boundUsd": 0.14356,
+      "startedAt": "2026-11-03T21:39:30.773Z",
+      "status": "RECEIVED",
+      "elapsedMs": 13529,
+      "httpStatus": 200,
+      "requestId": "req_af49d2dce4c44ad3886f0afe23087df6",
+      "usage": {
+        "prompt_tokens": 6342,
+        "completion_tokens": 528,
+        "total_tokens": 6870,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 6339,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 57,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.0211335,
+      "costUsdBeforeCacheWritePremium": 0.017964,
+      "cacheWritePremiumUsd": 0.0031695
+    },
+    {
+      "runDirectory": "artifacts/auditor-live-repair-07",
+      "id": 12,
+      "model": "gpt-6.1-sol",
+      "schema": "final_grounding_review_v1",
+      "boundUsd": 0.030655,
+      "startedAt": "2026-11-03T21:39:44.309Z",
+      "status": "RECEIVED",
+      "elapsedMs": 3952,
+      "httpStatus": 200,
+      "requestId": "req_1ddf07be5c8f4208972b06fe17c15fd4",
+      "usage": {
+        "prompt_tokens": 744,
+        "completion_tokens": 110,
+        "total_tokens": 854,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 84,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "costUsd": 0.002588,
+      "costUsdBeforeCacheWritePremium": 0.002588,
+      "cacheWritePremiumUsd": 0.0
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "facts_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGGU6WAQp05uuDeBqARsftMrVVmn",
+    "object": "chat.completion",
+    "created": 1793741006,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"supported\":true,\"reason\":\"Все заявленные факты подтверждаются текстом резюме: продление договоров, согласование с юридическим отделом, подготовка списка вопросов, использование списка на еженедельной встрече, сохранение 85% клиентов и отсутствие отдельного измерения личного вклада. Текущая должность и желаемая роль в резюме действительно различаются; это отражено корректно как текущее описание и цель поиска. Точная отрасль и грейд не указаны явно, поэтому они правомерно оставлены как неустановленные.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 879,
+      "completion_tokens": 437,
+      "total_tokens": 1316,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 296,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

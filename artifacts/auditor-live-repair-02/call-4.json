@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGGl37jgprAFFuOSG1WOI1bYXASx",
+    "object": "chat.completion",
+    "created": 1793741023,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"decisions\":[{\"id\":\"F11\",\"supported\":true,\"reason\":\"Замечание точно отражает фрагмент: указан командный показатель 85% удержания, и прямо сказано, что личный вклад отдельно не измерялся. Поэтому нельзя приписывать результат лично кандидату.\"},{\"id\":\"F12\",\"supported\":true,\"reason\":\"В резюме действительно есть описание функции — продление договоров и согласование условий с юристами, — но не раскрыты конкретные решения и границы полномочий. Как замечание о нехватке контекста это корректно.\"},{\"id\":\"S11\",\"supported\":true,\"reason\":\"Фраза о едином списке открытых вопросов, который менеджеры используют на еженедельной встрече, действительно показывает полезный рабочий артефакт, встроенный в регулярный процесс команды.\"},{\"id\":\"candidateContext.primaryProfession\",\"supported\":true,\"reason\":\"Из текста прямо следует профессиональная роль: менеджер по работе с корпоративными клиентами.\"},{\"id\":\"candidateContext.secondaryContext\",\"supported\":true,\"reason\":\"Контекст сопровождения действующих договоров прямо указан в резюме.\"},{\"id\":\"candidateContext.claimedLevel\",\"supported\":true,\"reason\":\"В исходных данных прямо указано, что уровень не установлен.\"},{\"id\":\"candidateContext.inferredLevel\",\"supported\":true,\"reason\":\"В исходных данных прямо указано, что уровень не установлен.\"},{\"id\":\"candidateContext.industry\",\"supported\":true,\"reason\":\"Корпоративный/B2B-сегмент прямо указан и не противоречит тексту.\"},{\"id\":\"candidateContext.careerPattern\",\"supported\":true,\"reason\":\"Описан паттерн сопровождения клиентов с процессным улучшением: работа с договорами плюс подготовка общего списка вопросов для команды.\"},{\"id\":\"candidateContext.confidence\",\"supported\":true,\"reason\":\"Значение задано в данных и не противоречит резюме.\"},{\"id\":\"professionalAssessment.overallImpression\",\"supported\":true,\"reason\":\"Оценка согласуется с содержанием резюме: есть работа с договорами, согласование и процессная польза, при этом без лишних преувеличений.\"},{\"id\":\"professionalAssessment.strongestProfessionalSignal\",\"supported\":true,\"reason\":\"Это прямо следует из текста: подготовлен единый список открытых вопросов, который реально используется командой на регулярной встрече.\"},{\"id\":\"professionalAssessment.mainResumeProblem\",\"supported\":true,\"reason\":\"Замечание соответствует резюме: указан командный показатель удержания, но личный вклад кандидата отдельно не измерялся.\"},{\"id\":\"professionalAssessment.seniorityConsistency\",\"supported\":true,\"reason\":\"Вывод о нейтральном уровне подтверждается: есть координация и процессная польза, но нет данных о масштабе ответственности.\"},{\"id\":\"professionalAssessment.resumeVsExperienceGap\",\"supported\":true,\"reason\":\"Резюме действительно показывает работу с договорами и юристами, но не раскрывает портфель, объём и самостоятельность решения сложных случаев.\"},{\"id\":\"questionsCreatedByResume.0\",\"supported\":true,\"reason\":\"Вопрос об объёме договоров логично вытекает из описания работы и помогает оценить масштаб опыта.\"},{\"id\":\"questionsCreatedByResume.1\",\"supported\":true,\"reason\":\"Вопрос о степени самостоятельности при согласовании условий прямо следует из описанной функции и действительно остаётся открытым.\"},{\"id\":\"uncertainties.0\",\"supported\":true,\"reason\":\"Точная отрасль компании в резюме не названа.\"},{\"id\":\"uncertainties.1\",\"supported\":true,\"reason\":\"По одному названию должности уровень корректно определить нельзя; в тексте нет достаточных данных.\"},{\"id\":\"uncertainties.2\",\"supported\":true,\"reason\":\"В резюме прямо сказано, что личный вклад в 85% удержания не измерялся.\"},{\"id\":\"claimsNotAllowed.0\",\"supported\":true,\"reason\":\"Это корректный запрет на вывод: по командному показателю нельзя приписывать персональное удержание клиентов кандидату.\"},{\"id\":\"claimsNotAllowed.1\",\"supported\":true,\"reason\":\"Это корректный запрет на вывод: seniority нельзя утверждать только по названию должности без дополнительных фактов.\"},{\"id\":\"claimsNotAllowed.2\",\"supported\":true,\"reason\":\"Это корректный запрет на вывод: в тексте говорится о продлении действующих договоров, а не о росте продаж.\"}]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1395,
+      "completion_tokens": 1539,
+      "total_tokens": 2934,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 574,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

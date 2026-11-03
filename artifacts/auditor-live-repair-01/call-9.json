@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_repair_v1",
+  "response": {
+    "id": "chatcmpl-EgGEO49Kc78QUlTf4uYXNwDmEn68H",
+    "object": "chat.completion",
+    "created": 1793740876,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"candidateContext\":{\"primaryProfession\":\"менеджер по работе с корпоративными клиентами\",\"secondaryContext\":\"корпоративный B2B-сегмент, договоры и внутреннее согласование\",\"claimedLevel\":\"не установлен\",\"inferredLevel\":\"не установлен\",\"industry\":\"корпоративный B2B-сегмент\",\"careerPattern\":\"сопровождение клиентов через договоры и внутреннюю координацию\",\"confidence\":0.88},\"professionalAssessment\":{\"overallImpression\":\"Текст быстро считывается как живой аккаунт-опыт, без лишней мишуры.\",\"strongestProfessionalSignal\":\"Список открытых вопросов, который используют менеджеры, показывает не просто выполнение задач, а полезный след в процессе.\",\"mainResumeProblem\":\"Командный retention звучит громче, чем индивидуальный вклад, а читатель не должен сам додумывать долю автора.\",\"seniorityConsistency\":\"На роль аккаунта текст подходит, но не разгоняется в уровень сверх данных.\",\"resumeVsExperienceGap\":\"Не хватает более конкретных деталей об отрасли, масштабе портфеля и измеримом личном результате автора; текущий текст оставляет их нераскрытыми.\"},\"findings\":[{\"id\":\"F21\",\"sourceQuote\":\"Команда сохранила 85% клиентов за год, личный вклад в этот показатель отдельно не измерялся.\",\"interpretation\":\"Фраза звучит эффектно, но не даёт автору права на чужой результат.\",\"whyItMatters\":\"Если не отделён личный вклад, показатель нельзя использовать как персональное достижение.\",\"severity\":\"medium\",\"confidence\":\"high\",\"issueType\":\"атрибуция результата\"}],\"strengths\":[{\"id\":\"S21\",\"sourceQuote\":\"Подготовила единый список открытых вопросов по договорам; менеджеры используют его на еженедельной встрече.\",\"interpretation\":\"Это уже не просто описание работы, а полезный артефакт, который виден коллегам.\"},{\"id\":\"S22\",\"sourceQuote\":\"согласовывала условия с юридическим отделом.\",\"interpretation\":\"Есть нормальная кросс-функциональная работа без лишнего шума.\"}],\"questionsCreatedByResume\":[],\"uncertainties\":[\"Уровень действительно не указан, поэтому как неопределённость это замечание корректно отражает текст.\"],\"claimsNotAllowed\":[\"Нельзя превращать командный retention в личную победу автора.\",\"Нельзя навешивать «старший» уровень без прямых оснований в тексте.\"]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1906,
+      "completion_tokens": 649,
+      "total_tokens": 2555,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 114,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

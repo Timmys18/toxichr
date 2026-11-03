@@ -1,0 +1,38 @@
+{
+  "schema": "coordinated_view_repair_v1",
+  "response": {
+    "id": "chatcmpl-EgGPj1NdcgmNEcPY9UrXhm1nt0QjD",
+    "object": "chat.completion",
+    "created": 1793741579,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"selectedId\":\"F30\",\"angle\":\"Подпись тут важнее сверки: автор делает лабораторную часть, а финальное подтверждение результата остаётся у инженера. Практический смысл простой — не путать аккуратное исполнение с правом ставить итог.\",\"imageDirection\":\"Рабочий стол лаборатории: образцы бетона, журнал, рядом подпись инженера на протоколе; акцент на границе между подготовкой образцов и финальным утверждением результата.\",\"overlapReason\":\"С другими сохранёнными HR общий фон неизбежен — лабораторная рутина, маркировка, порядок. Но здесь выбран другой смысловой угол: не улучшение процесса и не общая аккуратность, а разделение ролей и ответственности, которое текст прямо показывает.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 2943,
+      "completion_tokens": 390,
+      "total_tokens": 3333,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 206,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

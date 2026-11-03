@@ -44,7 +44,8 @@ test("full OpenAI route with stub transport saves facts, plan, checked author re
    case "facts_review_v1":response={supported:true,reason:""};break;
    case "coordinated_plan_v1":expect(content?.sharedFacts).toBeTruthy();expect(JSON.parse(input).resumeText).toBe(text);response=plan;break;
    case "assessment_grounding_review_v1":expect(content?.coordinatedPlan).toBeTruthy();expect(JSON.parse(input).claims.some((c:{id:string})=>c.id==="professionalAssessment.overallImpression")).toBe(true);response={decisions:assessmentClaims(plan.views.tamara.assessment).map(c=>({id:c.id,supported:true,reason:""}))};break;
-   case "persona_review_v2":expect(JSON.parse(input).fullResume).toBe(text);expect(JSON.parse(input).selectedAnchor.item.id).toBe("S01");response=authored;break;
+   case "coordinated_view_repair_v1":expect(JSON.parse(input).shownReplies[0].comment).toBe(authored.verdict.comment);response={selectedId:"S01",angle:"Самостоятельный второй взгляд",imageDirection:"Иной образ",overlapReason:"Краткий фрагмент"};break;
+   case "persona_review_v2":if(steps.includes("coordinated_view_repair_v1"))expect(JSON.parse(input).shownReplies[0].comment).toBe(authored.verdict.comment);expect(JSON.parse(input).fullResume).toBe(text);expect(JSON.parse(input).selectedAnchor.item.id).toBe("S01");response=authored;break;
    case "final_grounding_review_v1":expect(JSON.parse(input).draft.verdict.comment).toBe(authored.verdict.comment);response={supported:true,reason:""};break;
    default:throw new Error(`Unexpected call blocked: ${step}`);
   }
@@ -61,6 +62,10 @@ test("full OpenAI route with stub transport saves facts, plan, checked author re
   const receipts=readFileSync(process.env.AI_CALL_JOURNAL_FILE??".data/ai-call-ledger.jsonl","utf8").trim().split("\n").map(line=>JSON.parse(line));
   for(const call of calls)expect(receipts.some(e=>e.id===call.id&&e.status==="COMPLETED")).toBe(true);
   const second=await createAndRunAnalysis(r.id,"tamara");expect(second.analysisId).toBe(first.analysisId);expect(steps).toHaveLength(6);expect(await prisma.analysis.count({where:{resumeVersionId:versionId}})).toBe(1);expect(await prisma.aiCall.count({where:{analysisId:a.id}})).toBe(6);expect(await prisma.analysisLease.count({where:{id:`resume:${versionId}`}})).toBe(0);
+  const other=await createAndRunAnalysis(r.id,"lera");
+  expect(other.analysisId).not.toBe(first.analysisId);
+  expect(steps.slice(6)).toEqual(["assessment_grounding_review_v1","coordinated_view_repair_v1","persona_review_v2","final_grounding_review_v1"]);
+  expect(await prisma.analysis.count({where:{resumeVersionId:versionId}})).toBe(2);
  } finally {
   globalThis.fetch=oldFetch;keys.forEach((k,i)=>{if(old[i]===undefined)delete process.env[k];else process.env[k]=old[i];});
   const ids=(await prisma.analysis.findMany({where:{resumeVersionId:versionId},select:{id:true}})).map(a=>a.id);

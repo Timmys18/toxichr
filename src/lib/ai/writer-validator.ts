@@ -180,7 +180,12 @@ export function validatePersonaDraft(
   errors.push(...validateUserFacingLanguage(allText));
   if (options.avoidMasculineSecondPerson && /(?:^|\s)ты\s+[а-яё]+(?:ил|ал|ял|ёл)(?=[\s,.!?;:]|$)/iu.test(allText)) errors.push("мужская форма обращения противоречит грамматике исходного резюме");
   if (options.metricIssueGrounded === false || options.hasFindings === false) {
-    if (/(?:нужн\w*|не хватает|добав\w*|укаж\w*|видеть).{0,55}(?:цифр\w*|метрик\w*|числ\w*)|без цифр/iu.test(draft.verdict.comment)) errors.push("требование чисел не основано на выявленной проблеме резюме");
+    const metricRequests = [...draft.verdict.comment.matchAll(/(?<![а-яё])(?:нужн[а-яё]*|не хватает|добав[а-яё]*|укаж[а-яё]*|видеть).{0,55}(?<![а-яё])(?:цифр[а-яё]*|метрик[а-яё]*|числ[а-яё]*)(?![а-яё])/giu)];
+    const positiveRequest = metricRequests.some(match => {
+      const prefix = draft.verdict.comment.slice(Math.max(0, match.index - 28), match.index);
+      return !/не\s+(?:(?:надо|нужно|следует|стоит)\s+)?$/iu.test(prefix);
+    });
+    if (positiveRequest || /без\s+цифр.{0,25}(?:непонят|ничего|пуст|бессмыслен)/iu.test(draft.verdict.comment)) errors.push("требование чисел не основано на выявленной проблеме резюме");
     if (/пусто по масштабу|сколько процедур|добав\w*.{0,35}(?:масштаб|конкретик)/iu.test(draft.verdict.comment)) errors.push("претензия к масштабу не основана на выявленной проблеме резюме");
   }
   if (options.enforceVoice && options.personaId === "lera" && /(?:^|\s)Лера\s*[,!]/u.test(draft.verdict.comment)) errors.push("персона обращается к себе вместо кандидата");

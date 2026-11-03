@@ -1,0 +1,39 @@
+{
+  "schema": "final_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGK9jFk0BhLCVACYXxyjSQ5a2TKy",
+    "object": "chat.completion",
+    "created": 1793741233,
+    "model": "gpt-6.1-sol",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"supported\":false,\"reason\":\"Утверждение, что у громких «улучшений процессов» часто нет описанного применения, не подтверждено исходным текстом.\"}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 813,
+      "completion_tokens": 114,
+      "total_tokens": 927,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 59,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}

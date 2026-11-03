@@ -23,7 +23,11 @@ async function clean(id:string){const ids=(await prisma.analysis.findMany({where
 test("неподтверждённое итоговое поле после одной правки не выдаётся",async()=>{
  const a=assessment();a.professionalAssessment.overallImpression="Кандидат единолично удвоил выручку компании за год.";
  const rejected={decisions:assessmentClaims(a).map(c=>({id:c.id,supported:c.id!=="professionalAssessment.overallImpression",reason:"выручка не указана"}))};
- await stub([rejected,a,rejected],async()=>{await expect(reviewAssessment(text,a,true)).rejects.toThrow("итоговое поле");});
+ await stub([rejected,a,rejected],async()=>{
+  const result=await reviewAssessment(text,a,true);
+  expect(JSON.stringify(result.assessment)).not.toContain("единолично удвоил выручку");
+  expect(result.assessment.professionalAssessment.overallImpression).toBe(a.strengths[0].interpretation);
+ });
 });
 test("после сохранения плана отклонение главного наблюдения сбрасывает его до автора",async()=>{
  const r=await resume();const corrected=assessment();corrected.strengths[0].interpretation="Указан конкретный рабочий результат в пределах описанного действия.";

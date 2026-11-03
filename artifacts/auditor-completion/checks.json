@@ -1,0 +1,21 @@
+{
+  "typecheck": "passed",
+  "targetedESLint": "passed",
+  "addressedTests": {
+    "startTime": "2026-11-03T21:38:24.479Z",
+    "duration": 3251.694,
+    "expected": 31,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "lastPersistenceCheck": {
+    "startTime": "2026-11-03T21:36:59.635Z",
+    "duration": 1415.272,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "transport": "isolated SQLite and stubbed HTTP for free tests; real provider responses in live artifacts"
+}

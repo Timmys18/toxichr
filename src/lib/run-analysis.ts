@@ -179,8 +179,14 @@ async function createAndRunAnalysisLocked(
       where: { resumeVersionId: version.id, status: "COMPLETED", reportPayload: { not: undefined } },
       orderBy: { createdAt: "desc" },
       take: 20,
-      select: { reportPayload: true },
+      select: { reportPayload: true, persona: { select: { code: true } } },
     });
+    const shownReplies = previous.flatMap(item => {
+      const report = item.reportPayload as { sourceTextHash?: unknown; verdict?: { title?: unknown; comment?: unknown } } | null;
+      const code = item.persona?.code;
+      return report?.sourceTextHash === resumeHash(resumeText) && code && code !== personaId && PERSONA_CODES.includes(code as PersonaId) && typeof report?.verdict?.title === "string" && typeof report.verdict.comment === "string"
+        ? [{ personaId: code as PersonaId, title: report.verdict.title, comment: report.verdict.comment }] : [];
+    }).filter((item,index,all) => all.findIndex(other => other.personaId === item.personaId) === index);
     const previousReport = previous.map((item) => item.reportPayload as {
       professionalAssessment?: unknown;
       generationMeta?: { promptVersion?: string; stages?: Array<{ name?: string }> };
@@ -205,6 +211,7 @@ async function createAndRunAnalysisLocked(
     }, () => runAnalysisPipeline({
       resumeText,
       personaId,
+      shownReplies,
       professionalAssessment: reused.success ? reused.data as ProfessionalAssessment : undefined,
       sharedFacts: stored?.sharedFacts?.textHash === resumeHash(resumeText) ? stored.sharedFacts.facts : undefined,
       onPlanInvalid: async () => {

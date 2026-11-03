@@ -1,0 +1,38 @@
+{
+  "schema": "assessment_grounding_review_v1",
+  "response": {
+    "id": "chatcmpl-EgGHEzpvMhBzO8DTygf54wSVcvbPf",
+    "object": "chat.completion",
+    "created": 1793741052,
+    "model": "gpt-5.4-mini-2026-03-17",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"decisions\":[{\"id\":\"F21\",\"supported\":true,\"reason\":\"В резюме прямо сказано, что 85% — командный результат и личный вклад отдельно не измерялся; замечание корректно фиксирует, что индивидуальная атрибуция результата не показана.\"},{\"id\":\"F22\",\"supported\":true,\"reason\":\"Фраза действительно описывает рабочие действия, но не раскрывает масштаб договоров и степень самостоятельности; это корректный недостаток конкретики по данному фрагменту.\"},{\"id\":\"S21\",\"supported\":true,\"reason\":\"Источник прямо показывает полезный артефакт: подготовлен единый список, которым команда пользуется на еженедельной встрече.\"},{\"id\":\"candidateContext.primaryProfession\",\"supported\":true,\"reason\":\"Это прямо следует из начала резюме: указан менеджер по работе с корпоративными клиентами.\"},{\"id\":\"candidateContext.secondaryContext\",\"supported\":true,\"reason\":\"В резюме явно указан корпоративный сегмент.\"},{\"id\":\"candidateContext.claimedLevel\",\"supported\":true,\"reason\":\"В резюме уровень не обозначен; запись об этом корректна.\"},{\"id\":\"candidateContext.inferredLevel\",\"supported\":true,\"reason\":\"По приведённым фактам уровень действительно не установлен однозначно.\"},{\"id\":\"candidateContext.industry\",\"supported\":true,\"reason\":\"Текст относится к B2B / корпоративному сегменту, это соответствует содержанию резюме.\"},{\"id\":\"candidateContext.careerPattern\",\"supported\":true,\"reason\":\"Из описания видны клиентское сопровождение и процессное улучшение, поэтому формулировка согласуется с резюме.\"},{\"id\":\"candidateContext.confidence\",\"supported\":true,\"reason\":\"Это служебная оценка уверенности, она не противоречит тексту резюме.\"},{\"id\":\"professionalAssessment.overallImpression\",\"supported\":true,\"reason\":\"Оценка соответствует содержанию: есть работа с действующими клиентами, без пустых формулировок, и выделяется полезный артефакт для команды.\"},{\"id\":\"professionalAssessment.strongestProfessionalSignal\",\"supported\":true,\"reason\":\"Это прямо основано на фрагменте про единый список открытых вопросов, который используют менеджеры.\"},{\"id\":\"professionalAssessment.mainResumeProblem\",\"supported\":true,\"reason\":\"Проблема сформулирована точно: самая заметная цифра относится к команде, а личный вклад отдельно не раскрыт.\"},{\"id\":\"professionalAssessment.seniorityConsistency\",\"supported\":true,\"reason\":\"По резюме действительно недостаточно фактов, чтобы надёжно определить уровень выше или ниже; вывод не противоречит тексту.\"},{\"id\":\"professionalAssessment.resumeVsExperienceGap\",\"supported\":true,\"reason\":\"Замечание корректно: из текста понятно, что было сделано в команде, но не разделён личный и общий вклад.\"},{\"id\":\"questionsCreatedByResume.0\",\"supported\":true,\"reason\":\"Вопрос логично возникает из фразы о продлении и согласовании условий: в резюме не раскрыто, что именно входило в этот процесс.\"},{\"id\":\"questionsCreatedByResume.1\",\"supported\":true,\"reason\":\"В тексте не указан объём зоны ответственности, поэтому такой вопрос действительно порождается резюме.\"},{\"id\":\"uncertainties.0\",\"supported\":true,\"reason\":\"Это прямо следует из текста: личный вклад в удержание отдельно не измерялся.\"},{\"id\":\"uncertainties.1\",\"supported\":true,\"reason\":\"Из резюме неясно, были ли полномочия влиять на условия или только передавать их на согласование.\"},{\"id\":\"claimsNotAllowed.0\",\"supported\":true,\"reason\":\"Да, по тексту нельзя приписывать 85% удержания как личный результат, потому что указано, что это командный показатель.\"},{\"id\":\"claimsNotAllowed.1\",\"supported\":true,\"reason\":\"Верно: по одному названию должности вывод о seniority делать нельзя.\"},{\"id\":\"claimsNotAllowed.2\",\"supported\":true,\"reason\":\"Верно: в тексте речь о продлении и сопровождении, а не о продажах; такой вывод делать нельзя.\"}]}",
+          "refusal": null,
+          "annotations": []
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 1373,
+      "completion_tokens": 1198,
+      "total_tokens": 2571,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 296,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "service_tier": "default",
+    "system_fingerprint": null
+  }
+}
