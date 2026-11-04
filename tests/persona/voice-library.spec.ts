@@ -300,31 +300,6 @@ test("independent editorial selection is grounded, passed to writer and accounte
   }
 });
 
-test("OpenAI defaults use the independent editorial path and configured writer", async () => {
-  const { resume, assessment } = fixture();
-  const authored = draft(); authored.verdict.findingIds = ["F01"];
-  const keys = ["AI_PROVIDER", "OPENAI_API_KEY", "AI_INDEPENDENT_PERSPECTIVE", "AI_EDITORIAL_SELECTION", "OPENAI_WRITER_MODEL"];
-  const saved = keys.map(key => process.env[key]);
-  const originalFetch = globalThis.fetch;
-  const requests: Array<Record<string, unknown>> = [];
-  const outputs = [assessment, { tamara: "F01", lera: "F01", gleb: "F01", vadik: "F01" }, authored];
-  globalThis.fetch = async (_url, init) => {
-    requests.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(outputs[requests.length - 1]) }, finish_reason: "stop" }], usage: { prompt_tokens: 20, completion_tokens: 20 } }), { status: 200 });
-  };
-  process.env.AI_PROVIDER = "openai"; process.env.OPENAI_API_KEY = "synthetic-test-key";
-  delete process.env.AI_INDEPENDENT_PERSPECTIVE; delete process.env.AI_EDITORIAL_SELECTION; delete process.env.OPENAI_WRITER_MODEL;
-  try {
-    const result = await runAnalysisPipeline({ resumeText: resume, professionalAssessment: assessment, personaId: "lera" });
-    expect(requests).toHaveLength(3);
-    expect(requests[2].model).toBe("gpt-6.1-sol");
-    expect(result.report.generationMeta?.stages.map(s => s.name)).toContain("persona-editorial-selection");
-  } finally {
-    globalThis.fetch = originalFetch;
-    keys.forEach((key, i) => { if (saved[i] === undefined) delete process.env[key]; else process.env[key] = saved[i]; });
-  }
-});
-
 test("editorial selection cannot introduce an unknown observation", async () => {
   const { resume, assessment } = fixture();
   const previousPerspective = process.env.AI_INDEPENDENT_PERSPECTIVE;

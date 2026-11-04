@@ -45,7 +45,7 @@ test("full OpenAI route with stub transport saves facts, plan, checked author re
    case "coordinated_plan_v1":expect(content?.sharedFacts).toBeTruthy();expect(JSON.parse(input).resumeText).toBe(text);response=plan;break;
    case "assessment_grounding_review_v1":expect(content?.coordinatedPlan).toBeTruthy();expect(JSON.parse(input).claims.some((c:{id:string})=>c.id==="professionalAssessment.overallImpression")).toBe(true);response={decisions:assessmentClaims(plan.views.tamara.assessment).map(c=>({id:c.id,supported:true,reason:""}))};break;
    case "coordinated_view_repair_v1":expect(JSON.parse(input).shownReplies[0].comment).toBe(authored.verdict.comment);response={selectedId:"S01",angle:"Самостоятельный второй взгляд",imageDirection:"Иной образ",overlapReason:"Краткий фрагмент"};break;
-   case "persona_review_v2":if(steps.includes("coordinated_view_repair_v1"))expect(JSON.parse(input).shownReplies[0].comment).toBe(authored.verdict.comment);expect(JSON.parse(input).fullResume).toBe(text);expect(JSON.parse(input).selectedAnchor.item.id).toBe("S01");response=authored;break;
+   case "persona_review_v2":expect(payload.model).toBe("gpt-6.1-sol");if(steps.includes("coordinated_view_repair_v1"))expect(JSON.parse(input).shownReplies[0].comment).toBe(authored.verdict.comment);expect(JSON.parse(input).fullResume).toBe(text);expect(JSON.parse(input).selectedAnchor.item.id).toBe("S01");response=authored;break;
    case "final_grounding_review_v1":expect(JSON.parse(input).draft.verdict.comment).toBe(authored.verdict.comment);response={supported:true,reason:""};break;
    default:throw new Error(`Unexpected call blocked: ${step}`);
   }
