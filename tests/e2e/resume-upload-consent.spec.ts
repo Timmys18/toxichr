@@ -21,3 +21,17 @@ test("direct upload requires consent and preserves its version in a synthetic DO
   expect(saved.sanitizedText).toContain("проводила интервью");
   expect(saved.versions[0].structuredContent).toMatchObject({ consentVersion: "v1" });
 });
+
+test("a synthetic PDF can be uploaded with consent", async ({ request, page }) => {
+  await page.setContent("<p>Product Manager. Since 2020, I have led development of a delivery product, interviewed customers, prepared requirements, coordinated engineers and analyzed the results of each release.</p>");
+  const pdf = await page.pdf({ format: "A4" });
+  const response = await request.post("/api/resumes/upload", {
+    headers: { "X-Resume-Consent": "v1" },
+    multipart: { file: { name: "synthetic-resume.pdf", mimeType: "application/pdf", buffer: pdf } },
+  });
+  expect(response.status(), await response.text()).toBe(200);
+  const { resumeId } = await response.json();
+  const saved = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId }, include: { versions: true } });
+  expect(saved.sanitizedText).toContain("interviewed customers");
+  expect(saved.versions[0].structuredContent).toMatchObject({ consentVersion: "v1" });
+});
