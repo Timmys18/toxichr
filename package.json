@@ -19,6 +19,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "backup:critical": "node scripts/backup-critical.mjs",
+    "backup:verify": "node scripts/verify-backup.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

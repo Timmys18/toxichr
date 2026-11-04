@@ -81,7 +81,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
     try {
       const form = new FormData();
       form.append("file", file);
-      const response = await fetch("/api/resumes/upload", { method: "POST", body: form });
+      const response = await fetch("/api/resumes/upload", { method: "POST", headers: { "X-Resume-Consent": "v1" }, body: form });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Не удалось загрузить файл");
       track("resume_uploaded", { mime: file.type || "unknown" });
@@ -101,7 +101,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
     try {
       const response = await fetch("/api/resumes/text", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Resume-Consent": "v1" },
         body: JSON.stringify({ text }),
       });
       const data = await response.json();

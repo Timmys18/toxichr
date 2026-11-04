@@ -37,7 +37,7 @@ test("результат, честный разбор вакансии и чет
   await expect(page.locator(".cabinet-feature")).toContainText("Продолжить ответы");
   await page.screenshot({ path: "artifacts/ux-ui-rebuild/working/cabinet-draft-desktop.png", fullPage: true, animations: "disabled" });
 
-  const second = await page.request.post("/api/resumes/text", { data: { text: `Мария Соколова — бухгалтер. Вела первичную документацию, сверяла счета и готовила отчёты с 2020 года. Работала с поставщиками и внутренними заявками. ${resume}` } });
+  const second = await page.request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: `Мария Соколова — бухгалтер. Вела первичную документацию, сверяла счета и готовила отчёты с 2020 года. Работала с поставщиками и внутренними заявками. ${resume}` } });
   expect(second.ok()).toBeTruthy();
   await page.reload();
   await expect(page.locator(".cabinet-resume-summary")).toHaveCount(2);

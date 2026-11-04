@@ -197,14 +197,14 @@ test("защитные сценарии API не ломают продукт", a
   expect(health.status()).toBe(200);
   expect(await health.json()).toMatchObject({ ok: true, service: "toxichr" });
 
-  const shortResume = await request.post("/api/resumes/text", { data: { text: "слишком коротко" } });
+  const shortResume = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: "слишком коротко" } });
   expect(shortResume.status()).toBe(400);
 
-  const longResume = await request.post("/api/resumes/text", { data: { text: "а".repeat(60_001) } });
+  const longResume = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: "а".repeat(60_001) } });
   expect(longResume.status()).toBe(413);
 
   const wrongFile = await request.post("/api/resumes/upload", {
-    multipart: {
+    headers: { "X-Resume-Consent": "v1" }, multipart: {
       file: { name: "resume.txt", mimeType: "text/plain", buffer: Buffer.from(RESUME) },
     },
   });
@@ -219,7 +219,7 @@ test("защитные сценарии API не ломают продукт", a
 });
 
 test("серверный цикл сохраняет две оценки, редактуру и сопоставление", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
 

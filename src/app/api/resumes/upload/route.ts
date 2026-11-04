@@ -9,6 +9,7 @@ import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 const MAX_BYTES = 8 * 1024 * 1024;
+const CONSENT_VERSION = "v1";
 
 export async function POST(request: Request) {
   const limited = rateLimit(`upload:${clientIp(request)}`, 30, 60_000);
@@ -17,6 +18,10 @@ export async function POST(request: Request) {
       `Слишком много загрузок. Подожди ${limited.retryAfterSec}с.`,
       429,
     );
+  }
+
+  if (request.headers.get("X-Resume-Consent") !== CONSENT_VERSION) {
+    return jsonError("Подтверди согласие на обработку резюме.", 403);
   }
 
   const form = await request.formData();
@@ -82,7 +87,7 @@ export async function POST(request: Request) {
         create: {
           versionNumber: 1,
           source: "upload",
-          structuredContent: { filename: file.name },
+          structuredContent: { filename: file.name, consentVersion: CONSENT_VERSION, consentedAt: new Date().toISOString() },
         },
       },
     },

@@ -7,6 +7,7 @@ import { trackServer } from "@/lib/analytics-server";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 
 type Body = { text?: string };
+const CONSENT_VERSION = "v1";
 const MAX_TEXT_LENGTH = 60_000;
 
 export async function POST(request: Request) {
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
   }
 
   const body = await readJson<Body>(request);
+  if (request.headers.get("X-Resume-Consent") !== CONSENT_VERSION) {
+    return jsonError("Подтверди согласие на обработку резюме.", 403);
+  }
   const raw = body?.text?.trim();
 
   if (!raw || raw.length < 80) {
@@ -41,7 +45,7 @@ export async function POST(request: Request) {
         create: {
           versionNumber: 1,
           source: "paste",
-          structuredContent: { rawLength: sanitizedText.length },
+          structuredContent: { rawLength: sanitizedText.length, consentVersion: CONSENT_VERSION, consentedAt: new Date().toISOString() },
         },
       },
     },

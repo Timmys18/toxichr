@@ -69,7 +69,7 @@ test("локальный backup содержит читаемую SQLite и фа
 });
 
 test("повтор checkout идемпотентен, а возврат подтверждает платёж без webhook", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();
@@ -123,7 +123,7 @@ test("повтор checkout идемпотентен, а возврат подт
 });
 
 test("сетевой сбой checkout сохраняет pending и повторяет тот же ключ", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();
@@ -158,7 +158,7 @@ test("сетевой сбой checkout сохраняет pending и повто�
 });
 
 test("отмена YooKassa не выдаёт пакет и освобождает checkout для новой попытки", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();
@@ -226,7 +226,7 @@ test("регистрация без согласия не создаёт акк�
 });
 
 test("доступ различает pending, failed, canceled и paid при возврате после оплаты", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();
@@ -252,7 +252,7 @@ test("доступ различает pending, failed, canceled и paid при �
 });
 
 test("недоступный YooKassa сохраняет pending без ложного 404", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();
@@ -265,7 +265,7 @@ test("недоступный YooKassa сохраняет pending без ложн
 
 for (const entryPoint of ["access", "checkout"] as const) {
   test(`старая покупка распознаётся через ${entryPoint} без повторной оплаты`, async ({ request }) => {
-    const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+    const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
     expect(resumeResponse.status()).toBe(200);
     const { resumeId } = await resumeResponse.json();
     const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
@@ -311,7 +311,7 @@ for (const entryPoint of ["access", "checkout"] as const) {
 }
 
 test("платный match закрыт сервером, а самостоятельный разбор вакансии остаётся бесплатным", async ({ request }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
 
@@ -428,7 +428,7 @@ test("аудит: владельцы, повторный анализ и ист�
   try {
     const session = await (await owner.get("/api/auth/session")).json();
     expect(session.user.id).toBeTruthy();
-    const { resumeId } = await (await owner.post("/api/resumes/text", { data: { text: RESUME } })).json();
+    const { resumeId } = await (await owner.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } })).json();
     expect((await prisma.resume.findUniqueOrThrow({ where: { id: resumeId } })).userId).toBe(session.user.id);
     expect((await other.post("/api/analyses", { data: { resumeId, personaId: "lera" } })).status()).toBe(403);
     const deniedStream = await other.post("/api/analyses/stream", { data: { resumeId, personaId: "lera" } });

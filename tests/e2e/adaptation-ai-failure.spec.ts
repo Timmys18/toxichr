@@ -15,7 +15,7 @@ const VACANCY = `Senior Product Manager
 Важно уметь работать с продуктовыми метриками и приоритизацией дорожной карты.`;
 
 async function prepareRecheck(request: APIRequestContext, marker: string) {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
@@ -52,7 +52,7 @@ async function prepareRecheck(request: APIRequestContext, marker: string) {
 }
 
 async function prepareAdaptation(request: APIRequestContext) {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();
@@ -74,7 +74,7 @@ async function prepareAdaptation(request: APIRequestContext) {
 
 async function prepareImprovement(request: APIRequestContext) {
   const resumeText = `Анна Петрова\nМенеджер продукта\nProduct Manager, 2021–2025\nПроводила интервью с пользователями и готовила требования для команды.`;
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: resumeText } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: resumeText } });
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });
   const { analysisId } = await analysisResponse.json();

@@ -28,7 +28,7 @@ test("unknown без цитаты из резюме всё равно созда
 });
 
 test("адаптация создаёт новую версию по подтверждённому факту и повторно сопоставляет её без второго списания", async ({ request, page }) => {
-  const resumeResponse = await request.post("/api/resumes/text", { data: { text: RESUME } });
+  const resumeResponse = await request.post("/api/resumes/text", { headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME } });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
   const analysisResponse = await request.post("/api/analyses", { data: { resumeId, personaId: "lera" } });

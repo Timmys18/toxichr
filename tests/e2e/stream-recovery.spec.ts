@@ -24,7 +24,7 @@ function completedId(stream: string): string | null {
 
 test("повторный поток возвращает готовый разбор без второго запуска AI", async ({ request }) => {
   const resumeResponse = await request.post("/api/resumes/text", {
-    data: { text: RESUME },
+    headers: { "X-Resume-Consent": "v1" }, data: { text: RESUME },
   });
   expect(resumeResponse.status()).toBe(200);
   const { resumeId } = await resumeResponse.json();
