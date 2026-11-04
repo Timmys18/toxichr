@@ -67,7 +67,7 @@ test("цены и auth используют единый mobile-контур б�
   );
 
   await page.goto("/auth");
-  await page.getByRole("button", { name: "Зарегистрироваться" }).click();
+  await page.getByRole("button", { name: "Создать аккаунт" }).click();
   await expect(page.getByText(/Согласен на обработку резюме/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
     await page.evaluate(() => window.innerWidth + 1),
