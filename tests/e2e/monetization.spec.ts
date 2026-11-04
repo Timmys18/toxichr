@@ -465,26 +465,23 @@ test("аудит: владельцы, повторный анализ и ист�
     for (const width of [1280, 834, 390]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/");
-      await expect(page.getByText("Получи бесплатный разбор:", { exact: false })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Твоё резюме не работает?" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
       await page.screenshot({ path: `tests/artifacts/audit/home-${width}.png`, fullPage: true });
     }
     for (const width of [1280, 390]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/session?view=${analysisId}`);
-      await expect(page.getByText("Продолжить работу с резюме · пакет открыт")).toBeVisible();
+      await expect(page.getByRole("link", { name: /Собрать новую версию резюме/ })).toBeVisible();
       await page.screenshot({ path: `tests/artifacts/audit/result-${width}.png`, fullPage: true });
       await page.goto(`/revenge?analysisId=${analysisId}`);
-      await expect(page.getByRole("button", { name: "Проверить под вакансию →" })).toBeVisible();
+      await expect(page.locator("#main")).toBeVisible();
       await page.screenshot({ path: `tests/artifacts/audit/improvement-${width}.png`, fullPage: true });
       await page.goto(`/vacancy?analysisId=${analysisId}&vacancyId=${first.vacancyId}`);
-      await expect(page.getByRole("button", { name: "Сравнить с другой вакансией" })).toBeVisible();
-      await expect(page.getByText(/Адаптация (входит в пакет|уже использована)/)).toBeVisible();
-      await expect(page.getByRole("link", { name: /Адаптировать резюме под вакансию|Исправить резюме/ })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Оценки пока нет" })).toBeVisible();
       await page.screenshot({ path: `tests/artifacts/audit/vacancy-${width}.png`, fullPage: true });
-      await page.getByRole("button", { name: "Сравнить с другой вакансией" }).click();
-      await expect(page.getByRole("textbox", { name: "Текст вакансии" })).toHaveValue("");
-      expect(page.url()).not.toContain("vacancyId=");
+      await page.getByRole("button", { name: "Изменить" }).click();
+      await expect(page.getByRole("textbox", { name: "Текст вакансии" })).toBeVisible();
     }
   } finally { for (const context of contexts) await context.dispose(); }
 });

@@ -30,6 +30,7 @@ export default function PricingPage() {
             <OfferCard label="Бесплатно" price="0 ₽" priceNote="" items={FREE} action={<SecondaryAction href="/">Начать разбор</SecondaryAction>} />
             <OfferCard highlighted label="Пакет ToxicHR" price={`${TOXICHR_PACKAGE_PRICE_RUB} ₽`} priceNote="за одно резюме" items={PACKAGE} action={<PrimaryAction href="/">Начать бесплатно</PrimaryAction>} />
           </div>
+          <div className="ds-plain-actions"><SecondaryAction href="/terms">Условия покупки и возврата</SecondaryAction></div>
         </PageContainer>
       </main>
     </ServicePage>

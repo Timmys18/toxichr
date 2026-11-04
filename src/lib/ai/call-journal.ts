@@ -3,7 +3,7 @@ import path from "node:path";
 import type { AiRequest, AiResponse } from "./gateway";
 /** Receipt metadata only. Each fsynced line survives later parser/process errors. */
 function append(event: Record<string, unknown>) {
- const file=path.resolve(process.env.AI_CALL_JOURNAL_FILE ?? path.join(process.cwd(),".data","ai-call-ledger.jsonl"));
+ const file=path.resolve(/* turbopackIgnore: true */ process.env.AI_CALL_JOURNAL_FILE ?? path.join(process.cwd(),".data","ai-call-ledger.jsonl"));
  mkdirSync(path.dirname(file),{recursive:true});
  appendFileSync(file,JSON.stringify({...event,at:new Date().toISOString()})+"\n",{flush:true});
 }

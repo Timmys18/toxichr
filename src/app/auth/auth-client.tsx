@@ -39,7 +39,7 @@ export function AuthClient() {
         const response = await fetch("/api/auth/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "Не удалось запросить ссылку.");
-        setResetMessage(data.resetToken ? `Ссылка для локальной проверки: /auth?reset=${data.resetToken}` : data.message);
+        setResetMessage(data.message);
         setBusy(false);
         return;
       }

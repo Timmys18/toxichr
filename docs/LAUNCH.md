@@ -19,8 +19,14 @@ Production readiness before public beta traffic.
 | `BETA_PAYWALL_ENABLED` | Keep `false` until payment smoke-test is complete |
 | `YOOKASSA_SHOP_ID` | Production YooKassa shop id |
 | `YOOKASSA_SECRET_KEY` | Production YooKassa secret key |
+| `RESEND_API_KEY` | Server-only key for password-reset mail; never expose to the browser |
+| `PASSWORD_RESET_FROM_EMAIL` | Sender address on a verified mail domain |
+| `PASSWORD_RESET_APP_URL` | Server-only public HTTPS origin used in reset links |
+| `SUPPORT_EMAIL` | Working support inbox published in purchase terms and privacy page |
 
 Copy from `.env.example`. Never commit `.env`.
+
+Password recovery returns `503` until all three mail settings are present. Before beta traffic, request a reset for a controlled account, confirm the email arrives, open the HTTPS link, set a new password, and confirm the link cannot be reused. Approve the seller identity, purchase terms, refund procedure, and support inbox before accepting payments; the prepared pages alone do not establish those facts.
 
 ## Commercial beta
 
@@ -81,6 +87,8 @@ The webhook never grants access from the incoming payload alone: the server re-r
 13. GitHub Actions is green on the release commit.
 14. Playwright desktop core loop and mobile viewport checks are green.
 15. `/ops/funnel` shows unique-user conversion rates rather than raw event totals.
+16. Password reset email arrives in a controlled inbox and the one-time link works on the public HTTPS origin.
+17. The support inbox receives a test message; the published purchase terms and privacy page contain approved seller and refund details.
 
 ## Smoke path
 
