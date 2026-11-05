@@ -14,6 +14,7 @@ import { ANALYSIS_RETRY_MESSAGE, requestErrorMessage } from "@/lib/user-facing-e
 import { CollapsibleSection, EmptyState, PageContainer, PrimaryAction, SecondaryAction, SectionLabel } from "@/components/ui/system";
 
 type StreamEvent =
+  | { type: "heartbeat" }
   | { type: "stage"; stage: string; status: "start" | "done" }
   | { type: "finding"; stage: string; message: string }
   | { type: "roast"; delta: string }
@@ -48,13 +49,21 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
   useEffect(() => {
     let cancelled = false;
     let settled = false;
-    const watch = window.setTimeout(() => {
-      if (!cancelled && !settled) {
-        settled = true;
-        setError(ANALYSIS_RETRY_MESSAGE);
-        setPhase("error");
-      }
-    }, 75_000);
+    let watch = 0;
+    const fail = (reason: unknown) => {
+      if (cancelled || settled) return;
+      settled = true;
+      window.clearTimeout(watch);
+      setError(requestErrorMessage(reason, ANALYSIS_RETRY_MESSAGE));
+      setPhase("error");
+    };
+    const resetWatch = () => {
+      window.clearTimeout(watch);
+      watch = window.setTimeout(() => {
+        if (!cancelled && !settled) fail(new Error(ANALYSIS_RETRY_MESSAGE));
+      }, 75_000);
+    };
+    resetWatch();
 
     async function loadReport(id: string) {
       for (let i = 0; i < 10; i += 1) {
@@ -82,7 +91,7 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
         }
         await new Promise((resolve) => window.setTimeout(resolve, 600));
       }
-      if (!cancelled) setError("Разбор не загрузился. Попробуй ещё раз.");
+      throw new Error("Разбор не загрузился. Попробуй ещё раз.");
     }
 
     function onEvent(event: StreamEvent) {
@@ -94,13 +103,10 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
       } else if (event.type === "roast") {
         setStage("persona");
         setLiveRoast((previous) => previous + event.delta);
-      } else if (event.type === "completed") void loadReport(event.analysisId);
+      } else if (event.type === "completed") void loadReport(event.analysisId).catch(fail);
       else if (event.type === "error") {
-        settled = true;
-        window.clearTimeout(watch);
         setPurchaseAnalysisId(event.purchaseAnalysisId ?? null);
-        setError(requestErrorMessage(new Error(event.message), ANALYSIS_RETRY_MESSAGE));
-        setPhase("error");
+        fail(new Error(event.message));
       }
     }
 
@@ -134,6 +140,7 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
           if (!raw) continue;
           try {
             const event = JSON.parse(raw) as StreamEvent;
+            if (event.type !== "error") resetWatch();
             onEvent(event);
             saw = true;
             if (event.type === "completed" || event.type === "error") terminal = true;
@@ -180,12 +187,7 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
           }
         }
       } catch (reason) {
-        settled = true;
-        window.clearTimeout(watch);
-        if (!cancelled) {
-          setError(requestErrorMessage(reason, ANALYSIS_RETRY_MESSAGE));
-          setPhase("error");
-        }
+        fail(reason);
       }
     })();
 

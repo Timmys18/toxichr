@@ -110,7 +110,7 @@ export async function findReusableAnalysis(
 
 export async function waitForAnalysis(
   analysisId: string,
-  timeoutMs = 75_000,
+  timeoutMs = 240_000,
 ): Promise<"COMPLETED" | "FAILED" | "TIMEOUT"> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {

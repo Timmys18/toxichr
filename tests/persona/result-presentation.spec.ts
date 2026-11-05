@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { resultPresentation } from "../../src/lib/ai/result-presentation";
+import { prioritizeFindings, resultPresentation } from "../../src/lib/ai/result-presentation";
 import { runHeuristicAnalysis } from "../../src/lib/ai/heuristics";
 import { validatePersonaDraft, validateUserFacingLanguage } from "../../src/lib/ai/writer-validator";
 
@@ -40,4 +40,11 @@ test("unknown lead reference cannot pass validation", () => {
     priorities: [{ findingIds: ["F01"], action: "Уточните содержание задачи." }], shareLines: ["Формулировка должна показывать работу."],
   };
   expect(validatePersonaDraft(draft, new Set(["F01"])).errors).toContain("главная реплика ссылается на несуществующий findingId");
+});
+
+test("visible issues start with the HR's lead even when the analyst listed it last", () => {
+  const findings = [{ id: "F01" }, { id: "F02" }, { id: "F03" }, { id: "F04" }];
+  const shown = prioritizeFindings(findings, ["F03"], ["F01", "F03", "F02"]);
+  expect(shown.map(item => item.id)).toEqual(["F03", "F01", "F02", "F04"]);
+  expect(findings.map(item => item.id)).toEqual(["F01", "F02", "F03", "F04"]);
 });

@@ -12,10 +12,9 @@ Production readiness before public beta traffic.
 | `DATABASE_URL` | Persistent production database |
 | `AUTH_SECRET` | Long random (`openssl rand -base64 32`) |
 | `OPS_EMAILS` | Emails allowed to open `/ops/funnel` |
-| `YANDEX_AI_API_KEY` + `YANDEX_AI_FOLDER_ID` | Required for YandexGPT; store only as production secrets |
-| Model | Fixed in code: `gpt://<YANDEX_AI_FOLDER_ID>/yandexgpt-5.1` |
-| `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` | Optional non-production comparison providers |
-| `AI_PROVIDER` | `mock` \| `yandex` \| `openai` \| `anthropic` |
+| `AI_PROVIDER` | `openai` для выпуска; `mock` только для локальных бесплатных проверок |
+| `OPENAI_API_KEY` | Серверный ключ OpenAI API; хранить только в защищённых настройках |
+| `OPENAI_ANALYST_MODEL`, `OPENAI_WRITER_MODEL`, `OPENAI_EDITOR_MODEL` | Модели анализа и авторского ответа из `.env.example`; редактор должен сохранять качество автора |
 | `BETA_PAYWALL_ENABLED` | Keep `false` until payment smoke-test is complete |
 | `YOOKASSA_SHOP_ID` | Production YooKassa shop id |
 | `YOOKASSA_SECRET_KEY` | Production YooKassa secret key |
@@ -54,7 +53,7 @@ The repository includes a single-VM Docker Compose/Caddy deployment in `deploy/`
 
 Use one persistent Linux VM for the current SQLite, local-upload and in-process rate-limit architecture. The public domain must point to that VM, with ports 80/443 open. Keep the app port private; `deploy/compose.yml` exposes only Caddy. The proxy overwrites `X-Real-IP`, which the app uses for rate limiting.
 
-On the selected host, place the checkout under `/opt/toxichr`, a private environment file outside Git (for example `/etc/toxichr/app.env`), and persistent writable directories for app data and backups. The app process runs as UID 1000. The environment file needs `NEXT_PUBLIC_APP_URL=https://<domain>`, `DATABASE_URL=file:./.data/toxichr.db`, a generated `AUTH_SECRET`, live `AI_PROVIDER`/API key, `OPS_EMAILS`, `BETA_PAYWALL_ENABLED=false` initially, and production `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY`. Restrict the file to the deploying operator. Never print or commit these values.
+On the selected host, place the checkout under `/opt/toxichr`, a private environment file outside Git (for example `/etc/toxichr/app.env`), and persistent writable directories for app data and backups. The app process runs as UID 1000. The environment file needs `NEXT_PUBLIC_APP_URL=https://<domain>`, `DATABASE_URL=file:./.data/toxichr.db`, a generated `AUTH_SECRET`, `AI_PROVIDER=openai` and `OPENAI_API_KEY`, `OPS_EMAILS`, `BETA_PAYWALL_ENABLED=false` initially, and production `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY`. Restrict the file to the deploying operator. Never print or commit these values. The existing server's old provider setting must be changed only at an explicitly approved deployment checkpoint, after a controlled OpenAI access check from that server.
 
 Set `PUBLIC_HOST`, `TOXICHR_ENV_FILE`, `TOXICHR_DATA_DIR` and `TOXICHR_BACKUP_DIR` in the deployment shell (or a root-only Compose env file). The two directories must be absolute host paths; backup storage should be encrypted and copied off-host. From the repository root:
 

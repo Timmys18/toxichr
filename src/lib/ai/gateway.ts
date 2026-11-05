@@ -144,7 +144,7 @@ export function assertAiReady(): void {
   const provider = resolveProvider();
   if (provider === "openai" && !hasOpenAiKey()) {
     throw new AiConfigError(
-      "Нужен ключ ChatGPT: добавь OPENAI_API_KEY в файл .env (ключ с platform.openai.com) и перезапусти сервер.",
+      "Нужен ключ OpenAI API: добавь OPENAI_API_KEY в защищённые настройки окружения и перезапусти сервер.",
     );
   }
   if (provider === "anthropic" && !hasAnthropicKey()) {
@@ -248,7 +248,7 @@ async function callOpenAi(
       );
     }
     if (res.status === 403 && /country|region|territory/i.test(err)) {
-      throw new AiConfigError("OpenAI недоступен в регионе размещения сервера. Выбери поддерживаемого провайдера.");
+      throw new AiConfigError("OpenAI недоступен с выбранного сервера. Проверь размещение и доступ к OpenAI API.");
     }
     if (res.status === 429) {
       throw new Error(

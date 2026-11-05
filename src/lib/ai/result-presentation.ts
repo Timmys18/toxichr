@@ -1,5 +1,14 @@
 import type { AnalysisReport } from "./schemas";
 
+/** Put the HR's supported lead and actions before the analyst's original order. */
+export function prioritizeFindings<T extends { id: string }>(findings: T[], leadIds: string[], actionIds: string[]): T[] {
+  const rank = new Map<string, number>();
+  [...leadIds, ...actionIds].forEach((id, index) => { if (!rank.has(id)) rank.set(id, index); });
+  return findings.map((item, index) => ({ item, index }))
+    .sort((a, b) => (rank.get(a.item.id) ?? Infinity) - (rank.get(b.item.id) ?? Infinity) || a.index - b.index)
+    .map(({ item }) => item);
+}
+
 /** Never attribute the analyst's first finding to the persona's lead. */
 export function resultPresentation(report: AnalysisReport) {
   const assessment = report.professionalAssessment;

@@ -57,6 +57,7 @@ export async function POST(request: Request) {
           // клиент отключился — молча продолжаем, результат сохранится в БД
         }
       };
+      const heartbeat = setInterval(() => send({ type: "heartbeat" }), 15_000);
 
       try {
         const reusable = await findReusableAnalysis(resumeId, personaId, session?.user?.id);
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
             : analysisErrorMessage(error);
         send({ type: "error", message, purchaseAnalysisId: error instanceof AnalysisInputError ? error.purchaseAnalysisId : undefined });
       } finally {
+        clearInterval(heartbeat);
         try {
           controller.close();
         } catch {
