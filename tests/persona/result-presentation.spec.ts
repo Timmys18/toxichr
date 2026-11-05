@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { prioritizeFindings, resultPresentation } from "../../src/lib/ai/result-presentation";
+import { readFileSync } from "node:fs";
+import { prioritizeFindings, resultPresentation, selectReportFindings } from "../../src/lib/ai/result-presentation";
+import { unsupportedAssessmentClaimReasons } from "../../src/lib/ai/assessment-review";
+import { ProfessionalAssessmentSchema } from "../../src/lib/ai/professional-assessment";
 import { runHeuristicAnalysis } from "../../src/lib/ai/heuristics";
 import { validatePersonaDraft, validateUserFacingLanguage } from "../../src/lib/ai/writer-validator";
 
@@ -47,4 +50,29 @@ test("visible issues start with the HR's lead even when the analyst listed it la
   const shown = prioritizeFindings(findings, ["F03"], ["F01", "F03", "F02"]);
   expect(shown.map(item => item.id)).toEqual(["F03", "F01", "F02", "F04"]);
   expect(findings.map(item => item.id)).toEqual(["F01", "F02", "F03", "F04"]);
+});
+
+test("a critical finding cannot be displaced by the eight-item presentation limit", () => {
+  const findings = Array.from({ length: 10 }, (_, index) => ({ id: `F${index + 1}`, severity: index === 9 ? "critical" : "medium" }));
+  const shown = selectReportFindings(findings, ["F1"], ["F2", "F3"]);
+  expect(shown).toHaveLength(8);
+  expect(shown[0].id).toBe("F1");
+  expect(shown.some(item => item.id === "F10")).toBe(true);
+  expect(shown.some(item => item.id === "F9")).toBe(false);
+});
+
+test("all critical findings survive even when there are more than the usual limit", () => {
+  const findings = Array.from({ length: 10 }, (_, index) => ({ id: `F${index + 1}`, severity: "critical" }));
+  expect(selectReportFindings(findings, ["F1"], [])).toHaveLength(10);
+});
+
+test("the saved H10 report flags invented time savings and hidden proof", () => {
+  const text = readFileSync("artifacts/auditor-live-repair-08/H10-resume.txt", "utf8");
+  const saved = JSON.parse(readFileSync("artifacts/auditor-live-repair-08/H10-lera.json", "utf8"));
+  const assessment = ProfessionalAssessmentSchema.parse(saved.report.professionalAssessment);
+  const rejected = unsupportedAssessmentClaimReasons(text, assessment);
+  expect([...rejected.keys()].sort()).toEqual(["F21", "S21"]);
+  assessment.strengths[0].interpretation = "Сэкономила время команды благодаря списку вопросов.";
+  expect(unsupportedAssessmentClaimReasons(text, assessment).has("S21")).toBe(true);
+  expect(unsupportedAssessmentClaimReasons(`${text} Сократила время встречи на 20 минут.`, assessment).has("S21")).toBe(false);
 });

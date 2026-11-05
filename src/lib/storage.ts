@@ -2,7 +2,7 @@ import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-const UPLOAD_DIR = path.join(process.cwd(), ".data", "uploads");
+const UPLOAD_DIR = path.resolve(process.env.LOCAL_UPLOAD_DIR || path.join(process.cwd(), ".data", "uploads"));
 
 export async function saveUpload(
   buffer: Buffer,

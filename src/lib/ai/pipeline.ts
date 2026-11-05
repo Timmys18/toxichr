@@ -17,7 +17,7 @@ import { voiceCalibration } from "@/lib/ai/voice/runtime";
 import { reviewAssessment } from "@/lib/ai/assessment-review";
 import { reviewFinalDraft } from "@/lib/ai/final-review";
 import { selectEditorialAnchor } from "@/lib/ai/editorial-selection";
-import { prioritizeFindings } from "@/lib/ai/result-presentation";
+import { selectReportFindings } from "@/lib/ai/result-presentation";
 import { AUTHOR_DIRECTION, CHARACTER_DIRECTION } from "@/lib/ai/voice/direction";
 import {
   buildSharePrivacyContext,
@@ -173,8 +173,8 @@ function reportFromDraft(
 ): AnalysisReport {
   const actionFor = (id: string) => draft.priorities.find((item) => item.findingIds.includes(id))?.action ?? "Уточните формулировку только реальными фактами из опыта.";
   // The visible issues should follow the HR's chosen lead and proposed actions.
-  const orderedFindings = prioritizeFindings(assessment.findings, draft.verdict.findingIds ?? [], draft.priorities.flatMap((item) => item.findingIds));
-  const topProblems: Problem[] = orderedFindings.slice(0, 8).map((item, index) => ({
+  const orderedFindings = selectReportFindings(assessment.findings, draft.verdict.findingIds ?? [], draft.priorities.flatMap((item) => item.findingIds));
+  const topProblems: Problem[] = orderedFindings.map((item, index) => ({
     id: `p-${index}`,
     severity: item.severity,
     title: item.interpretation.slice(0, 120),

@@ -117,7 +117,7 @@ export const AnalysisReportSchema = z.object({
   viralMetrics: ViralMetricsSchema,
   verdict: VerdictSchema,
   hrReview: HrReviewSchema,
-  topProblems: z.array(ProblemSchema).max(12),
+  topProblems: z.array(ProblemSchema).max(14),
   strengths: z.array(StrengthSchema).max(6),
   theatreFindings: z.array(TheatreFindingSchema).min(3),
   shareQuotes: z.array(ShareQuoteSchema).min(1).max(5),

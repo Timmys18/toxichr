@@ -29,6 +29,21 @@ test("неподтверждённое итоговое поле после од
   expect(result.assessment.professionalAssessment.overallImpression).toBe(a.strengths[0].interpretation);
  });
 });
+test("скрытая экономия времени и обвинение в сокрытии доказательства исправляются до выдачи",async()=>{
+ const resumeText=readFileSync("artifacts/auditor-live-repair-08/H10-resume.txt","utf8");
+ const saved=JSON.parse(readFileSync("artifacts/auditor-live-repair-08/H10-lera.json","utf8"));
+ const before=saved.report.professionalAssessment;
+ const corrected=structuredClone(before);
+ corrected.findings[0].interpretation="Командный показатель не описывает личный вклад в удержание клиентов.";
+ corrected.strengths[0].interpretation="Подготовленный список вопросов используется менеджерами на еженедельной встрече.";
+ const allSupported=(value:typeof before)=>({decisions:assessmentClaims(value).map(c=>({id:c.id,supported:true,reason:""}))});
+ await stub([allSupported(before),corrected,allSupported(corrected)],async()=>{
+  const result=await reviewAssessment(resumeText,before,true);
+  expect(result.assessment.findings[0].interpretation).toBe(corrected.findings[0].interpretation);
+  expect(result.assessment.strengths[0].interpretation).toBe(corrected.strengths[0].interpretation);
+  expect(JSON.stringify(result.assessment)).not.toMatch(/экономит время|убираешь доказательство/iu);
+ });
+});
 test("после сохранения плана отклонение главного наблюдения сбрасывает его до автора",async()=>{
  const r=await resume();const corrected=assessment();corrected.strengths[0].interpretation="Указан конкретный рабочий результат в пределах описанного действия.";
  try{await stub([decisions("S01"),corrected,decisions()],async()=>{await expect(createAndRunAnalysis(r.id,"tamara")).rejects.toThrow("проверку разбора");});

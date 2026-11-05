@@ -9,6 +9,15 @@ export function prioritizeFindings<T extends { id: string }>(findings: T[], lead
     .map(({ item }) => item);
 }
 
+/** Keep the HR's lead and every critical finding, even when they exceed the usual eight. */
+export function selectReportFindings<T extends { id: string; severity: string }>(findings: T[], leadIds: string[], actionIds: string[], limit = 8): T[] {
+  const ordered = prioritizeFindings(findings, leadIds, actionIds);
+  const leads = new Set(leadIds);
+  const essential = ordered.filter(item => leads.has(item.id) || item.severity === "critical");
+  const rest = ordered.filter(item => !leads.has(item.id) && item.severity !== "critical");
+  return [...essential, ...rest.slice(0, Math.max(0, limit - essential.length))];
+}
+
 /** Never attribute the analyst's first finding to the persona's lead. */
 export function resultPresentation(report: AnalysisReport) {
   const assessment = report.professionalAssessment;

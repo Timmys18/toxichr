@@ -324,8 +324,8 @@ function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, r
   }
 
   const r = report;
-  const featuredProblems = r.topProblems.slice(0, 3);
-  const additionalProblems = r.topProblems.slice(3);
+  const featuredProblems = r.topProblems.filter((problem, index) => index < 3 || problem.severity === "critical");
+  const additionalProblems = r.topProblems.filter((problem, index) => index >= 3 && problem.severity !== "critical");
   const presentation = resultPresentation(r);
   const hrGenitive = personaCode ? { tamara: "Тамары Петровны", lera: "Леры", gleb: "Глеба Аркадьевича", vadik: "Вадика" }[personaCode] : "HR";
   const feminineVoice = personaCode === "lera" || personaCode === "tamara";
@@ -349,7 +349,7 @@ function Verdict({ report, hrName, hrImage, analysisId, resumeId, personaCode, r
       </div>
 
       {featuredProblems.length ? <section className="result-issues" aria-labelledby="result-issues-heading"><h2 id="result-issues-heading">Что важно исправить</h2><div className="result-issue-list">{featuredProblems.map(issue)}</div></section> : null}
-      {additionalProblems.length ? <CollapsibleSection className="result-extra" title={`Остальные замечания · ${additionalProblems.length}`}><div className="result-issue-list">{additionalProblems.map((problem, index) => issue(problem, index + 3))}</div></CollapsibleSection> : null}
+      {additionalProblems.length ? <CollapsibleSection className="result-extra" title={`Остальные замечания · ${additionalProblems.length}`}><div className="result-issue-list">{additionalProblems.map((problem, index) => issue(problem, index + featuredProblems.length))}</div></CollapsibleSection> : null}
 
       {presentation.paragraphs.length ? <CollapsibleSection className="result-extra" title={`Подробный разбор ${hrGenitive}`}><div className="result-review">{presentation.paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div></CollapsibleSection> : null}
 
