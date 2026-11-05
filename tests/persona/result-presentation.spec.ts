@@ -76,3 +76,16 @@ test("the saved H10 report flags invented time savings and hidden proof", () => 
   expect(unsupportedAssessmentClaimReasons(text, assessment).has("S21")).toBe(true);
   expect(unsupportedAssessmentClaimReasons(`${text} Сократила время встречи на 20 минут.`, assessment).has("S21")).toBe(false);
 });
+
+test("regular documented use is not a resume defect just because time savings were not measured", () => {
+  const saved = JSON.parse(readFileSync("artifacts/auditor-live-repair-08/H10-lera.json", "utf8"));
+  const assessment = ProfessionalAssessmentSchema.parse(saved.report.professionalAssessment);
+  const finding = assessment.findings[0];
+  finding.sourceQuote = "В 2024 году лично составила список вопросов. Менеджеры используют его на еженедельных встречах. Экономию времени от списка не измеряли.";
+  finding.interpretation = "Полезный рабочий инструмент есть, но его эффект оставлен без доказательства.";
+  expect(unsupportedAssessmentClaimReasons(finding.sourceQuote, assessment).has(finding.id)).toBe(true);
+  finding.interpretation = "Полезный инструмент описан без измерения эффекта.";
+  expect(unsupportedAssessmentClaimReasons(finding.sourceQuote, assessment).has(finding.id)).toBe(true);
+  finding.interpretation = "Неясно, кто отвечает за внедрение списка вопросов.";
+  expect(unsupportedAssessmentClaimReasons(finding.sourceQuote, assessment).has(finding.id)).toBe(false);
+});
