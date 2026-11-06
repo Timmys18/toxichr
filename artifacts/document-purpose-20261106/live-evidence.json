@@ -23,9 +23,21 @@
       "failedAnalysisRows": 2,
       "professionalPipelineCostUsd": 0.076563,
       "refreshResult": "not verified because the first result did not complete"
+    },
+    "successfulNewResume": {
+      "input": "new pasted synthetic customer support management resume",
+      "purposeDecision": "suitable",
+      "analysisId": "cmw4rxwj500294wubpk9dog0r",
+      "analysisStatus": "COMPLETED",
+      "resultMode": "live",
+      "elapsedMs": 93826,
+      "costUsd": 0.09403475,
+      "refresh": "same analysis ID and result; no new analysis",
+      "mobileHorizontalOverflowPx": 0,
+      "screenshots": ["resume-result-desktop.png", "resume-result-mobile.png"]
     }
   },
-  "totalLiveCostUsd": 0.077286,
-  "acceptance": "incomplete: positive end-to-end case did not produce an HR result",
-  "notes": "Costs are sums of the stand's completed provider-call receipts, not a billing statement. No live payment or production change."
+  "totalLiveCostUsd": 0.17132075,
+  "acceptance": "negative file stopped; new pasted resume reached a live HR result and survived refresh",
+  "notes": "The first positive candidate passed the gate but its downstream HR analysis failed twice; this remains a reliability observation. Costs are sums of the stand's completed provider-call receipts, not a billing statement. No live payment or production change."
 }
