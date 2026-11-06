@@ -3,6 +3,7 @@ import { acquireLease } from "./analysis-lease";
 import { aiCallContext } from "./ai/call-context";
 import { validatePlan, resumeHash, type CoordinatedPlan } from "./ai/coordinated-plan";
 import { aiMockEnabled, resolveProvider } from "./ai/gateway";
+import { classifyDocumentPurpose, storedDocumentPurpose, type DocumentPurposeRecord } from "./document-purpose";
 /**
  * Общий запуск анализа для sync-роута и SSE-стрима:
  * загрузка резюме → запись Analysis → пайплайн v3 → сохранение результата.
@@ -98,7 +99,9 @@ export async function findReusableAnalysis(
   });
   const currentResume = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId }, select: { sanitizedText: true } });
   const content = latest.structuredContent as { text?: string } | null;
-  const textHash = resumeHash(content?.text?.trim() || currentResume.sanitizedText || "");
+  const resumeText = content?.text?.trim() || currentResume.sanitizedText || "";
+  const textHash = resumeHash(resumeText);
+  if (storedDocumentPurpose(content, resumeText)?.decision !== "suitable") return null;
   const activeLease = await prisma.analysisLease.findFirst({ where: { id: `resume:${latest.id}`, expiresAt: { gt: new Date() } } });
   const reusable = recent.find((item) => {
     if (item.status === "RUNNING") return Boolean(activeLease);
@@ -151,6 +154,10 @@ async function createAndRunAnalysisLocked(
   if (!version) {
     throw new AnalysisInputError("Версия резюме не найдена.", 404);
   }
+  const versionContent = version.structuredContent as { text?: string } | null;
+  if (storedDocumentPurpose(versionContent, versionContent?.text?.trim() || resume.sanitizedText)?.decision !== "suitable") {
+    throw new AnalysisInputError("Проверка содержимого не завершена. Попробуй ещё раз.", 409);
+  }
 
   const verifyFence = async (tx: Prisma.TransactionClient) => {
     if (fence && !await tx.analysisLease.findFirst({ where: { ...fence, expiresAt: { gt: new Date() } } })) throw new Error("Блокировка утрачена до сохранения");
@@ -167,7 +174,6 @@ async function createAndRunAnalysisLocked(
   await trackServer("analysis_started", { analysisId: analysis.id, personaId });
 
   try {
-    const versionContent = version.structuredContent as { text?: string } | null;
     const resumeText = versionContent?.text?.trim() || resume.sanitizedText;
     const freshVersion = await prisma.resumeVersion.findUniqueOrThrow({ where: { id: version.id } });
     const stored = freshVersion.structuredContent as { coordinatedPlan?: unknown; sharedFacts?: { textHash: string; facts: CoordinatedPlan["facts"] } } | null;
@@ -320,8 +326,11 @@ export async function createAndRunAnalysis(
   const cachedAnswer = async () => {
     const candidates = await prisma.analysis.findMany({ where: { resumeVersionId: version.id, persona: { code: personaId }, status: "COMPLETED" }, orderBy: { createdAt: "desc" }, select: { id: true, reportPayload: true } });
     const current = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId } });
-    const content = version.structuredContent as { text?: string } | null;
-    const textHash = resumeHash(content?.text?.trim() || current.sanitizedText || "");
+    const freshVersion = await prisma.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, select: { structuredContent: true } });
+    const content = freshVersion.structuredContent as { text?: string } | null;
+    const resumeText = content?.text?.trim() || current.sanitizedText || "";
+    if (storedDocumentPurpose(content, resumeText)?.decision !== "suitable") return null;
+    const textHash = resumeHash(resumeText);
     const cached = candidates.find(c => {
       const r = c.reportPayload as { sourceTextHash?: string; generationMeta?: { promptVersion?: string; voice?: { status?: string }, stages?: { name?: string }[] } } | null;
       return r && (!(!aiMockEnabled() && resolveProvider() === "openai") || (r.generationMeta?.promptVersion?.includes("coordinated@2") && r.sourceTextHash === textHash)) && !r.generationMeta?.stages?.some(s => /fallback/.test(s.name ?? ""));
@@ -341,6 +350,30 @@ export async function createAndRunAnalysis(
     await assertResumeAccess(resumeId,currentUserId);
     const ready = await cachedAnswer(); if (ready) return ready;
     await lease.assertOwner();
+    const resume = await prisma.resume.findUniqueOrThrow({ where: { id: resumeId }, select: { sanitizedText: true, deletedAt: true } });
+    const freshVersion = await prisma.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, select: { structuredContent: true } });
+    if (resume.deletedAt) throw new AnalysisInputError("Резюме удалено.", 404);
+    const content = freshVersion.structuredContent as { text?: string } | null;
+    const text = content?.text?.trim() || resume.sanitizedText || "";
+    let purpose: DocumentPurposeRecord | null = storedDocumentPurpose(content, text);
+    if (!purpose) {
+      const checked = await classifyDocumentPurpose(text);
+      await lease.assertOwner();
+      await prisma.$transaction(async tx => {
+        const owner = await tx.analysisLease.findFirst({ where: { id: `resume:${version.id}`, owner: lease.owner, expiresAt: { gt: new Date() } } });
+        if (!owner) throw new AnalysisInputError("Проверка прервана. Попробуй ещё раз.", 409);
+        const current = await tx.resumeVersion.findUniqueOrThrow({ where: { id: version.id }, include: { resume: { select: { sanitizedText: true, deletedAt: true } } } });
+        const currentContent = current.structuredContent as { text?: string; redacted?: boolean } | null;
+        if (current.resume.deletedAt || currentContent?.redacted) throw new AnalysisInputError("Резюме удалено.", 404);
+        const currentText = currentContent?.text?.trim() || current.resume.sanitizedText || "";
+        if (resumeHash(currentText) !== checked.textHash) throw new AnalysisInputError("Текст изменился. Начни разбор ещё раз.", 409);
+        await tx.resumeVersion.update({ where: { id: version.id }, data: { structuredContent: JSON.parse(JSON.stringify({ ...currentContent, documentPurpose: checked })) } });
+      });
+      purpose = checked;
+    }
+    if (purpose.decision === "other") throw new AnalysisInputError("Это не резюме и не описание профессионального опыта. Загрузи резюме или вставь описание опыта.", 422);
+    if (purpose.decision === "uncertain") throw new AnalysisInputError("По этому тексту не удалось определить профессиональный опыт. Загрузи другой файл или добавь более полное описание опыта.", 422);
+    const readyAfterCheck = await cachedAnswer(); if (readyAfterCheck) return readyAfterCheck;
     await prisma.analysis.updateMany({ where: { resumeVersionId: version.id, status: "RUNNING" }, data: { status: "FAILED" } });
     return await createAndRunAnalysisLocked(resumeId, personaId, onEvent, version.id, currentUserId, lease.assertOwner, { id: `resume:${version.id}`, owner: lease.owner });
   } finally { await lease.release(); }

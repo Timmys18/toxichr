@@ -40,7 +40,8 @@ test("full OpenAI route with stub transport saves facts, plan, checked author re
   const content=(await prisma.resumeVersion.findUniqueOrThrow({where:{id:versionId}})).structuredContent as Record<string,unknown>|null;
   let response:unknown;
   switch(step){
-   case "resume_facts_v1": expect(content).toBeNull();response=plan.facts;break;
+   case "document_purpose_v1":response={decision:"suitable"};break;
+   case "resume_facts_v1": expect(content?.documentPurpose).toBeTruthy();response=plan.facts;break;
    case "facts_review_v1":response={supported:true,reason:""};break;
    case "coordinated_plan_v1":expect(content?.sharedFacts).toBeTruthy();expect(JSON.parse(input).resumeText).toBe(text);response=plan;break;
    case "assessment_grounding_review_v1":expect(content?.coordinatedPlan).toBeTruthy();expect(JSON.parse(input).claims.some((c:{id:string})=>c.id==="professionalAssessment.overallImpression")).toBe(true);response={decisions:assessmentClaims(plan.views.tamara.assessment).map(c=>({id:c.id,supported:true,reason:""}))};break;
@@ -53,7 +54,7 @@ test("full OpenAI route with stub transport saves facts, plan, checked author re
  };
  try {
   const first=await createAndRunAnalysis(r.id,"tamara");
-  expect(steps).toEqual(["resume_facts_v1","facts_review_v1","coordinated_plan_v1","assessment_grounding_review_v1","persona_review_v2","final_grounding_review_v1"]);
+  expect(steps).toEqual(["document_purpose_v1","resume_facts_v1","facts_review_v1","coordinated_plan_v1","assessment_grounding_review_v1","persona_review_v2","final_grounding_review_v1"]);
   const a=await prisma.analysis.findUniqueOrThrow({where:{id:first.analysisId}});
   expect(a.status).toBe("COMPLETED");expect(a.accountingIncomplete).toBe(false);
   const report=AnalysisReportSchema.parse(a.reportPayload);
@@ -61,10 +62,10 @@ test("full OpenAI route with stub transport saves facts, plan, checked author re
   const calls=await prisma.aiCall.findMany({where:{analysisId:a.id}});expect(calls).toHaveLength(6);expect(calls.every(c=>c.status==="COMPLETED"&&c.elapsedMs!==null&&c.costAmount!==null)).toBe(true);expect(a.costAmount).toBeCloseTo(calls.reduce((n,c)=>n+c.costAmount!,0),10);
   const receipts=readFileSync(process.env.AI_CALL_JOURNAL_FILE??".data/ai-call-ledger.jsonl","utf8").trim().split("\n").map(line=>JSON.parse(line));
   for(const call of calls)expect(receipts.some(e=>e.id===call.id&&e.status==="COMPLETED")).toBe(true);
-  const second=await createAndRunAnalysis(r.id,"tamara");expect(second.analysisId).toBe(first.analysisId);expect(steps).toHaveLength(6);expect(await prisma.analysis.count({where:{resumeVersionId:versionId}})).toBe(1);expect(await prisma.aiCall.count({where:{analysisId:a.id}})).toBe(6);expect(await prisma.analysisLease.count({where:{id:`resume:${versionId}`}})).toBe(0);
+  const second=await createAndRunAnalysis(r.id,"tamara");expect(second.analysisId).toBe(first.analysisId);expect(steps).toHaveLength(7);expect(await prisma.analysis.count({where:{resumeVersionId:versionId}})).toBe(1);expect(await prisma.aiCall.count({where:{analysisId:a.id}})).toBe(6);expect(await prisma.analysisLease.count({where:{id:`resume:${versionId}`}})).toBe(0);
   const other=await createAndRunAnalysis(r.id,"lera");
   expect(other.analysisId).not.toBe(first.analysisId);
-  expect(steps.slice(6)).toEqual(["assessment_grounding_review_v1","coordinated_view_repair_v1","persona_review_v2","final_grounding_review_v1"]);
+  expect(steps.slice(7)).toEqual(["assessment_grounding_review_v1","coordinated_view_repair_v1","persona_review_v2","final_grounding_review_v1"]);
   expect(await prisma.analysis.count({where:{resumeVersionId:versionId}})).toBe(2);
  } finally {
   globalThis.fetch=oldFetch;keys.forEach((k,i)=>{if(old[i]===undefined)delete process.env[k];else process.env[k]=old[i];});

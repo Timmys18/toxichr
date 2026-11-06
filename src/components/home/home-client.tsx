@@ -15,14 +15,14 @@ import styles from "./home-client.module.css";
 const MAX_BYTES = 8 * 1024 * 1024;
 type Pending = { kind: "file"; file: File; persona: PersonaId } | { kind: "text"; text: string; persona: PersonaId };
 
-export function HomeClient({ initialPersona, priceRub }: { initialPersona?: PersonaId; priceRub: number }) {
+export function HomeClient({ initialPersona, initialPaste = false, priceRub }: { initialPersona?: PersonaId; initialPaste?: boolean; priceRub: number }) {
   const router = useRouter();
   const [sel, setSel] = useState<PersonaId | null>(initialPersona ?? null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [showPaste, setShowPaste] = useState(false);
+  const [showPaste, setShowPaste] = useState(initialPaste);
   const [pastedText, setPastedText] = useState("");
   const [draftRestored, setDraftRestored] = useState(false);
   const [consentApproved, setConsentApproved] = useState(false);
@@ -94,7 +94,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
   }, [router]);
 
   const pasteResume = useCallback(async (text: string, persona: PersonaId) => {
-    if (text.trim().length < 80) return;
+    if (!text.trim()) return;
     setBusy(true);
     setError(null);
     track("resume_upload_started", { source: "paste", persona });
@@ -133,7 +133,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
   function requestAnalysis() {
     if (!sel || busy) return;
     const resume: Pending | null = showPaste
-      ? pastedText.trim().length >= 80 ? { kind: "text", text: pastedText, persona: sel } : null
+      ? pastedText.trim() ? { kind: "text", text: pastedText, persona: sel } : null
       : selectedFile ? { kind: "file", file: selectedFile, persona: sel } : null;
     if (!resume) return;
     if (consentApproved) start(resume);
@@ -147,8 +147,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
   }
 
   const pastedLength = pastedText.trim().length;
-  const missingPasteChars = Math.max(0, 80 - pastedLength);
-  const resumeReady = showPaste ? pastedLength >= 80 : selectedFile !== null;
+  const resumeReady = showPaste ? pastedLength > 0 : selectedFile !== null;
 
   return <div className={styles.home}>
     <section className={styles.hero} id="top" aria-labelledby="home-title">
@@ -170,7 +169,7 @@ export function HomeClient({ initialPersona, priceRub }: { initialPersona?: Pers
         {showPaste ? <div className={styles.pasteBox} id="paste-panel">
           <label htmlFor="resume-text">Резюме без файла</label>
           <textarea id="resume-text" value={pastedText} onChange={(event) => { setPastedText(event.target.value); setDraftRestored(false); }} placeholder="Опыт, проекты, результаты, образование…" rows={7} maxLength={60_000} aria-describedby="paste-requirement" />
-          <p id="paste-requirement" aria-live="polite">{draftRestored ? "Черновик восстановлен. Проверь текст и продолжай." : pastedLength === 0 ? "Нужно минимум 80 символов." : missingPasteChars > 0 ? `Добавь ещё ${missingPasteChars} символов.` : "Текста достаточно."}</p>
+          <p id="paste-requirement" aria-live="polite">{draftRestored ? "Черновик восстановлен. Проверь текст и продолжай." : "Опиши свой профессиональный опыт."}</p>
         </div> : null}
       </div>
       <div className={styles.carousel}><h2 className={styles.srOnly}>Выбери HR</h2><HrCarousel selected={sel} featured={initialPersona ?? "vadik"} onSelect={select} /></div>

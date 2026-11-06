@@ -14,7 +14,7 @@ const decisions=(rejected?:string)=>({decisions:assessmentClaims(assessment()).m
 async function stub(outputs:unknown[],run:()=>Promise<void>) {
  const oldFetch=globalThis.fetch, oldProvider=process.env.AI_PROVIDER, oldKey=process.env.OPENAI_API_KEY;let index=0;
  process.env.AI_PROVIDER="openai";process.env.OPENAI_API_KEY="synthetic-only";
- globalThis.fetch=async()=>{if(index>=outputs.length)throw new Error("Unexpected call, no network");return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(outputs[index++])},finish_reason:"stop"}],usage:{prompt_tokens:10,completion_tokens:10}}),{status:200});};
+ globalThis.fetch=async(_url,init)=>{const name=JSON.parse(String(init?.body)).response_format?.json_schema?.name;if(name!=="document_purpose_v1"&&index>=outputs.length)throw new Error("Unexpected call, no network");return new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(name==="document_purpose_v1"?{decision:"suitable"}:outputs[index++])},finish_reason:"stop"}],usage:{prompt_tokens:10,completion_tokens:10}}),{status:200});};
  try{await run();}finally{globalThis.fetch=oldFetch;if(oldProvider===undefined)delete process.env.AI_PROVIDER;else process.env.AI_PROVIDER=oldProvider;if(oldKey===undefined)delete process.env.OPENAI_API_KEY;else process.env.OPENAI_API_KEY=oldKey;}
 }
 async function resume(){return prisma.resume.create({data:{sanitizedText:text,versions:{create:{versionNumber:1,structuredContent:{coordinatedPlan:planFor(text)}}}},include:{versions:true}});}

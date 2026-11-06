@@ -101,7 +101,7 @@ export async function POST(request: Request) {
           error instanceof AnalysisInputError
             ? error.message
             : analysisErrorMessage(error);
-        send({ type: "error", message, purchaseAnalysisId: error instanceof AnalysisInputError ? error.purchaseAnalysisId : undefined });
+        send({ type: "error", message, status: error instanceof AnalysisInputError ? error.status : 503, purchaseAnalysisId: error instanceof AnalysisInputError ? error.purchaseAnalysisId : undefined });
       } finally {
         clearInterval(heartbeat);
         try {

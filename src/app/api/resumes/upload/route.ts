@@ -56,17 +56,7 @@ export async function POST(request: Request) {
     await trackServer("resume_parse_failed", {
       reason: "unsupported_or_corrupt",
     });
-    return jsonError(
-      "Ваше резюме технически победило искусственный интеллект. Попробуй другой файл или вставь текст.",
-      422,
-    );
-  }
-
-  if (extracted.text.trim().length < 80) {
-    return jsonError(
-      "Резюме настолько краткое, что разбирать пока нечего.",
-      422,
-    );
+    return jsonError("Не удалось прочитать файл. Попробуй другой PDF или DOCX либо вставь текст.", 422);
   }
 
   const storageKey = await saveUpload(buffer, file.name);

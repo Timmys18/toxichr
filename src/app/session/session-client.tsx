@@ -19,7 +19,7 @@ type StreamEvent =
   | { type: "finding"; stage: string; message: string }
   | { type: "roast"; delta: string }
   | { type: "completed"; analysisId: string }
-  | { type: "error"; message: string; purchaseAnalysisId?: string };
+  | { type: "error"; message: string; status?: number; purchaseAnalysisId?: string };
 
 type Phase = "analyzing" | "verdict" | "error";
 type Props = { resumeId?: string; personaId?: PersonaId; viewId?: string; priceRub: number };
@@ -45,6 +45,7 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
   const [activeResumeId, setActiveResumeId] = useState<string | null>(resumeId ?? null);
   const [purchaseAnalysisId, setPurchaseAnalysisId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inputRejected, setInputRejected] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +106,7 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
         setLiveRoast((previous) => previous + event.delta);
       } else if (event.type === "completed") void loadReport(event.analysisId).catch(fail);
       else if (event.type === "error") {
+        setInputRejected(event.status === 422);
         setPurchaseAnalysisId(event.purchaseAnalysisId ?? null);
         fail(new Error(event.message));
       }
@@ -241,7 +243,7 @@ export function SessionClient({ resumeId, personaId, viewId, priceRub }: Props) 
         ) : null}
 
         {phase === "error" ? (
-          <EmptyState className="errbox" action={<div>{purchaseAnalysisId ? <PrimaryAction href={`/revenge?analysisId=${encodeURIComponent(purchaseAnalysisId)}`}>Открыть пакет ToxicHR · {priceRub} ₽</PrimaryAction> : null}<PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></div>}>{error}</EmptyState>
+          <EmptyState className="errbox" action={<div>{inputRejected ? <><PrimaryAction href={`/?persona=${personaCode ?? "vadik"}#resume-start`}>Загрузить резюме</PrimaryAction><SecondaryAction href={`/?persona=${personaCode ?? "vadik"}&paste=1#resume-start`}>Вставить текст</SecondaryAction></> : <>{purchaseAnalysisId ? <PrimaryAction href={`/revenge?analysisId=${encodeURIComponent(purchaseAnalysisId)}`}>Открыть пакет ToxicHR · {priceRub} ₽</PrimaryAction> : null}<PrimaryAction type="button" onClick={() => window.location.reload()}>Попробовать снова</PrimaryAction><SecondaryAction href="/">На главную</SecondaryAction></>}</div>}>{error}</EmptyState>
         ) : null}
 
       </div>

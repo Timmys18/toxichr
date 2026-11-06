@@ -57,3 +57,7 @@ Implemented:
 Validation: final typecheck and targeted ESLint passed; 20/20 addressed tests passed. Results: artifacts/recovery/audit-fixes-tests.json. Tests use isolated SQLite and fake HTTP transport, no live acceptance.
 Budget: recovery paid calls 0. Lifetime spend and remainder still UNKNOWN because paid historical runs were lost; existing $5 reconciliation gate retained. No live calls until confirmed.
 Operational: schema changes require prisma db push on target before use; no production DB changes, merge or deploy. Unrelated modified UX screenshot preserved and excluded.
+# 2026-11-06 — входной контроль резюме
+
+- Добавлена серверная AI-проверка назначения документа перед HR-конвейером, кэшированная по версии, провайдеру и хешу текста. При неподходящем или неопределённом материале Analysis не создаётся; клиент получает путь к новой загрузке или вставке текста.
+- Адресные тесты 24/24, живой негативный сценарий и обновление страницы прошли. Положительный сценарий прошёл входной контроль, но HR-пайплайн дважды завершился ошибкой; не считать приёмку завершённой. Расход живой проверки $0,077286. Production не тронут.

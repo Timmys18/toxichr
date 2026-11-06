@@ -22,8 +22,8 @@ export async function POST(request: Request) {
   }
   const raw = body?.text?.trim();
 
-  if (!raw || raw.length < 80) {
-    return jsonError("Слишком коротко — разбирать пока нечего.", 400);
+  if (!raw) {
+    return jsonError("Вставь описание профессионального опыта.", 400);
   }
   if (raw.length > MAX_TEXT_LENGTH) {
     return jsonError("Текст длиннее 60 000 знаков. Оставь только резюме.", 413);

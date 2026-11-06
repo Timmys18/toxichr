@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-06",
+  "stand": "http://127.0.0.1:3102",
+  "provider": "openai",
+  "data": "synthetic-only",
+  "cases": {
+    "otherDocument": {
+      "input": "new DOCX: museum inventory procedure",
+      "purposeDecision": "other",
+      "analysisRows": 0,
+      "costUsd": 0.0003075,
+      "purposeElapsedMs": 3029,
+      "refresh": "same refusal; no additional AI call",
+      "directAnalysisRequest": "POST /api/analyses with forged trusted-status fields returned 422; no analysis row",
+      "screenshots": ["other-document-desktop.png", "other-document-mobile.png"]
+    },
+    "newResume": {
+      "input": "new pasted synthetic museum curator resume",
+      "purposeDecision": "suitable",
+      "purposeCostUsd": 0.0004155,
+      "purposeElapsedMs": 2335,
+      "professionalAnalysis": "FAILED twice after the gate; no successful HR report",
+      "failedAnalysisRows": 2,
+      "professionalPipelineCostUsd": 0.076563,
+      "refreshResult": "not verified because the first result did not complete"
+    }
+  },
+  "totalLiveCostUsd": 0.077286,
+  "acceptance": "incomplete: positive end-to-end case did not produce an HR result",
+  "notes": "Costs are sums of the stand's completed provider-call receipts, not a billing statement. No live payment or production change."
+}
