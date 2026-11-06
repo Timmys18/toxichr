@@ -1,0 +1,11 @@
+{
+  "url": "http://127.0.0.1:3102/session?resumeId=cmw505k2i003b4wub45tfenax&personaId=lera",
+  "result": "COMPLETED",
+  "elapsedMs": 101783,
+  "analysisId": "cmw505mpw003f4wubuuqp9hp4",
+  "reloadedAnalysisId": "cmw505mpw003f4wubuuqp9hp4",
+  "status": "COMPLETED",
+  "resultMode": "live",
+  "mobileOverflowPx": 0,
+  "costUsd": 0.08331140000000001
+}

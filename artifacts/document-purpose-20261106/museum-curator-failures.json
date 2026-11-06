@@ -1,0 +1,127 @@
+{
+  "source": "museum-curator-resume.txt",
+  "sourceTextHash": "eb3f4ebf5fe1c1fe824866985c2376d407959f213ac309688f7c6502b368ee5d",
+  "evidence": "AiCall rows plus provider journal; the old exception text and model outputs were not persisted, so locations below are inferred from call order and token caps, not reconstructed error messages",
+  "attempts": [
+    {
+      "analysisId": "cmw4qebox001f4wubb4hl5gu3",
+      "status": "FAILED",
+      "createdAt": "2026-11-06T08:47:27.921+00:00",
+      "calls": [
+        {
+          "id": "cmw4qebpn001h4wub1gkvxof6",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 7998,
+          "costAmount": 0.00659475,
+          "inferredStep": "facts extraction",
+          "maxTokens": 3500
+        },
+        {
+          "id": "cmw4qehx5001i4wubete6a0ap",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 7141,
+          "costAmount": 0.0079545,
+          "inferredStep": "facts repair",
+          "maxTokens": 3500
+        },
+        {
+          "id": "cmw4qengv001j4wubggsmac4x",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 4844,
+          "costAmount": 0.00378225,
+          "inferredStep": "facts semantic review",
+          "maxTokens": 1000
+        }
+      ],
+      "costUsd": 0.0183315,
+      "rawExceptionStored": false,
+      "failureLocationInference": "checked facts rejected after repair"
+    },
+    {
+      "analysisId": "cmw4qereg001k4wub06gt5mrn",
+      "status": "FAILED",
+      "createdAt": "2026-11-06T08:47:48.280+00:00",
+      "calls": [
+        {
+          "id": "cmw4qerf3001m4wubkveklse4",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 7765,
+          "costAmount": 0.00708525,
+          "inferredStep": "facts extraction",
+          "maxTokens": 3500
+        },
+        {
+          "id": "cmw4qexg5001n4wubzav4vety",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 7761,
+          "costAmount": 0.0088275,
+          "inferredStep": "facts repair",
+          "maxTokens": 3500
+        },
+        {
+          "id": "cmw4qf3h3001o4wubba5t1w27",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 2712,
+          "costAmount": 0.00286125,
+          "inferredStep": "facts semantic review",
+          "maxTokens": 1000
+        },
+        {
+          "id": "cmw4qf5mt001p4wubisi4yafb",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 22553,
+          "costAmount": 0.0232845,
+          "inferredStep": "four-view plan",
+          "maxTokens": 11000
+        },
+        {
+          "id": "cmw4qfn3f001q4wub3brsemxf",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 5266,
+          "costAmount": 0.00534675,
+          "inferredStep": "assessment semantic review",
+          "maxTokens": 1800
+        },
+        {
+          "id": "cmw4qfr73001r4wubbxwmmnn4",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 4025,
+          "costAmount": 0.0050805,
+          "inferredStep": "assessment repair",
+          "maxTokens": 5000
+        },
+        {
+          "id": "cmw4qfuce001s4wubp3cgmk1j",
+          "stage": "grounding",
+          "model": "gpt-5.4-mini",
+          "status": "COMPLETED",
+          "elapsedMs": 5624,
+          "costAmount": 0.00574575,
+          "inferredStep": "assessment re-review",
+          "maxTokens": 1800
+        }
+      ],
+      "costUsd": 0.0582315,
+      "rawExceptionStored": false,
+      "failureLocationInference": "assessment semantic re-review rejected after repair"
+    }
+  ]
+}

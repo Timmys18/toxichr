@@ -237,7 +237,23 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   let planning: Awaited<ReturnType<typeof buildPlan>> | undefined;
   if (openAiLive) {
     if (plan) plan = validatePlan(plan, input.resumeText);
-    else { planning = await buildPlan(input.resumeText, input.sharedFacts, input.onFacts); plan = planning.plan; await input.onPlan?.(plan); }
+    else {
+      let checkedFacts = input.sharedFacts;
+      let persistenceFailed = false;
+      const saveFacts = async (facts: CoordinatedPlan["facts"]) => {
+        try { await input.onFacts?.(facts); }
+        catch (error) { persistenceFailed = true; throw error; }
+        checkedFacts = facts;
+      };
+      try { planning = await buildPlan(input.resumeText, checkedFacts, saveFacts); }
+      catch (error) {
+        if (error instanceof AiConfigError || persistenceFailed) throw error;
+        console.error("[pipeline] checked plan failed; retrying once", error);
+        planning = await buildPlan(input.resumeText, checkedFacts, saveFacts);
+      }
+      plan = planning.plan;
+      await input.onPlan?.(plan);
+    }
   }
   const suppliedAssessment = plan?.views[input.personaId].assessment ?? (!independentPerspective && input.professionalAssessment
     ? parseGroundedAssessment(input.professionalAssessment, input.resumeText).assessment ?? undefined
@@ -294,7 +310,12 @@ export async function runAnalysisPipeline(input: PipelineInput): Promise<Pipelin
   let coordinationRepair: Awaited<ReturnType<typeof reconcileView>> | null = null;
   if (plan || process.env.AI_SEMANTIC_REVIEW === "true") {
     try {
-      groundingReview = await reviewAssessment(input.resumeText, assessment, Boolean(plan));
+      try { groundingReview = await reviewAssessment(input.resumeText, assessment, Boolean(plan)); }
+      catch (error) {
+        if (error instanceof AiConfigError) throw error;
+        console.error("[pipeline] checked assessment failed; retrying once", error);
+        groundingReview = await reviewAssessment(input.resumeText, assessment, Boolean(plan));
+      }
       assessment = groundingReview.assessment;
       if (plan) {
         // Any semantic alteration invalidates coordination. Never pass an old

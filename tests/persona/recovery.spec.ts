@@ -98,3 +98,29 @@ test("исправление аналитика выполняется один 
   const result=await reviewAssessment(cases[0],raw,true);expect(result.assessment.strengths).toHaveLength(1);expect(requests).toHaveLength(3);
  });
 });
+test("конвейер повторяет проверяемый план после отказа, не принимая невалидный авторский ответ",async()=>{
+ const raw=planFor(cases[0]);
+ await withTransport([{}, {}, raw, {decisions:[{id:"S01",supported:true,reason:""}]}, {}, {}],async requests=>{
+  await expect(runAnalysisPipeline({resumeText:cases[0],personaId:"tamara",sharedFacts:raw.facts})).rejects.toThrow("обязательные проверки");
+  expect(requests.map(p=>(p.response_format as {json_schema:{name:string}}).json_schema.name)).toEqual([
+   "coordinated_plan_v1","coordinated_plan_repair_v1","coordinated_plan_v1",
+   "assessment_grounding_review_v1","persona_review_v2","persona_review_repair_v2",
+  ]);
+ });
+});
+test("конвейер повторяет неполную проверку оценки, но не пропускает невалидный ответ",async()=>{
+ const raw=validatePlan(planFor(cases[0]),cases[0]);
+ await withTransport([{decisions:[]},{decisions:[{id:"S01",supported:true,reason:""}]},{},{}],async requests=>{
+  await expect(runAnalysisPipeline({resumeText:cases[0],personaId:"tamara",coordinatedPlan:raw})).rejects.toThrow("обязательные проверки");
+  expect(requests.map(p=>(p.response_format as {json_schema:{name:string}}).json_schema.name)).toEqual([
+   "assessment_grounding_review_v1","assessment_grounding_review_v1","persona_review_v2","persona_review_repair_v2",
+  ]);
+ });
+});
+test("ошибка сохранения проверенных фактов не запускает платный повтор",async()=>{
+ const raw=planFor(cases[0]);
+ await withTransport([raw.facts,{supported:true,reason:""}],async requests=>{
+  await expect(runAnalysisPipeline({resumeText:cases[0],personaId:"tamara",onFacts:async()=>{throw new Error("storage unavailable");}})).rejects.toThrow("storage unavailable");
+  expect(requests).toHaveLength(2);
+ });
+});
